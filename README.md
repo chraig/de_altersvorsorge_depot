@@ -26,8 +26,6 @@ Based on the **Altersvorsorgereformgesetz** as amended by the Finanzausschuss on
 ## Quick Start
 
 ```bash
-git clone https://github.com/chraig/de_altersvorsorge_depot.git
-cd de_altersvorsorge_depot
 flutter pub get
 flutter run -d chrome
 ```
@@ -466,32 +464,44 @@ flutter test integration_test/
 
 ## Deployment
 
-### Static Hosting (Recommended)
-
-```bash
-flutter build web --release --web-renderer canvaskit
-```
-
-Deploy `build/web/` to:
-- **Vercel**: `vercel --prod`
-- **Netlify**: drag & drop `build/web/`
-- **GitHub Pages**: push to `gh-pages` branch
-- **Firebase Hosting**: `firebase deploy`
-- **AWS S3 + CloudFront**
-
-### Docker
-
-```dockerfile
-FROM nginx:alpine
-COPY build/web /usr/share/nginx/html
-EXPOSE 80
-```
+### Build
 
 ```bash
 flutter build web --release
-docker build -t avdepot-rechner .
-docker run -p 8080:80 avdepot-rechner
 ```
+
+This produces a fully static site in `build/web/` (~25 MB). No backend required.
+
+### Test Locally
+
+```bash
+cd build/web
+python -m http.server 8080
+# Open http://localhost:8080
+```
+
+### Deploy to Hosting Provider
+
+Upload the contents of `build/web/` to your hosting provider's public directory:
+
+- **Hostinger / shared hosting**: Upload via File Manager or FTP to `public_html/`
+- **Vercel**: `vercel --prod`
+- **Netlify**: Drag & drop `build/web/`
+- **GitHub Pages**: Push to `gh-pages` branch
+
+No server-side configuration needed — any static file host works.
+
+### Security
+
+This application is safe to host. It is a purely client-side static site:
+
+- **No backend**: No server-side code, no database, no API endpoints to secure
+- **No data collection**: No cookies, no tracking, no analytics, no user accounts
+- **No external requests**: All calculations run locally in the browser
+- **No user input transmitted**: Nothing leaves the visitor's device
+- **Minimal attack surface**: Only static HTML, JS, and WASM files served by the web host
+
+Recommended: Serve over **HTTPS** (enabled by default on most hosting providers) to prevent file tampering in transit.
 
 ---
 
