@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../config/theme.dart';
+import '../../../core/responsive/screen_layout.dart';
 import '../../../core/state/locale_cubit.dart';
 import '../../../shared/utils/fmt.dart';
 import '../../../models/scenario.dart';
@@ -17,19 +18,26 @@ class PersonalScenarioBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<LocaleCubit>().state.strings;
+    final compact = context.isCompact;
     return BlocBuilder<CalculatorCubit, CalculatorState>(
       builder: (context, state) {
+        final chips = state.personalScenarios.map((sc) => _ScenarioChip(
+          scenario: sc,
+          selected: state.selectedPersonalScenarioId == sc.id,
+        )).toList();
+        final addChip = _AddChip(label: s.addScenario, onTap: () => _showAddDialog(context));
+
+        if (compact) {
+          return Wrap(
+            spacing: 6, runSpacing: 6,
+            children: [...chips, addChip],
+          );
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ...state.personalScenarios.map((sc) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: _ScenarioChip(
-                scenario: sc,
-                selected: state.selectedPersonalScenarioId == sc.id,
-              ),
-            )),
-            _AddChip(label: s.addScenario, onTap: () => _showAddDialog(context)),
+            ...chips.map((c) => Padding(padding: const EdgeInsets.only(bottom: 4), child: c)),
+            addChip,
           ],
         );
       },

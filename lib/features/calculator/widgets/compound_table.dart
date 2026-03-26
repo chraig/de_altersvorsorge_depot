@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../config/theme.dart';
+import '../../../core/l10n/app_strings.dart';
+import '../../../core/responsive/screen_layout.dart';
 import '../../../core/state/locale_cubit.dart';
 import '../../../shared/utils/fmt.dart';
 import '../cubit/calculator_cubit.dart';
@@ -30,22 +32,7 @@ class CompoundTable extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(color: AppColors.border),
               ),
-              child: IntrinsicHeight(
-                child: Row(
-                  children: _intersperse(
-                    [
-                      _tag(s.tagSavingsRate, '${Fmt.eur(p.sparrate)}${s.perMonth}', AppColors.accent),
-                      _tag(s.tagGross, Fmt.eur(p.brutto), null),
-                      _tag(s.tagChildren, '${p.kinder}', null),
-                      _tag(s.tagDuration, '${p.spardauer}${s.yearSuffix}', null),
-                      _tag(s.tagSubsidyYear, Fmt.eur(sub.total), AppColors.accent),
-                      _tag(s.tagSubsidyRate, Fmt.pct(sub.foerderquote), AppColors.accent),
-                      _tag(s.tagMargTax, Fmt.pct(sub.grenzsteuersatz), null),
-                    ].map((w) => Expanded(child: w)).toList(),
-                    VerticalDivider(width: 1, thickness: 1, color: AppColors.border),
-                  ),
-                ),
-              ),
+              child: _buildSummaryContent(context, s, p, sub),
             ),
 
             // Table (no selection)
@@ -120,6 +107,35 @@ class CompoundTable extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildSummaryContent(BuildContext context, AppStrings s, dynamic p, dynamic sub) {
+    final tags = [
+      _tag(s.tagSavingsRate, '${Fmt.eur(p.sparrate)}${s.perMonth}', AppColors.accent),
+      _tag(s.tagGross, Fmt.eur(p.brutto), null),
+      _tag(s.tagChildren, '${p.kinder}', null),
+      _tag(s.tagDuration, '${p.spardauer}${s.yearSuffix}', null),
+      _tag(s.tagSubsidyYear, Fmt.eur(sub.total), AppColors.accent),
+      _tag(s.tagSubsidyRate, Fmt.pct(sub.foerderquote), AppColors.accent),
+      _tag(s.tagMargTax, Fmt.pct(sub.grenzsteuersatz), null),
+    ];
+
+    if (context.isCompact) {
+      return Wrap(
+        spacing: 16, runSpacing: 12,
+        alignment: WrapAlignment.center,
+        children: tags,
+      );
+    }
+
+    return IntrinsicHeight(
+      child: Row(
+        children: _intersperse(
+          tags.map((w) => Expanded(child: w)).toList(),
+          VerticalDivider(width: 1, thickness: 1, color: AppColors.border),
+        ),
+      ),
     );
   }
 

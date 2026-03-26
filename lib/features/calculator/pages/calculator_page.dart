@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../config/theme.dart';
 import '../../../core/l10n/app_strings.dart';
+import '../../../core/responsive/screen_layout.dart';
 import '../../../core/state/locale_cubit.dart';
 import '../../../models/scenario.dart';
 import '../../../shared/utils/fmt.dart';
@@ -54,24 +55,28 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
         final macro = state.effectiveMacro(s);
         final diff = av.endkapital - etf.endkapital;
 
+        final compact = context.isCompact;
+
         return Scaffold(
           body: SingleChildScrollView(
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: AppDimensions.maxContentWidth),
                 child: Padding(
-                  padding: AppPadding.page,
+                  padding: compact
+                      ? const EdgeInsets.symmetric(horizontal: AppSpacing.lg)
+                      : AppPadding.page,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // ─── HEADER + LANGUAGE TOGGLE ───────────
-                      const SizedBox(height: AppSpacing.section),
+                      SizedBox(height: compact ? AppSpacing.xl : AppSpacing.section),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Spacer(),
                           Text(s.calculatorBadge,
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
+                            style: TextStyle(fontSize: compact ? 10 : 12, fontWeight: FontWeight.w700,
                               color: AppColors.accent, letterSpacing: 2)),
                           const Spacer(),
                           _LanguageToggle(
@@ -86,81 +91,76 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
                       ),
                       const SizedBox(height: AppSpacing.md),
                       Center(child: Text(s.appTitle,
-                        style: Theme.of(context).textTheme.headlineLarge)),
+                        style: compact
+                            ? Theme.of(context).textTheme.headlineMedium
+                            : Theme.of(context).textTheme.headlineLarge)),
                       Center(child: Text(s.appSubtitle,
-                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500,
+                        style: TextStyle(fontSize: compact ? 14 : 17, fontWeight: FontWeight.w500,
                           color: AppColors.muted))),
                       const SizedBox(height: 10),
                       Center(child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 520),
                         child: Text(s.appDescription,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 12, color: AppColors.muted, height: 1.5),
+                          style: TextStyle(fontSize: compact ? 11 : 12, color: AppColors.muted, height: 1.5),
                         ),
                       )),
                       const SizedBox(height: AppSpacing.xxxl),
 
                       // ─── PERSONAL SCENARIOS ──────────────────
                       SectionDivider(s.sectionPersonalScenarios),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: AppDimensions.sidebarWidth,
-                            child: const PersonalScenarioBar(),
-                          ),
-                          const SizedBox(width: AppSpacing.xl),
-                          const Expanded(child: InputPanel()),
-                        ],
-                      ),
+                      if (compact) ...[
+                        const PersonalScenarioBar(),
+                        const SizedBox(height: AppSpacing.lg),
+                        const InputPanel(),
+                      ] else
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: AppDimensions.sidebarWidth,
+                              child: const PersonalScenarioBar(),
+                            ),
+                            const SizedBox(width: AppSpacing.xl),
+                            const Expanded(child: InputPanel()),
+                          ],
+                        ),
 
                       // ─── MACROECONOMIC SCENARIOS ───────────────
                       SectionDivider(s.sectionMacroScenarios),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: AppDimensions.sidebarWidth,
-                            child: const MacroScenarioGrid(),
-                          ),
-                          const SizedBox(width: AppSpacing.xl),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: AppColors.card,
-                                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                                    border: Border.all(color: AppColors.border),
-                                  ),
-                                  child: TabBar(
-                                    controller: _macroTabController,
-                                    labelColor: Colors.white,
-                                    unselectedLabelColor: AppColors.muted,
-                                    labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-                                    indicator: BoxDecoration(
-                                      color: AppColors.accent,
-                                      borderRadius: BorderRadius.circular(AppRadius.chip),
-                                    ),
-                                    indicatorSize: TabBarIndicatorSize.tab,
-                                    dividerHeight: 0,
-                                    tabs: [
-                                      Tab(text: s.chartTab),
-                                      Tab(text: s.tableTab),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: AppSpacing.md),
-                                if (_macroTabController.index == 0)
-                                  const MacroOverlayChart()
-                                else
-                                  const CompoundTable(),
-                              ],
+                      if (compact) ...[
+                        const MacroScenarioGrid(),
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildMacroTabBar(s),
+                        const SizedBox(height: AppSpacing.md),
+                        if (_macroTabController.index == 0)
+                          const MacroOverlayChart()
+                        else
+                          const CompoundTable(),
+                      ] else
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: AppDimensions.sidebarWidth,
+                              child: const MacroScenarioGrid(),
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: AppSpacing.xl),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildMacroTabBar(s),
+                                  const SizedBox(height: AppSpacing.md),
+                                  if (_macroTabController.index == 0)
+                                    const MacroOverlayChart()
+                                  else
+                                    const CompoundTable(),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
 
                       // ─── DETAIL RESULTS ─────────────────────
                       SectionDivider(s.sectionDetailedResults),
@@ -232,6 +232,34 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
           ),
         );
       },
+    );
+  }
+
+  // ─── MACRO TAB BAR ─────────────────────────────────────────────
+
+  Widget _buildMacroTabBar(AppStrings s) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: TabBar(
+        controller: _macroTabController,
+        labelColor: Colors.white,
+        unselectedLabelColor: AppColors.muted,
+        labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+        indicator: BoxDecoration(
+          color: AppColors.accent,
+          borderRadius: BorderRadius.circular(AppRadius.chip),
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerHeight: 0,
+        tabs: [
+          Tab(text: s.chartTab),
+          Tab(text: s.tableTab),
+        ],
+      ),
     );
   }
 
