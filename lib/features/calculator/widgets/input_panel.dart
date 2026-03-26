@@ -24,7 +24,10 @@ class PersonalScenarioBar extends StatelessWidget {
           children: [
             ...state.personalScenarios.map((sc) => Padding(
               padding: const EdgeInsets.only(bottom: 4),
-              child: _ScenarioChip(scenario: sc),
+              child: _ScenarioChip(
+                scenario: sc,
+                selected: state.selectedPersonalScenarioId == sc.id,
+              ),
             )),
             _AddChip(label: s.addScenario, onTap: () => _showAddDialog(context)),
           ],
@@ -48,7 +51,8 @@ class PersonalScenarioBar extends StatelessWidget {
 
 class _ScenarioChip extends StatelessWidget {
   final PersonalScenario scenario;
-  const _ScenarioChip({required this.scenario});
+  final bool selected;
+  const _ScenarioChip({required this.scenario, required this.selected});
 
   @override
   Widget build(BuildContext context) {
@@ -64,14 +68,18 @@ class _ScenarioChip extends StatelessWidget {
         ),
       ),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: EdgeInsets.symmetric(horizontal: selected ? 7 : 8, vertical: selected ? 3 : 4),
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: selected ? AppColors.accentLight : AppColors.card,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(
+            color: selected ? AppColors.accent : AppColors.border,
+            width: selected ? 2 : 1,
+          ),
         ),
         child: Text('${scenario.icon} ${scenario.name}',
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.label)),
+          style: TextStyle(fontSize: 11, fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+            color: selected ? AppColors.accent : AppColors.label)),
       ),
     );
   }

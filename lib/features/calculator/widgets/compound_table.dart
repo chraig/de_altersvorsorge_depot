@@ -23,24 +23,28 @@ class CompoundTable extends StatelessWidget {
           children: [
             // Summary bar
             Container(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: 14),
+              margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
                 color: AppColors.card,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(color: AppColors.border),
               ),
-              child: Wrap(
-                spacing: 10, runSpacing: AppSpacing.sm,
-                children: [
-                  _tag(s.tagSavingsRate, '${Fmt.eur(p.sparrate)}${s.perMonth}', AppColors.accent),
-                  _tag(s.tagGross, Fmt.eur(p.brutto), null),
-                  _tag(s.tagChildren, '${p.kinder}', null),
-                  _tag(s.tagDuration, '${p.spardauer}${s.yearSuffix}', null),
-                  _tag(s.tagSubsidyYear, Fmt.eur(sub.total), AppColors.accent),
-                  _tag(s.tagSubsidyRate, Fmt.pct(sub.foerderquote), AppColors.accent),
-                  _tag(s.tagMargTax, Fmt.pct(sub.grenzsteuersatz), null),
-                ],
+              child: IntrinsicHeight(
+                child: Row(
+                  children: _intersperse(
+                    [
+                      _tag(s.tagSavingsRate, '${Fmt.eur(p.sparrate)}${s.perMonth}', AppColors.accent),
+                      _tag(s.tagGross, Fmt.eur(p.brutto), null),
+                      _tag(s.tagChildren, '${p.kinder}', null),
+                      _tag(s.tagDuration, '${p.spardauer}${s.yearSuffix}', null),
+                      _tag(s.tagSubsidyYear, Fmt.eur(sub.total), AppColors.accent),
+                      _tag(s.tagSubsidyRate, Fmt.pct(sub.foerderquote), AppColors.accent),
+                      _tag(s.tagMargTax, Fmt.pct(sub.grenzsteuersatz), null),
+                    ].map((w) => Expanded(child: w)).toList(),
+                    VerticalDivider(width: 1, thickness: 1, color: AppColors.border),
+                  ),
+                ),
               ),
             ),
 
@@ -120,10 +124,24 @@ class CompoundTable extends StatelessWidget {
   }
 
   Widget _tag(String label, String value, Color? valueColor) {
-    return RichText(text: TextSpan(children: [
-      TextSpan(text: '$label ', style: const TextStyle(fontSize: 10, color: AppColors.muted)),
-      TextSpan(text: value, style: AppTheme.monoSmall.copyWith(
-        fontWeight: FontWeight.w700, color: valueColor ?? AppColors.text)),
-    ]));
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label.toUpperCase(), style: const TextStyle(
+          fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.muted, letterSpacing: 0.3)),
+        const SizedBox(height: 4),
+        Text(value, style: AppTheme.monoSmall.copyWith(
+          fontWeight: FontWeight.w700, color: valueColor ?? AppColors.text)),
+      ],
+    );
+  }
+
+  List<Widget> _intersperse(List<Widget> items, Widget separator) {
+    final result = <Widget>[];
+    for (int i = 0; i < items.length; i++) {
+      if (i > 0) result.add(separator);
+      result.add(items[i]);
+    }
+    return result;
   }
 }

@@ -9,6 +9,7 @@ class CalculatorState {
   final PersonalScenario currentPerson;
   final MacroScenario currentMacro;
   final CostSettings costs;
+  final String? selectedPersonalScenarioId;
   final bool showAdvanced;
   final bool useCustomRendite;
   final double customRendite;
@@ -19,6 +20,7 @@ class CalculatorState {
     required this.currentPerson,
     required this.currentMacro,
     required this.costs,
+    this.selectedPersonalScenarioId,
     this.showAdvanced = false,
     this.useCustomRendite = false,
     this.customRendite = 0.07,
@@ -74,6 +76,8 @@ class CalculatorState {
     PersonalScenario? currentPerson,
     MacroScenario? currentMacro,
     CostSettings? costs,
+    String? selectedPersonalScenarioId,
+    bool clearSelectedPersonal = false,
     bool? showAdvanced,
     bool? useCustomRendite,
     double? customRendite,
@@ -85,6 +89,7 @@ class CalculatorState {
       currentPerson: currentPerson ?? this.currentPerson,
       currentMacro: currentMacro ?? this.currentMacro,
       costs: costs ?? this.costs,
+      selectedPersonalScenarioId: clearSelectedPersonal ? null : (selectedPersonalScenarioId ?? this.selectedPersonalScenarioId),
       showAdvanced: showAdvanced ?? this.showAdvanced,
       useCustomRendite: useCustomRendite ?? this.useCustomRendite,
       customRendite: customRendite ?? this.customRendite,

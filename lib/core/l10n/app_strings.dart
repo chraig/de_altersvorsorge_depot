@@ -84,6 +84,9 @@ abstract class AppStrings {
   String get slPayoutLabel;
   String get slPayoutDetail;
 
+  // ─── ERRORS ──────────────────────────────────────────────────────
+  String pageNotFound(String uri);
+
   // ─── FOOTER ───────────────────────────────────────────────────────
   String get resetAll;
   String get disclaimer;
@@ -292,6 +295,9 @@ class StringsEn extends AppStrings {
     '\u25B8 Payout plan until 85, up to 30% lump sum\n'
     '\u25B8 Deferred taxation';
 
+  // Errors
+  String pageNotFound(String uri) => 'Page not found: $uri';
+
   // Footer
   String get resetAll => 'Reset All Values';
   String get disclaimer =>
@@ -389,7 +395,7 @@ class StringsEn extends AppStrings {
   String get macroJapanShort => 'Japan';
   String get macroJapanDesc => 'Stagnation with zero interest \u2013 Japan 1990\u20132020.';
   String get macroLostDecadeName => 'Lost Decade';
-  String get macroLostDecadeShort => 'Lost Dec.';
+  String get macroLostDecadeShort => 'Lost Decade';
   String get macroLostDecadeDesc => 'Crash with slow recovery \u2013 2000\u20132012.';
 }
 
@@ -487,6 +493,8 @@ class StringsDe extends AppStrings {
     '\u25B8 Auszahlplan bis 85, bis 30 % Einmalentnahme\n'
     '\u25B8 Nachgelagerte Besteuerung';
 
+  String pageNotFound(String uri) => 'Seite nicht gefunden: $uri';
+
   String get resetAll => 'Alle Werte zur\u00FCcksetzen';
   String get disclaimer =>
     'Hinweis: Dieser Rechner dient der Veranschaulichung, nicht als '
@@ -577,6 +585,6 @@ class StringsDe extends AppStrings {
   String get macroJapanShort => 'Japan';
   String get macroJapanDesc => 'Stagnation mit Nullzinsen \u2013 Japan 1990\u20132020.';
   String get macroLostDecadeName => 'Verlorenes Jahrzehnt';
-  String get macroLostDecadeShort => 'Verl. Jahrzehnt';
+  String get macroLostDecadeShort => 'Verlorenes Jahrzehnt';
   String get macroLostDecadeDesc => 'Crash mit langsamer Erholung \u2013 2000\u20132012.';
 }

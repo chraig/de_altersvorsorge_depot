@@ -38,6 +38,7 @@ class CalculatorCubit extends Cubit<CalculatorState> {
         alterStart: s.alterStart,
         spardauer: s.spardauer,
       ),
+      selectedPersonalScenarioId: s.id,
     ));
   }
 
@@ -48,23 +49,23 @@ class CalculatorCubit extends Cubit<CalculatorState> {
   // ─── INPUT SETTERS ────────────────────────────────────────────────
 
   void setSparrate(double v) {
-    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(sparrate: v)));
+    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(sparrate: v), clearSelectedPersonal: true));
   }
 
   void setBrutto(double v) {
-    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(brutto: v)));
+    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(brutto: v), clearSelectedPersonal: true));
   }
 
   void setKinder(int v) {
-    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(kinder: v)));
+    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(kinder: v), clearSelectedPersonal: true));
   }
 
   void setAlterStart(int v) {
-    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(alterStart: v)));
+    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(alterStart: v), clearSelectedPersonal: true));
   }
 
   void setSpardauer(int v) {
-    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(spardauer: v)));
+    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(spardauer: v), clearSelectedPersonal: true));
   }
 
   void setKostenAV(double v) {
@@ -120,6 +121,42 @@ class CalculatorCubit extends Cubit<CalculatorState> {
         ? remaining.first
         : state.currentMacro;
     emit(state.copyWith(macroScenarios: remaining, currentMacro: currentMacro));
+  }
+
+  void updateLocale(AppStrings strings) {
+    final defaultPersonal = PersonalScenario.defaults(strings);
+    final defaultMacro = MacroScenario.defaults(strings);
+
+    final updatedPersonal = state.personalScenarios.map((s) {
+      if (s.isCustom) return s;
+      final idx = state.personalScenarios.indexOf(s);
+      if (idx < defaultPersonal.length) {
+        return s..name = defaultPersonal[idx].name;
+      }
+      return s;
+    }).toList();
+
+    final updatedMacro = state.macroScenarios.map((s) {
+      if (s.isCustom) return s;
+      final idx = state.macroScenarios.indexOf(s);
+      if (idx < defaultMacro.length) {
+        final d = defaultMacro[idx];
+        s.name = d.name;
+        s.shortName = d.shortName;
+        s.description = d.description;
+      }
+      return s;
+    }).toList();
+
+    // Update currentMacro if it's a default
+    final currentMacroIdx = state.macroScenarios.indexWhere((m) => m.id == state.currentMacro.id);
+    final updatedCurrentMacro = currentMacroIdx >= 0 ? updatedMacro[currentMacroIdx] : state.currentMacro;
+
+    emit(state.copyWith(
+      personalScenarios: updatedPersonal,
+      macroScenarios: updatedMacro,
+      currentMacro: updatedCurrentMacro,
+    ));
   }
 
   void resetToDefaults(AppStrings strings) {

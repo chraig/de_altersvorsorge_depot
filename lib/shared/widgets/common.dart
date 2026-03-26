@@ -114,7 +114,7 @@ class ComparisonBar extends StatelessWidget {
 
   const ComparisonBar({super.key, required this.label, required this.avValue,
     required this.etfValue, required this.avText, required this.etfText,
-    this.avLabel = 'AV-Depot', this.etfLabel = 'ETF-Depot'});
+    required this.avLabel, required this.etfLabel});
 
   @override
   Widget build(BuildContext context) {

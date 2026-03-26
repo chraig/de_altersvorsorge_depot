@@ -76,7 +76,11 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
                           const Spacer(),
                           _LanguageToggle(
                             locale: localeCubit.state.locale,
-                            onToggle: localeCubit.toggle,
+                            onToggle: () {
+                              localeCubit.toggle();
+                              final newStrings = localeCubit.state.strings;
+                              context.read<CalculatorCubit>().updateLocale(newStrings);
+                            },
                           ),
                         ],
                       ),
