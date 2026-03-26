@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'config/theme.dart';
-import 'core/routes/router.dart';
-import 'core/state/app_settings.dart';
-import 'core/state/app_settings_scope.dart';
-import 'core/state/locale_cubit.dart';
+import 'package:avdepot_rechner/config/theme.dart';
+import 'package:avdepot_rechner/core/routes/router.dart';
+import 'package:avdepot_rechner/core/state/app_settings.dart';
+import 'package:avdepot_rechner/core/state/app_settings_scope.dart';
+import 'package:avdepot_rechner/core/state/locale_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

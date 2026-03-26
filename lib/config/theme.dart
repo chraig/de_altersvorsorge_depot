@@ -93,12 +93,19 @@ class AppColors {
   static const text = Color(0xFF1A1A2E);
   static const label = Color(0xFF4A4A6A);
   static const muted = Color(0xFF8B8BA7);
+  static const gray = Color(0xFF6B7280);
 
   // Semantic
   static const success = Color(0xFF10B981);
   static const successBg = Color(0xFFECFDF5);
+  static const successBorder = Color(0xFFA7F3D0);
+  static const successText = Color(0xFF065F46);
+  static const successTextLight = Color(0xFF047857);
   static const danger = Color(0xFFEF4444);
   static const dangerBg = Color(0xFFFEF2F2);
+  static const dangerBorder = Color(0xFFFECACA);
+  static const dangerText = Color(0xFF991B1B);
+  static const dangerTextLight = Color(0xFFB91C1C);
 
   // Warning
   static const warnBg = Color(0xFFFFFBEB);

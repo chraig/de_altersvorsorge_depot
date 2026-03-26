@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../features/calculator/pages/calculator_page.dart';
-import '../state/locale_cubit.dart';
+import 'package:avdepot_rechner/features/calculator/pages/calculator_page.dart';
+import 'package:avdepot_rechner/core/state/locale_cubit.dart';
 
 GoRouter createRouter() {
   return GoRouter(

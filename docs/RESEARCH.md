@@ -100,7 +100,7 @@ Bonus = €200 if (alter_bei_abschluss < 25) AND (vertragsjahr ≤ 3)
 Geringverdienerbonus = €175 if (brutto ≤ 26,250) AND (Eigenbeitrag ≥ 120)
 ```
 
-- Not implemented in current calculator (simplification)
+- Implemented: €175/yr added to total subsidy when conditions are met
 - Stacks on top of Grundzulage
 
 ### 2.5 Günstigerprüfung (Tax Optimization Check)
@@ -172,7 +172,9 @@ Steuer = Steuerpflichtiger_Gewinn × Abgeltungssteuersatz
 
 Where:
   Teilfreistellung = 30% for Aktienfonds (≥51% equity, §20 InvStG)
-  Abgeltungssteuersatz = 26.375% (25% + 5.5% Soli, no Kirchensteuer)
+  Abgeltungssteuersatz = 26.375% without Kirchensteuer (25% + 5.5% Soli)
+  With Kirchensteuer: KapESt = 25% / (1 + KiSt_rate), plus Soli + KiSt
+    → 8% KiSt (Bayern/BaWü): ~27.82%  |  9% KiSt (other): ~27.99%
 ```
 
 **Key difference**: In the ETF depot, only the GAIN is taxed (and with 30% exemption).

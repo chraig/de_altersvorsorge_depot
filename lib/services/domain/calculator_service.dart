@@ -1,5 +1,5 @@
 import 'dart:math';
-import '../../models/scenario.dart';
+import 'package:avdepot_rechner/models/scenario.dart';
 
 /// Core calculation engine for AV-Depot and ETF-Depot simulations.
 /// All methods are static and pure -- no side effects.
@@ -25,13 +25,19 @@ class CalculatorService {
     return (alter < 25 && bonusJahre < 3) ? 200.0 : 0.0;
   }
 
+  /// Geringverdienerbonus: 175 EUR/year if brutto <= 26250 and eigenbeitrag >= 120
+  static double calcGeringverdienerbonus(double brutto, double jahresbeitrag) {
+    return (brutto <= 26250 && jahresbeitrag >= 120) ? 175.0 : 0.0;
+  }
+
   /// Combined yearly subsidy
-  static ({double grund, double kind, double bonus, double total})
-  calcZulage(double jahresbeitrag, int kinder, int alter, int bonusJahre) {
+  static ({double grund, double kind, double bonus, double gering, double total})
+  calcZulage(double jahresbeitrag, int kinder, int alter, int bonusJahre, double brutto) {
     final grund = calcGrundzulage(jahresbeitrag);
     final kind = calcKinderzulage(jahresbeitrag, kinder);
     final bonus = calcBonus(alter, bonusJahre);
-    return (grund: grund, kind: kind, bonus: bonus, total: grund + kind + bonus);
+    final gering = calcGeringverdienerbonus(brutto, jahresbeitrag);
+    return (grund: grund, kind: kind, bonus: bonus, gering: gering, total: grund + kind + bonus + gering);
   }
 
   /// German marginal tax rate approximation
@@ -55,7 +61,7 @@ class CalculatorService {
   /// Full subsidy breakdown for year 1
   static SubsidyBreakdown calcSubsidyBreakdown(PersonalScenario person) {
     final jb = person.jahresbeitrag;
-    final z = calcZulage(jb, person.kinder, person.alterStart, 0);
+    final z = calcZulage(jb, person.kinder, person.alterStart, 0, person.brutto);
     final gst = getGrenzsteuersatz(person.brutto);
     final gp = calcGuenstigerpruefung(jb, z.total, gst);
     final fq = jb > 0 ? z.total / jb : 0.0;
@@ -63,6 +69,7 @@ class CalculatorService {
       grundzulage: z.grund,
       kinderzulage: z.kind,
       bonus: z.bonus,
+      geringverdienerbonus: z.gering,
       total: z.total,
       foerderquote: fq,
       steuererstattung: gp.zusaetzlich,
@@ -89,7 +96,7 @@ class CalculatorService {
 
     for (int j = 0; j < person.spardauer; j++) {
       final alter = person.alterStart + j;
-      final z = calcZulage(jb, person.kinder, alter, j);
+      final z = calcZulage(jb, person.kinder, alter, j, person.brutto);
       final gp = calcGuenstigerpruefung(jb, z.total, gst);
 
       final zufluss = jb + z.total;
@@ -116,7 +123,8 @@ class CalculatorService {
     const auszahlungsDauer = 20;
     final monatlich = depot / (auszahlungsDauer * 12);
     final steuersatzRente = gst * 0.7; // typically lower in retirement
-    final netto = monatlich * (1 - steuersatzRente);
+    final kirchensteuerFaktor = 1 + costs.kirchensteuer;
+    final netto = monatlich * (1 - steuersatzRente * kirchensteuerFaktor);
 
     return AVResult(
       endkapital: depot,
@@ -167,7 +175,7 @@ class CalculatorService {
     final gewinn = depot - eigenBeitraege;
     const teilfreistellung = 0.30;
     final steuerpflichtigerGewinn = gewinn * (1 - teilfreistellung);
-    final steuer = steuerpflichtigerGewinn * 0.26375; // Abgeltungssteuer + Soli
+    final steuer = steuerpflichtigerGewinn * costs.abgeltungssteuersatz;
     final nachSteuer = depot - steuer;
 
     const auszahlungsDauer = 20;

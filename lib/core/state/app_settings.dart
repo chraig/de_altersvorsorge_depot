@@ -1,6 +1,6 @@
-import '../../features/calculator/cubit/calculator_cubit.dart';
-import '../l10n/app_strings.dart';
-import 'locale_cubit.dart';
+import 'package:avdepot_rechner/features/calculator/cubit/calculator_cubit.dart';
+import 'package:avdepot_rechner/core/l10n/app_strings.dart';
+import 'package:avdepot_rechner/core/state/locale_cubit.dart';
 
 /// Coordinates all app-level state holders.
 class AppSettings {

@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/l10n/app_strings.dart';
-import '../../../models/scenario.dart';
-import 'calculator_state.dart';
+import 'package:avdepot_rechner/core/l10n/app_strings.dart';
+import 'package:avdepot_rechner/models/scenario.dart';
+import 'package:avdepot_rechner/features/calculator/cubit/calculator_state.dart';
 
 class CalculatorCubit extends Cubit<CalculatorState> {
   CalculatorCubit(AppStrings strings)
@@ -55,11 +55,20 @@ class CalculatorCubit extends Cubit<CalculatorState> {
   }
 
   void setAlterStart(int v) {
-    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(alterStart: v), clearSelectedPersonal: true));
+    final retirementAge = state.currentPerson.rentenalter;
+    final newSpardauer = (retirementAge - v).clamp(5, 45);
+    emit(state.copyWith(
+      currentPerson: state.currentPerson.copyWith(alterStart: v, spardauer: newSpardauer),
+      clearSelectedPersonal: true,
+    ));
   }
 
-  void setSpardauer(int v) {
-    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(spardauer: v), clearSelectedPersonal: true));
+  void setRetirementAge(int v) {
+    final newSpardauer = (v - state.currentPerson.alterStart).clamp(5, 45);
+    emit(state.copyWith(
+      currentPerson: state.currentPerson.copyWith(spardauer: newSpardauer),
+      clearSelectedPersonal: true,
+    ));
   }
 
   void setKostenAV(double v) {
@@ -76,6 +85,10 @@ class CalculatorCubit extends Cubit<CalculatorState> {
 
   void setCustomInflation(double v) {
     emit(state.copyWith(customInflation: v, useCustomRendite: true));
+  }
+
+  void setKirchensteuer(double v) {
+    emit(state.copyWith(costs: state.costs.copyWith(kirchensteuer: v)));
   }
 
   void toggleAdvanced() {

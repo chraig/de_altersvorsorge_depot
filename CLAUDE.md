@@ -143,11 +143,12 @@ All financial logic lives in `lib/services/domain/calculator_service.dart` as pu
 - `calcGrundzulage()` — 50%/25% two-tier subsidy
 - `calcKinderzulage()` — up to €300/child 1:1 match
 - `calcBonus()` — €200/yr for 3 years (under 25)
+- `calcGeringverdienerbonus()` — €175/yr if gross ≤ €26,250
 - `calcZulage()` — combined yearly subsidy (record return type)
 - `getGrenzsteuersatz()` — German marginal tax rate approximation (2024 brackets)
 - `calcGuenstigerpruefung()` — automatic tax optimization check
-- `simulateAV()` — year-by-year AV-Depot simulation with deferred taxation
-- `simulateETF()` — year-by-year ETF-Depot simulation with Vorabpauschale + Abgeltungssteuer
+- `simulateAV()` — year-by-year AV-Depot simulation with deferred taxation + Kirchensteuer
+- `simulateETF()` — year-by-year ETF-Depot simulation with Vorabpauschale + Abgeltungssteuer + Kirchensteuer
 - `simulateAllMacros()` — cross-product: person × all macros
 
 All methods are pure — no side effects, no state. Easy to unit test in isolation.

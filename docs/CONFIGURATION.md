@@ -22,8 +22,8 @@ Located in: `lib/services/domain/calculator_service.dart`
 | Berufseinsteigerbonus | €200/yr | Fixed | §89 Abs. 3 EStG-E | `calcBonus()` |
 | Bonus max years | 3 | Fixed | §89 Abs. 3 EStG-E | `calcBonus()` |
 | Bonus max age | 24 (under 25) | Fixed | §89 Abs. 3 EStG-E | `calcBonus()` |
-| Geringverdienerbonus | €175/yr | NOT IMPLEMENTED | §89 Abs. 4 EStG-E | — |
-| Geringverdiener threshold | €26,250 brutto | NOT IMPLEMENTED | §89 Abs. 4 EStG-E | — |
+| Geringverdienerbonus | €175/yr | Fixed | §89 Abs. 4 EStG-E | `calcGeringverdienerbonus()` |
+| Geringverdiener threshold | €26,250 brutto | Fixed | §89 Abs. 4 EStG-E | `calcGeringverdienerbonus()` |
 | Mindestbeitrag | €120/yr | Not enforced | §89 Abs. 1 EStG-E | Slider min=€10/mo |
 | Höchstbeitrag (gefördert) | €1,800/yr | Enforced in calc | §89 Abs. 1 EStG-E | `calcGrundzulage()` |
 
@@ -47,8 +47,8 @@ Located in: `lib/services/domain/calculator_service.dart`
 | Spitzensteuersatz | 42% | §32a EStG | `getGrenzsteuersatz()` |
 | Reichensteuersatz start | €277,826 | §32a EStG 2024 | `getGrenzsteuersatz()` |
 | Reichensteuersatz | 45% | §32a EStG | `getGrenzsteuersatz()` |
-| Abgeltungssteuersatz | 26.375% | §43a + §4 SolZG | `simulateETF()` |
-| Kirchensteuer | 0% | Not implemented | — |
+| Abgeltungssteuersatz | 26.375% (default) | §43a + §4 SolZG | `CostSettings.abgeltungssteuersatz` |
+| Kirchensteuer | 0% / 8% / 9% | Toggle in Advanced Settings | `CostSettings.kirchensteuer` |
 | Teilfreistellung Aktienfonds | 30% | §20 InvStG | `simulateETF()` |
 | Vorabpauschale drag | 0.2% p.a. | Simplified estimate | `simulateETF()` |
 | Retirement tax factor | 0.7× working rate | Simplification | `simulateAV()` |
@@ -64,18 +64,14 @@ approximation. For production use, consider implementing the exact §32a formula
 // This gives the tax amount, not the marginal rate
 ```
 
-### To add Kirchensteuer:
+### Kirchensteuer
 
-Multiply Abgeltungssteuer by (1 + Kirchensteuersatz):
-```dart
-// Bayern/BaWü: 8%
-final abgeltung = 0.25 * (1 + 0.08); // = 27.0%
-final soli = abgeltung * 0.055;
-final total = abgeltung + soli; // ≈ 28.5%
+Kirchensteuer is implemented as a toggle in Advanced Settings (None / 8% / 9%):
 
-// Alle anderen: 9%
-final abgeltung = 0.25 * (1 + 0.09); // = 27.25%
-```
+- **ETF side**: Uses the reduced KapESt formula: `KapESt = 25% / (1 + KiSt_rate)`, then adds Soli and KiSt
+  - None: 26.375% | 8%: ~27.82% | 9%: ~27.99%
+- **AV side**: Retirement payout tax multiplied by `(1 + KiSt_rate)`
+- Code: `CostSettings.abgeltungssteuersatz` (computed getter) and `CostSettings.kirchensteuer`
 
 ---
 
@@ -111,7 +107,7 @@ Located in: `lib/services/domain/calculator_service.dart`
 | Parameter | Default | Basis | Code Location |
 |---|---|---|---|
 | Auszahlungsdauer | 20 years | §89 Abs. 8 (bis 85) | `simulateAV()`, `simulateETF()` |
-| Payout start age | 65 | Implied (Rentenalter) | User's alterStart + spardauer |
+| Payout start age | 65 | Implied (Rentenalter) | User-selected retirement age; spardauer derived as retirementAge - alterStart |
 | Einmalentnahme | 0% (not modeled) | Up to 30% allowed | §89 Abs. 9 EStG-E |
 | Leibrente option | Not modeled | Available via provider switch | — |
 
@@ -134,21 +130,21 @@ Located in: `lib/models/scenario.dart` → `PersonalScenario.defaults()`
 
 | Preset | Sparrate | Brutto | Kinder | Alter | Dauer | Rationale |
 |---|---|---|---|---|---|---|
-| Berufseinsteiger 🎓 | €50/mo | €32,000 | 0 | 23 | 42 | Entry-level salary, long horizon |
+| Berufseinsteiger 🎓 | €50/mo | €32,000 | 0 | 23 | 44 | Entry-level salary, long horizon, retirement at 67 |
 | Single Mitte 30 💼 | €150/mo | €55,000 | 0 | 35 | 32 | Median income, max. contribution |
 | Familie 2 Kinder 👨‍👩‍👧‍👦 | €100/mo | €45,000 | 2 | 32 | 35 | Dual-earner household, one partner |
-| Gutverdiener 📈 | €150/mo | €85,000 | 0 | 40 | 27 | High income, Günstigerprüfung dominant |
+| Gutverdiener 📈 | €500/mo | €85,000 | 0 | 40 | 27 | High income, contributions above subsidy cap |
 | Teilzeit + Kind 👶 | €50/mo | €22,000 | 1 | 30 | 37 | Part-time worker, high Förderquote |
 
 ### UI Ranges for Sliders
 
 | Slider | Min | Max | Step | Unit |
 |---|---|---|---|---|
-| Sparrate | 10 | 300 | 5 | €/Monat |
-| Bruttojahresgehalt | 12,000 | 120,000 | 1,000 | €/Jahr |
+| Sparrate | 10 | 5,000 | 10 | €/Monat |
+| Bruttojahresgehalt | 12,000 | 1,000,000 | 1,000 | €/Jahr |
 | Kinder | 0 | 5 | 1 | — |
 | Alter bei Start | 18 | 60 | 1 | Jahre |
-| Spardauer | 5 | 45 | 1 | Jahre |
+| Rentenalter | 60 | 75 | 1 | Jahre |
 | Rendite p.a. | 1.0% | 14.0% | 0.5% | — |
 | Kosten AV | 0.1% | 1.5% | 0.1% | — |
 | Kosten ETF | 0.1% | 1.0% | 0.1% | — |
@@ -218,12 +214,10 @@ Located in: `lib/config/theme.dart`
 
 ## 8. Feature Flags / Planned Toggles
 
-Not yet implemented, but recommended for future versions:
+Recommended for future versions:
 
 ```dart
 class FeatureFlags {
-  static const bool enableKirchensteuer = false;
-  static const bool enableGeringverdienerbonus = false;
   static const bool enableEinmalentnahme = false;
   static const bool enableRiesterComparison = false;
   static const bool enableMonteCarloSim = false;
@@ -231,6 +225,8 @@ class FeatureFlags {
   static const bool enableDarkMode = false;
 }
 ```
+
+Already implemented: Kirchensteuer toggle (None/8%/9%), Geringverdienerbonus (€175/yr).
 
 ---
 

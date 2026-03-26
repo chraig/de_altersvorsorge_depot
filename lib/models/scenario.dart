@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import '../core/l10n/app_strings.dart';
+import 'package:avdepot_rechner/core/l10n/app_strings.dart';
 
 const _uuid = Uuid();
 
@@ -45,10 +45,10 @@ class PersonalScenario {
   double get jahresbeitrag => sparrate * 12;
 
   static List<PersonalScenario> defaults(AppStrings s) => [
-    PersonalScenario(name: s.presetCareerStarter, icon: '\uD83C\uDF93', sparrate: 50, brutto: 32000, kinder: 0, alterStart: 23, spardauer: 42),
+    PersonalScenario(name: s.presetCareerStarter, icon: '\uD83C\uDF93', sparrate: 50, brutto: 32000, kinder: 0, alterStart: 23, spardauer: 44),
     PersonalScenario(name: s.presetSingleMid30, icon: '\uD83D\uDCBC', sparrate: 150, brutto: 55000, kinder: 0, alterStart: 35, spardauer: 32),
     PersonalScenario(name: s.presetFamily2Kids, icon: '\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66', sparrate: 100, brutto: 45000, kinder: 2, alterStart: 32, spardauer: 35),
-    PersonalScenario(name: s.presetHighEarner, icon: '\uD83D\uDCC8', sparrate: 150, brutto: 85000, kinder: 0, alterStart: 40, spardauer: 27),
+    PersonalScenario(name: s.presetHighEarner, icon: '\uD83D\uDCC8', sparrate: 500, brutto: 85000, kinder: 0, alterStart: 40, spardauer: 27),
     PersonalScenario(name: s.presetPartTimeChild, icon: '\uD83D\uDC76', sparrate: 50, brutto: 22000, kinder: 1, alterStart: 30, spardauer: 37),
   ];
 }
@@ -121,11 +121,25 @@ class MacroScenario {
 class CostSettings {
   double kostenAV;
   double kostenETF;
+  double kirchensteuer; // 0.0 = none, 0.08 = Bayern/BaWü, 0.09 = other states
 
-  CostSettings({this.kostenAV = 0.005, this.kostenETF = 0.002});
+  CostSettings({this.kostenAV = 0.005, this.kostenETF = 0.002, this.kirchensteuer = 0.0});
 
-  CostSettings copyWith({double? kostenAV, double? kostenETF}) =>
-    CostSettings(kostenAV: kostenAV ?? this.kostenAV, kostenETF: kostenETF ?? this.kostenETF);
+  /// Abgeltungssteuer + Soli + optional Kirchensteuer
+  double get abgeltungssteuersatz {
+    if (kirchensteuer == 0) return 0.26375;
+    final kapEst = 0.25 / (1 + kirchensteuer);
+    final soli = kapEst * 0.055;
+    final kiSt = kapEst * kirchensteuer;
+    return kapEst + soli + kiSt;
+  }
+
+  CostSettings copyWith({double? kostenAV, double? kostenETF, double? kirchensteuer}) =>
+    CostSettings(
+      kostenAV: kostenAV ?? this.kostenAV,
+      kostenETF: kostenETF ?? this.kostenETF,
+      kirchensteuer: kirchensteuer ?? this.kirchensteuer,
+    );
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -136,6 +150,7 @@ class SubsidyBreakdown {
   final double grundzulage;
   final double kinderzulage;
   final double bonus;
+  final double geringverdienerbonus;
   final double total;
   final double foerderquote;
   final double steuererstattung;
@@ -145,6 +160,7 @@ class SubsidyBreakdown {
     required this.grundzulage,
     required this.kinderzulage,
     required this.bonus,
+    required this.geringverdienerbonus,
     required this.total,
     required this.foerderquote,
     required this.steuererstattung,

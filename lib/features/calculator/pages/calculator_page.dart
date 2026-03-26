@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../config/theme.dart';
-import '../../../core/l10n/app_strings.dart';
-import '../../../core/responsive/screen_layout.dart';
-import '../../../core/state/locale_cubit.dart';
-import '../../../models/scenario.dart';
-import '../../../shared/utils/fmt.dart';
-import '../../../shared/widgets/common.dart';
-import '../widgets/input_panel.dart';
-import '../widgets/macro_section.dart';
-import '../widgets/charts.dart';
-import '../widgets/compound_table.dart';
-import '../cubit/calculator_cubit.dart';
-import '../cubit/calculator_state.dart';
+import 'package:avdepot_rechner/config/theme.dart';
+import 'package:avdepot_rechner/core/l10n/app_strings.dart';
+import 'package:avdepot_rechner/core/responsive/screen_layout.dart';
+import 'package:avdepot_rechner/core/state/locale_cubit.dart';
+import 'package:avdepot_rechner/models/scenario.dart';
+import 'package:avdepot_rechner/shared/utils/fmt.dart';
+import 'package:avdepot_rechner/shared/widgets/common.dart';
+import 'package:avdepot_rechner/features/calculator/widgets/input_panel.dart';
+import 'package:avdepot_rechner/features/calculator/widgets/macro_section.dart';
+import 'package:avdepot_rechner/features/calculator/widgets/charts.dart';
+import 'package:avdepot_rechner/features/calculator/widgets/compound_table.dart';
+import 'package:avdepot_rechner/features/calculator/cubit/calculator_cubit.dart';
+import 'package:avdepot_rechner/features/calculator/cubit/calculator_state.dart';
 
 class CalculatorPage extends StatefulWidget {
   const CalculatorPage({super.key});
@@ -208,6 +208,33 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
                         ),
                       ),
 
+                      // ─── SIMPLIFICATIONS + PLANNED ────────
+                      Container(
+                        padding: AppPadding.panel,
+                        margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+                        decoration: BoxDecoration(
+                          color: AppColors.card,
+                          borderRadius: BorderRadius.circular(AppRadius.panel),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(s.includedFeaturesTitle, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent)),
+                            const SizedBox(height: 4),
+                            Text(s.includedFeaturesDetail, style: const TextStyle(fontSize: 11, color: AppColors.label, height: 1.6)),
+                            const Divider(height: 24),
+                            Text(s.simplificationsTitle, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent)),
+                            const SizedBox(height: 4),
+                            Text(s.simplificationsDetail, style: const TextStyle(fontSize: 11, color: AppColors.label, height: 1.6)),
+                            const Divider(height: 24),
+                            Text(s.plannedFeaturesTitle, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent)),
+                            const SizedBox(height: 4),
+                            Text(s.plannedFeaturesDetail, style: const TextStyle(fontSize: 11, color: AppColors.label, height: 1.6)),
+                          ],
+                        ),
+                      ),
+
                       // ─── DISCLAIMER ─────────────────────────
                       Container(
                         margin: const EdgeInsets.only(bottom: 40),
@@ -266,45 +293,64 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
       (s.baseGrant, Fmt.eur(sub.grundzulage)),
       (s.childGrant, Fmt.eur(sub.kinderzulage)),
       if (sub.bonus > 0) (s.entryBonus, Fmt.eur(sub.bonus)),
+      if (sub.geringverdienerbonus > 0) (s.lowIncomeBonus, Fmt.eur(sub.geringverdienerbonus)),
       (s.totalSubsidyYear, Fmt.eur(sub.total)),
       (s.subsidyRate, Fmt.pct(sub.foerderquote)),
       if (sub.steuererstattung > 0) ('${s.taxRefundYear} (${s.viaTaxOptimization})', Fmt.eur(sub.steuererstattung)),
       (s.marginalTaxRate, Fmt.pct(sub.grenzsteuersatz)),
     ];
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (sub.geringverdienerbonus > 0) Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: const BoxDecoration(
-              color: AppColors.accentLight,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(AppRadius.card),
-                topRight: Radius.circular(AppRadius.card)),
+            decoration: BoxDecoration(
+              color: AppColors.successBg,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
             ),
-            child: Text(s.annualSubsidiesTitle(macro.icon, macro.name),
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.accent)),
+            child: Text(s.lowIncomeBonusApplies,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.successText)),
           ),
-          ...rows.map((r) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(r.$1, style: const TextStyle(fontSize: 13, color: AppColors.label)),
-                Text(r.$2, style: AppTheme.mono.copyWith(fontSize: 14, fontWeight: FontWeight.w700)),
-              ],
-            ),
-          )),
-        ],
-      ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: const BoxDecoration(
+                  color: AppColors.accentLight,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(AppRadius.card),
+                    topRight: Radius.circular(AppRadius.card)),
+                ),
+                child: Text(s.annualSubsidiesTitle(macro.icon, macro.name),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.accent)),
+              ),
+              ...rows.map((r) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(r.$1, style: const TextStyle(fontSize: 13, color: AppColors.label)),
+                    Text(r.$2, style: AppTheme.mono.copyWith(fontSize: 14, fontWeight: FontWeight.w700)),
+                  ],
+                ),
+              )),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -319,7 +365,15 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
           title: diff >= 0 ? s.avYieldsMore(Fmt.eur(diff)) : s.etfYieldsMore(Fmt.eur(-diff)),
           subtitle: s.comparisonSubtitle(macro.icon, macro.name),
         ),
+        if (diff < 0) Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+          child: Text(s.etfWinsExplanation,
+            style: const TextStyle(fontSize: 11, color: AppColors.label, height: 1.6)),
+        ),
         const ComparisonChart(),
+        const SizedBox(height: AppSpacing.lg),
+        Text(s.etfTaxNote,
+          style: const TextStyle(fontSize: 10, color: AppColors.muted, height: 1.5)),
         const SizedBox(height: AppSpacing.xl),
         ComparisonBar(label: s.finalCapitalGross,
           avValue: av.endkapital, etfValue: etf.endkapital,
@@ -341,7 +395,84 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
         // ─── ANNUAL SUBSIDIES TABLE ───────────────────────
         const SizedBox(height: AppSpacing.xl),
         _buildSubsidyTable(s, sub, macro),
+
+        // ─── PROS / CONS ────────────────────────────────────
+        const SizedBox(height: AppSpacing.xl),
+        _buildProsCons(s, state, av, etf, sub),
       ],
+    );
+  }
+
+  // ─── PROS / CONS ─────────────────────────────────────────────
+
+  Widget _buildProsCons(AppStrings s, CalculatorState state, AVResult av, ETFResult etf, SubsidyBreakdown sub) {
+    final p = state.currentPerson;
+    final avPros = <String>[];
+    final avCons = <String>[];
+    final etfPros = <String>[];
+
+    // AV pros
+    if (sub.foerderquote > 0.25) avPros.add(s.proHighSubsidyRate);
+    if (sub.kinderzulage > 0) avPros.add(s.proKinderzulage);
+    if (sub.geringverdienerbonus > 0) avPros.add(s.proGeringverdienerbonus);
+    if (sub.bonus > 0) avPros.add(s.proBerufseinsteigerbonus);
+    if (sub.steuererstattung > 0) avPros.add(s.proGuenstigerpruefung);
+    if (p.spardauer >= 25) avPros.add(s.proLongDuration);
+    avPros.add(s.proTaxFreeGrowth);
+
+    // AV cons
+    if (p.jahresbeitrag > 1800) avCons.add(s.conLowSubsidyLeverage);
+    if (av.grenzsteuersatz >= 0.42) avCons.add(s.conHighRetirementTax);
+
+    // ETF pros
+    etfPros.add(s.proEtfOnlyGainsTaxed);
+    etfPros.add(s.proEtfTeilfreistellung);
+    etfPros.add(s.proEtfFlexibility);
+    if (state.effectiveRendite <= 0.04) etfPros.add(s.proEtfLowReturnsAdvantage);
+
+    return Container(
+      padding: AppPadding.panel,
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.panel),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(s.prosConsTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+          const SizedBox(height: AppSpacing.lg),
+          Text(s.avProsTitle, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent)),
+          const SizedBox(height: 4),
+          ...avPros.map((t) => Padding(
+            padding: const EdgeInsets.only(bottom: 3),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('\u2713 ', style: TextStyle(fontSize: 11, color: AppColors.success)),
+              Expanded(child: Text(t, style: const TextStyle(fontSize: 11, color: AppColors.label, height: 1.5))),
+            ]),
+          )),
+          if (avCons.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.md),
+            ...avCons.map((t) => Padding(
+              padding: const EdgeInsets.only(bottom: 3),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('\u2717 ', style: TextStyle(fontSize: 11, color: AppColors.danger)),
+                Expanded(child: Text(t, style: const TextStyle(fontSize: 11, color: AppColors.label, height: 1.5))),
+              ]),
+            )),
+          ],
+          const Divider(height: 20),
+          Text(s.etfProsTitle, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.etf)),
+          const SizedBox(height: 4),
+          ...etfPros.map((t) => Padding(
+            padding: const EdgeInsets.only(bottom: 3),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('\u2713 ', style: TextStyle(fontSize: 11, color: AppColors.success)),
+              Expanded(child: Text(t, style: const TextStyle(fontSize: 11, color: AppColors.label, height: 1.5))),
+            ]),
+          )),
+        ],
+      ),
     );
   }
 

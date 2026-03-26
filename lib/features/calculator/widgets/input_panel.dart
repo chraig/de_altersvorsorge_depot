@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../config/theme.dart';
-import '../../../core/responsive/screen_layout.dart';
-import '../../../core/state/locale_cubit.dart';
-import '../../../shared/utils/fmt.dart';
-import '../../../models/scenario.dart';
-import '../cubit/calculator_cubit.dart';
-import '../cubit/calculator_state.dart';
+import 'package:avdepot_rechner/config/theme.dart';
+import 'package:avdepot_rechner/core/responsive/screen_layout.dart';
+import 'package:avdepot_rechner/core/state/locale_cubit.dart';
+import 'package:avdepot_rechner/shared/utils/fmt.dart';
+import 'package:avdepot_rechner/models/scenario.dart';
+import 'package:avdepot_rechner/features/calculator/cubit/calculator_cubit.dart';
+import 'package:avdepot_rechner/features/calculator/cubit/calculator_state.dart';
 
 // ═══════════════════════════════════════════════════════════════════
 // PERSONAL SCENARIO BAR
@@ -140,10 +140,10 @@ class InputPanel extends StatelessWidget {
           child: Column(
             children: [
               AppSlider(label: s.monthlySavings, value: p.sparrate,
-                min: 10, max: 300, step: 5, display: Fmt.eur(p.sparrate),
+                min: 10, max: 5000, step: 10, display: Fmt.eur(p.sparrate),
                 onChanged: cubit.setSparrate, hint: s.hintSubsidized),
               AppSlider(label: s.grossAnnualSalary, value: p.brutto,
-                min: 12000, max: 120000, step: 1000, display: Fmt.eur(p.brutto),
+                min: 12000, max: 1000000, step: 1000, display: Fmt.eur(p.brutto),
                 onChanged: cubit.setBrutto),
               AppSlider(label: s.numberOfChildren, value: p.kinder.toDouble(),
                 min: 0, max: 5, step: 1, display: '${p.kinder}',
@@ -152,10 +152,10 @@ class InputPanel extends StatelessWidget {
               AppSlider(label: s.startingAge, value: p.alterStart.toDouble(),
                 min: 18, max: 60, step: 1, display: '${p.alterStart}',
                 onChanged: (v) => cubit.setAlterStart(v.round())),
-              AppSlider(label: s.savingsDuration, value: p.spardauer.toDouble(),
-                min: 5, max: 45, step: 1, display: s.yearsLabel(p.spardauer),
-                onChanged: (v) => cubit.setSpardauer(v.round()),
-                hint: s.retirementAgeHint(p.rentenalter)),
+              AppSlider(label: s.retirementAge, value: p.rentenalter.toDouble(),
+                min: 60, max: 75, step: 1, display: '${p.rentenalter}',
+                onChanged: (v) => cubit.setRetirementAge(v.round()),
+                hint: s.derivedDuration(p.spardauer)),
 
               GestureDetector(
                 onTap: cubit.toggleAdvanced,
@@ -185,6 +185,11 @@ class InputPanel extends StatelessWidget {
                 AppSlider(label: s.inflationPa, value: state.effectiveInflation,
                   min: 0.005, max: 0.06, step: 0.005, display: Fmt.pct(state.effectiveInflation),
                   onChanged: cubit.setCustomInflation),
+                const SizedBox(height: AppSpacing.md),
+                _KirchensteuerToggle(
+                  value: state.costs.kirchensteuer,
+                  onChanged: cubit.setKirchensteuer,
+                ),
               ],
             ],
           ),
@@ -348,5 +353,57 @@ class _PersonScenarioDialogState extends State<PersonScenarioDialog> {
       cubit.addPersonalScenario(scenario);
     }
     Navigator.pop(context);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// KIRCHENSTEUER TOGGLE
+// ═══════════════════════════════════════════════════════════════════
+
+class _KirchensteuerToggle extends StatelessWidget {
+  final double value;
+  final ValueChanged<double> onChanged;
+
+  const _KirchensteuerToggle({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.read<LocaleCubit>().state.strings;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(s.kirchensteuerLabel.toUpperCase(),
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
+            color: AppColors.label, letterSpacing: 0.3)),
+        const SizedBox(height: AppSpacing.sm),
+        Row(
+          children: [
+            _chip(s.kirchensteuerNone, 0.0),
+            const SizedBox(width: AppSpacing.md),
+            _chip(s.kirchensteuerBayBw, 0.08),
+            const SizedBox(width: AppSpacing.md),
+            _chip(s.kirchensteuerOther, 0.09),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _chip(String label, double chipValue) {
+    final selected = value == chipValue;
+    return GestureDetector(
+      onTap: () => onChanged(chipValue),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.accent : AppColors.card,
+          borderRadius: BorderRadius.circular(AppRadius.chip),
+          border: Border.all(color: selected ? AppColors.accent : AppColors.border),
+        ),
+        child: Text(label, style: TextStyle(
+          fontSize: 11, fontWeight: FontWeight.w600,
+          color: selected ? Colors.white : AppColors.label)),
+      ),
+    );
   }
 }

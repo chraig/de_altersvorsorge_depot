@@ -152,10 +152,13 @@ Payout period: 20 years (age 65–85)
 ### ETF Tax Parameters
 
 ```dart
-// Abgeltungssteuer
-Rate: 26.375% (25% + 5.5% Soli, no Kirchensteuer)
+// Abgeltungssteuer (default, without Kirchensteuer)
+Rate: 26.375% (25% + 5.5% Soli)
+With 8% Kirchensteuer (Bayern/BaWü): ~27.82%
+With 9% Kirchensteuer (other states):  ~27.99%
 Teilfreistellung: 30% for Aktien-ETFs (≥51% equity)
 Vorabpauschale drag: ~0.2% p.a. (simplified)
+// Kirchensteuer is configurable via Advanced Settings toggle
 ```
 
 ### Default Scenarios (`lib/models/scenario.dart`)
@@ -305,7 +308,7 @@ For each year j = 0 ... spardauer-1:
 Payout phase:
   gewinn = depot - eigenbeitraege
   steuerpflichtiger_gewinn = gewinn × (1 - 0.30)   // 30% Teilfreistellung
-  steuer = steuerpflichtiger_gewinn × 0.26375       // Abgeltungssteuer + Soli
+  steuer = steuerpflichtiger_gewinn × abgeltungssteuersatz  // 26.375% default, higher with Kirchensteuer
   netto = depot - steuer
   monthly = netto / 240
 ```
@@ -317,8 +320,8 @@ Payout phase:
 | Returns | Constant annual rate | Volatile, sequence-of-returns risk |
 | Inflation | Constant annual rate | Variable |
 | Tax brackets | Static (2024 values) | Adjusted ~annually |
-| Kirchensteuer | Not included | 8–9% on Abgeltungssteuer |
-| Soli | Included in 26.375% | May change |
+| Kirchensteuer | Optional toggle (0%/8%/9%) | Affects both AV payout tax and Abgeltungssteuer |
+| Soli | Included in base rate | May change |
 | Vorabpauschale | Fixed 0.2% drag | Depends on Basiszins |
 | Retirement tax rate | 70% of working rate | Depends on total retirement income |
 | Günstigerprüfung refund | Not reinvested | Could be reinvested manually |
@@ -508,14 +511,13 @@ Recommended: Serve over **HTTPS** (enabled by default on most hosting providers)
 ## Known Limitations
 
 1. **Constant returns**: Real markets are volatile; sequence-of-returns risk is not modeled
-2. **No Kirchensteuer**: Would add 8–9% on Abgeltungssteuer (ETF) and income tax (AV)
-3. **Simplified Vorabpauschale**: Uses fixed 0.2% drag instead of actual Basiszins calculation
-4. **No partial-year contributions**: Assumes full-year contributions from year 1
-5. **Retirement tax rate**: Simplified as 70% of working rate; real rate depends on total income in retirement
-6. **Günstigerprüfung refund not reinvested**: In practice, you could invest the tax refund in a separate ETF
-7. **No Wohnriester/wohnwirtschaftliche Verwendung**: Tax-free withdrawal for property not modeled
-8. **No Riester comparison**: Only compares AV-Depot vs. free ETF; old Riester not included
-9. **No mortality tables**: Leibrente option would require actuarial calculations
+2. **Simplified Vorabpauschale**: Uses fixed 0.2% drag instead of actual Basiszins calculation
+3. **No partial-year contributions**: Assumes full-year contributions from year 1
+4. **Retirement tax rate**: Simplified as 70% of working rate; real rate depends on total income in retirement
+5. **Günstigerprüfung refund not reinvested**: In practice, you could invest the tax refund in a separate ETF
+6. **No Wohnriester/wohnwirtschaftliche Verwendung**: Tax-free withdrawal for property not modeled
+7. **No Riester comparison**: Only compares AV-Depot vs. free ETF; old Riester not included
+8. **No mortality tables**: Leibrente option would require actuarial calculations
 10. **2024 tax brackets**: Should be updated when 2027 brackets are published
 
 ---

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../features/calculator/cubit/calculator_cubit.dart';
-import 'app_settings.dart';
-import 'locale_cubit.dart';
+import 'package:avdepot_rechner/features/calculator/cubit/calculator_cubit.dart';
+import 'package:avdepot_rechner/core/state/app_settings.dart';
+import 'package:avdepot_rechner/core/state/locale_cubit.dart';
 
 /// Wraps the app with all necessary BlocProviders.
 class AppSettingsScope extends StatelessWidget {

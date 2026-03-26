@@ -20,6 +20,8 @@ abstract class AppStrings {
   String get numberOfChildren;
   String get startingAge;
   String get savingsDuration;
+  String get retirementAge;
+  String derivedDuration(int years);
   String get advancedSettings;
   String get returnPa;
   String get costAvPa;
@@ -31,12 +33,18 @@ abstract class AppStrings {
   String get hintCostCap;
   String get hintTypicalCost;
   String yearsLabel(int n);
+  String get kirchensteuerLabel;
+  String get kirchensteuerNone;
+  String get kirchensteuerBayBw;
+  String get kirchensteuerOther;
 
   // ─── SUBSIDY BOX ─────────────────────────────────────────────────
   String annualSubsidiesTitle(String icon, String name);
   String get baseGrant;
   String get childGrant;
   String get entryBonus;
+  String get lowIncomeBonus;
+  String get lowIncomeBonusApplies;
   String get subsidyRate;
   String get totalSubsidyYear;
   String get taxRefundYear;
@@ -49,6 +57,7 @@ abstract class AppStrings {
   // ─── COMPARISON ───────────────────────────────────────────────────
   String avYieldsMore(String amount);
   String etfYieldsMore(String amount);
+  String get etfWinsExplanation;
   String comparisonSubtitle(String icon, String name);
   String get finalCapitalGross;
   String get ownContributions;
@@ -94,9 +103,36 @@ abstract class AppStrings {
   // ─── ERRORS ──────────────────────────────────────────────────────
   String pageNotFound(String uri);
 
+  // ─── PROS / CONS ────────────────────────────────────────────────
+  String get prosConsTitle;
+  String get avProsTitle;
+  String get etfProsTitle;
+  String get proHighSubsidyRate;
+  String get proKinderzulage;
+  String get proGeringverdienerbonus;
+  String get proBerufseinsteigerbonus;
+  String get proGuenstigerpruefung;
+  String get proLongDuration;
+  String get proTaxFreeGrowth;
+  String get conLowSubsidyLeverage;
+  String get conHighRetirementTax;
+  String get proEtfOnlyGainsTaxed;
+  String get proEtfTeilfreistellung;
+  String get proEtfFlexibility;
+  String get proEtfLowReturnsAdvantage;
+
   // ─── FOOTER ───────────────────────────────────────────────────────
   String get resetAll;
   String get disclaimer;
+  String get includedFeaturesTitle;
+  String get includedFeaturesDetail;
+  String get simplificationsTitle;
+  String get simplificationsDetail;
+  String get plannedFeaturesTitle;
+  String get plannedFeaturesDetail;
+
+  // ─── ETF TAX NOTE ──────────────────────────────────────────────
+  String get etfTaxNote;
 
   // ─── CHARTS ───────────────────────────────────────────────────────
   String get chartAllMacrosTitle;
@@ -226,6 +262,8 @@ class StringsEn extends AppStrings {
   String get numberOfChildren => 'Number of Children';
   String get startingAge => 'Starting Age';
   String get savingsDuration => 'Savings Duration';
+  String get retirementAge => 'Retirement Age';
+  String derivedDuration(int years) => 'Duration: $years years (derived)';
   String get advancedSettings => 'Advanced Settings';
   String get returnPa => 'Return p.a.';
   String get costAvPa => 'AV-Depot Cost p.a.';
@@ -237,12 +275,18 @@ class StringsEn extends AppStrings {
   String get hintCostCap => 'Cost cap: 1.0%';
   String get hintTypicalCost => 'Typical: 0.1\u20130.2%';
   String yearsLabel(int n) => '$n years';
+  String get kirchensteuerLabel => 'Church Tax';
+  String get kirchensteuerNone => 'None';
+  String get kirchensteuerBayBw => '8% (Bavaria/BaW\u00FC)';
+  String get kirchensteuerOther => '9% (other states)';
 
   // Subsidy
   String annualSubsidiesTitle(String icon, String name) => 'Annual Subsidies \u2013 $icon $name';
   String get baseGrant => 'Base Grant';
   String get childGrant => 'Child Grant';
   String get entryBonus => 'Entry Bonus';
+  String get lowIncomeBonus => 'Low-Income Bonus';
+  String get lowIncomeBonusApplies => 'Low-income bonus applies: \u20AC175/yr (gross salary \u2264 \u20AC26,250)';
   String get subsidyRate => 'Subsidy Rate';
   String get totalSubsidyYear => 'Total Subsidy/Year';
   String get taxRefundYear => 'Tax Refund/Year';
@@ -255,6 +299,12 @@ class StringsEn extends AppStrings {
   // Comparison
   String avYieldsMore(String amount) => 'AV-Depot yields $amount more.';
   String etfYieldsMore(String amount) => 'ETF Portfolio yields $amount more.';
+  String get etfWinsExplanation =>
+    'Why? The AV-Depot subsidies are capped at \u20AC1,800/yr contributions. '
+    'Above that, additional savings receive no subsidy but the entire payout is '
+    'taxed at your income tax rate. The ETF portfolio only taxes gains (with 30% '
+    'exemption) at a lower flat rate. With high income, high contributions, or '
+    'low returns, this tax advantage outweighs the subsidy.';
   String comparisonSubtitle(String icon, String name) =>
     '$icon $name \u2013 AV: deferred taxation / ETF: capital gains tax with 30% partial exemption';
   String get finalCapitalGross => 'Final Capital (gross)';
@@ -323,12 +373,63 @@ class StringsEn extends AppStrings {
   // Errors
   String pageNotFound(String uri) => 'Page not found: $uri';
 
+  // Pros / Cons
+  String get prosConsTitle => 'What Applies to Your Scenario';
+  String get avProsTitle => 'AV-Depot advantages';
+  String get etfProsTitle => 'ETF Portfolio advantages';
+  String get proHighSubsidyRate => 'High subsidy rate on your contributions';
+  String get proKinderzulage => 'Child grant active (\u20AC300/child/yr)';
+  String get proGeringverdienerbonus => 'Low-income bonus applies (+\u20AC175/yr)';
+  String get proBerufseinsteigerbonus => 'Career starter bonus active (+\u20AC200/yr)';
+  String get proGuenstigerpruefung => 'Tax optimization check yields additional refund';
+  String get proLongDuration => 'Long savings duration \u2013 subsidies compound over decades';
+  String get proTaxFreeGrowth => 'Tax-free growth during accumulation (no Vorabpauschale, no capital gains tax)';
+  String get conLowSubsidyLeverage => 'Contributions above \u20AC150/mo receive no subsidy \u2013 but entire payout is taxed';
+  String get conHighRetirementTax => 'High marginal tax rate \u2013 deferred taxation at high rate reduces advantage';
+  String get proEtfOnlyGainsTaxed => 'Only gains are taxed \u2013 your contributions are returned tax-free';
+  String get proEtfTeilfreistellung => '30% partial exemption (Teilfreistellung) reduces taxable gains';
+  String get proEtfFlexibility => 'No lock-up period \u2013 withdraw any time without restrictions';
+  String get proEtfLowReturnsAdvantage => 'With low returns, gains are small \u2013 less tax impact than deferred full-payout taxation';
+
+  // ETF Tax Note
+  String get etfTaxNote =>
+    'ETF taxation: Only gains are taxed \u2013 with 30% partial exemption (Teilfreistellung) '
+    'for equity funds. This means only 70% of gains are subject to flat-rate capital gains '
+    'tax (Abgeltungssteuer). Your contributions are returned tax-free.';
+
   // Footer
   String get resetAll => 'Reset All Values';
   String get disclaimer =>
     'Note: This calculator is for illustration purposes, not financial advice. '
-    'Simplified assumptions (constant returns, linear tax rates, no church tax). '
     'The macro scenarios are stylized models, not forecasts.';
+  String get includedFeaturesTitle => 'Included in This Calculator';
+  String get includedFeaturesDetail =>
+    '\u25B8 Grundzulage (50%/25% two-tier subsidy on up to \u20AC1,800/yr)\n'
+    '\u25B8 Kinderzulage (up to \u20AC300/child/yr, 1:1 match)\n'
+    '\u25B8 Berufseinsteigerbonus (\u20AC200/yr for 3 years, under 25)\n'
+    '\u25B8 Geringverdienerbonus (\u20AC175/yr for gross \u2264 \u20AC26,250)\n'
+    '\u25B8 G\u00FCnstigerpr\u00FCfung (automatic tax optimization check)\n'
+    '\u25B8 Kirchensteuer (optional: None / 8% / 9%)\n'
+    '\u25B8 Abgeltungssteuer with 30% Teilfreistellung for ETF\n'
+    '\u25B8 Vorabpauschale (simplified as 0.2% annual drag)\n'
+    '\u25B8 Nachgelagerte Besteuerung (deferred taxation on AV-Depot payouts)\n'
+    '\u25B8 6 macro scenario presets + custom scenarios\n'
+    '\u25B8 5 personal scenario presets + custom input';
+  String get simplificationsTitle => 'Simplifications';
+  String get simplificationsDetail =>
+    '\u25B8 Constant annual returns (no sequence-of-returns risk)\n'
+    '\u25B8 Simplified Vorabpauschale as 0.2% annual drag (actual depends on Basiszins)\n'
+    '\u25B8 No partial-year contributions\n'
+    '\u25B8 Retirement tax rate simplified as 70% of working rate\n'
+    '\u25B8 G\u00FCnstigerpr\u00FCfung tax refund not reinvested into a separate ETF\n'
+    '\u25B8 Fund-level withholding tax (~0.3% p.a.) not separately modeled';
+  String get plannedFeaturesTitle => 'Not Yet Included';
+  String get plannedFeaturesDetail =>
+    '\u25B8 Riester comparison (old vs. new subsidy system)\n'
+    '\u25B8 Wohnwirtschaftliche Verwendung (tax-free property withdrawal)\n'
+    '\u25B8 Leibrente vs. Auszahlplan comparison\n'
+    '\u25B8 Monte Carlo simulation (random return sequences)\n'
+    '\u25B8 PDF/CSV export';
 
   // Charts
   String get chartAllMacrosTitle => 'AV-Depot: All Macro Scenarios + ETF (dashed)';
@@ -446,6 +547,8 @@ class StringsDe extends AppStrings {
   String get numberOfChildren => 'Anzahl Kinder';
   String get startingAge => 'Alter bei Start';
   String get savingsDuration => 'Spardauer';
+  String get retirementAge => 'Rentenalter';
+  String derivedDuration(int years) => 'Dauer: $years Jahre (abgeleitet)';
   String get advancedSettings => 'Erweiterte Einstellungen';
   String get returnPa => 'Rendite p.a.';
   String get costAvPa => 'Kosten AV-Depot p.a.';
@@ -457,11 +560,17 @@ class StringsDe extends AppStrings {
   String get hintCostCap => 'Kostendeckel: 1,0 %';
   String get hintTypicalCost => 'Typisch: 0,1\u20130,2 %';
   String yearsLabel(int n) => '$n Jahre';
+  String get kirchensteuerLabel => 'Kirchensteuer';
+  String get kirchensteuerNone => 'Keine';
+  String get kirchensteuerBayBw => '8 % (Bayern/BaW\u00FC)';
+  String get kirchensteuerOther => '9 % (\u00FCbrige Bundesl\u00E4nder)';
 
   String annualSubsidiesTitle(String icon, String name) => 'J\u00E4hrliche F\u00F6rderung \u2013 $icon $name';
   String get baseGrant => 'Grundzulage';
   String get childGrant => 'Kinderzulage';
   String get entryBonus => 'Bonus';
+  String get lowIncomeBonus => 'Geringverdienerbonus';
+  String get lowIncomeBonusApplies => 'Geringverdienerbonus greift: 175 \u20AC/Jahr (Brutto \u2264 26.250 \u20AC)';
   String get subsidyRate => 'F\u00F6rderquote';
   String get totalSubsidyYear => 'Gesamt-Zulage/Jahr';
   String get taxRefundYear => 'Steuererstattung/Jahr';
@@ -472,6 +581,12 @@ class StringsDe extends AppStrings {
 
   String avYieldsMore(String amount) => 'AV-Depot bringt $amount mehr.';
   String etfYieldsMore(String amount) => 'ETF-Depot bringt $amount mehr.';
+  String get etfWinsExplanation =>
+    'Warum? Die AV-Depot-Zulagen sind auf max. 1.800 \u20AC/Jahr Eigenbeitrag begrenzt. '
+    'Dar\u00FCber hinaus gibt es keine F\u00F6rderung, aber die gesamte Auszahlung wird '
+    'mit dem Einkommensteuersatz versteuert. Beim ETF-Depot werden nur die Gewinne '
+    '(mit 30 % Teilfreistellung) pauschal besteuert. Bei hohem Einkommen, hohen '
+    'Beitr\u00E4gen oder niedrigen Renditen \u00FCberwiegt dieser Steuervorteil die Zulage.';
   String comparisonSubtitle(String icon, String name) =>
     '$icon $name \u2013 AV: nachgelagerte Best. / ETF: Abgeltungsst. mit 30 % Teilfreist.';
   String get finalCapitalGross => 'Endkapital (brutto)';
@@ -536,12 +651,61 @@ class StringsDe extends AppStrings {
 
   String pageNotFound(String uri) => 'Seite nicht gefunden: $uri';
 
+  // Pros / Cons
+  String get prosConsTitle => 'Was f\u00FCr Ihr Szenario gilt';
+  String get avProsTitle => 'Vorteile AV-Depot';
+  String get etfProsTitle => 'Vorteile ETF-Depot';
+  String get proHighSubsidyRate => 'Hohe F\u00F6rderquote auf Ihre Beitr\u00E4ge';
+  String get proKinderzulage => 'Kinderzulage aktiv (300 \u20AC/Kind/Jahr)';
+  String get proGeringverdienerbonus => 'Geringverdienerbonus greift (+175 \u20AC/Jahr)';
+  String get proBerufseinsteigerbonus => 'Berufseinsteigerbonus aktiv (+200 \u20AC/Jahr)';
+  String get proGuenstigerpruefung => 'G\u00FCnstigerpr\u00FCfung bringt zus\u00E4tzliche Steuererstattung';
+  String get proLongDuration => 'Lange Spardauer \u2013 Zulagen verzinsen sich \u00FCber Jahrzehnte';
+  String get proTaxFreeGrowth => 'Steuerfreies Wachstum in der Ansparphase (keine Vorabpauschale, keine Abgeltungssteuer)';
+  String get conLowSubsidyLeverage => 'Beitr\u00E4ge \u00FCber 150 \u20AC/Monat erhalten keine Zulage \u2013 aber die gesamte Auszahlung wird versteuert';
+  String get conHighRetirementTax => 'Hoher Grenzsteuersatz \u2013 nachgelagerte Besteuerung zu hohem Satz mindert den Vorteil';
+  String get proEtfOnlyGainsTaxed => 'Nur Gewinne werden besteuert \u2013 Ihre Einzahlungen erhalten Sie steuerfrei zur\u00FCck';
+  String get proEtfTeilfreistellung => '30 % Teilfreistellung reduziert die steuerpflichtigen Gewinne';
+  String get proEtfFlexibility => 'Keine Bindungsfrist \u2013 jederzeit verf\u00FCgbar ohne Einschr\u00E4nkungen';
+  String get proEtfLowReturnsAdvantage => 'Bei niedrigen Renditen sind die Gewinne gering \u2013 weniger Steuerbelastung als nachgelagerte Vollbesteuerung';
+
+  String get etfTaxNote =>
+    'ETF-Besteuerung: Nur Gewinne werden besteuert \u2013 mit 30 % Teilfreistellung '
+    'f\u00FCr Aktienfonds. Das bedeutet, nur 70 % der Gewinne unterliegen der '
+    'Abgeltungssteuer. Ihre Einzahlungen erhalten Sie steuerfrei zur\u00FCck.';
+
   String get resetAll => 'Alle Werte zur\u00FCcksetzen';
   String get disclaimer =>
     'Hinweis: Dieser Rechner dient der Veranschaulichung, nicht als '
-    'Finanzberatung. Vereinfachte Annahmen (konstante Rendite, lineare '
-    'Steuers\u00E4tze, keine Kirchensteuer). Die Makro-Szenarien sind '
-    'stilisierte Modelle, keine Prognosen.';
+    'Finanzberatung. Die Makro-Szenarien sind stilisierte Modelle, keine Prognosen.';
+  String get includedFeaturesTitle => 'In diesem Rechner enthalten';
+  String get includedFeaturesDetail =>
+    '\u25B8 Grundzulage (50 %/25 % Zwei-Stufen-F\u00F6rderung auf bis zu 1.800 \u20AC/Jahr)\n'
+    '\u25B8 Kinderzulage (bis 300 \u20AC/Kind/Jahr, 1:1 Zuschuss)\n'
+    '\u25B8 Berufseinsteigerbonus (200 \u20AC/Jahr f\u00FCr 3 Jahre, unter 25)\n'
+    '\u25B8 Geringverdienerbonus (175 \u20AC/Jahr bei Brutto \u2264 26.250 \u20AC)\n'
+    '\u25B8 G\u00FCnstigerpr\u00FCfung (automatische Steueroptimierung)\n'
+    '\u25B8 Kirchensteuer (optional: Keine / 8 % / 9 %)\n'
+    '\u25B8 Abgeltungssteuer mit 30 % Teilfreistellung f\u00FCr ETF\n'
+    '\u25B8 Vorabpauschale (vereinfacht als 0,2 % j\u00E4hrlicher Abzug)\n'
+    '\u25B8 Nachgelagerte Besteuerung der AV-Depot-Auszahlungen\n'
+    '\u25B8 6 Makro-Szenarien + eigene Szenarien\n'
+    '\u25B8 5 pers\u00F6nliche Szenarien + freie Eingabe';
+  String get simplificationsTitle => 'Vereinfachungen';
+  String get simplificationsDetail =>
+    '\u25B8 Konstante j\u00E4hrliche Rendite (kein Reihenfolge-Risiko)\n'
+    '\u25B8 Vereinfachte Vorabpauschale als 0,2 % j\u00E4hrlicher Abzug (tats\u00E4chlich abh\u00E4ngig vom Basiszins)\n'
+    '\u25B8 Keine unterj\u00E4hrigen Beitr\u00E4ge\n'
+    '\u25B8 Steuersatz im Ruhestand vereinfacht als 70 % des Arbeitssatzes\n'
+    '\u25B8 G\u00FCnstigerpr\u00FCfung-Erstattung wird nicht in separates ETF-Depot reinvestiert\n'
+    '\u25B8 Quellensteuer auf Fondsebene (~0,3 % p.a.) nicht separat modelliert';
+  String get plannedFeaturesTitle => 'Noch nicht enthalten';
+  String get plannedFeaturesDetail =>
+    '\u25B8 Riester-Vergleich (altes vs. neues F\u00F6rdersystem)\n'
+    '\u25B8 Wohnwirtschaftliche Verwendung (steuerfreie Entnahme f\u00FCr Immobilien)\n'
+    '\u25B8 Leibrente vs. Auszahlplan-Vergleich\n'
+    '\u25B8 Monte-Carlo-Simulation (zuf\u00E4llige Renditefolgen)\n'
+    '\u25B8 PDF/CSV-Export';
 
   String get chartAllMacrosTitle => 'AV-Depot: Alle Makro-Szenarien + ETF (gestrichelt)';
   String chartWealthTitle(String icon, String name) => 'Verm\u00F6gensentwicklung \u2013 $icon $name';

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../config/theme.dart';
-import '../../../core/state/locale_cubit.dart';
-import '../../../shared/utils/fmt.dart';
-import '../../../models/scenario.dart';
-import '../cubit/calculator_cubit.dart';
-import '../cubit/calculator_state.dart';
+import 'package:avdepot_rechner/config/theme.dart';
+import 'package:avdepot_rechner/core/state/locale_cubit.dart';
+import 'package:avdepot_rechner/shared/utils/fmt.dart';
+import 'package:avdepot_rechner/models/scenario.dart';
+import 'package:avdepot_rechner/features/calculator/cubit/calculator_cubit.dart';
+import 'package:avdepot_rechner/features/calculator/cubit/calculator_state.dart';
 
 class MacroScenarioGrid extends StatelessWidget {
   const MacroScenarioGrid({super.key});

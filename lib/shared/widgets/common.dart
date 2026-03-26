@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../config/theme.dart';
+import 'package:avdepot_rechner/config/theme.dart';
 
 class StatCard extends StatelessWidget {
   final String label;
@@ -179,16 +179,16 @@ class ResultBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: positive ? AppColors.successBg : AppColors.dangerBg,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: positive ? const Color(0xFFA7F3D0) : const Color(0xFFFECACA)),
+        border: Border.all(color: positive ? AppColors.successBorder : AppColors.dangerBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700,
-            color: positive ? const Color(0xFF065F46) : const Color(0xFF991B1B))),
+            color: positive ? AppColors.successText : AppColors.dangerText)),
           const SizedBox(height: AppSpacing.sm),
           Text(subtitle, style: TextStyle(fontSize: 12,
-            color: positive ? const Color(0xFF047857) : const Color(0xFFB91C1C))),
+            color: positive ? AppColors.successTextLight : AppColors.dangerTextLight)),
         ],
       ),
     );

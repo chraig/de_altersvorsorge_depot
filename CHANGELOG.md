@@ -5,6 +5,14 @@ All notable user-facing changes to the Altersvorsorgedepot-Rechner.
 ## [1.1.0] — 2026-03-26
 
 ### Added
+- Geringverdienerbonus (€175/yr for gross ≤ €26,250) with green banner when active
+- Kirchensteuer toggle (None / 8% Bayern-BaWü / 9% other states) in Advanced Settings
+- Dynamic pros/cons section in comparison results, adapting to the current scenario
+- "Included in This Calculator" section in footer listing all implemented features
+- Simplifications and "Not Yet Included" sections in footer
+- ETF tax note explaining Teilfreistellung and how only gains are taxed
+- Contextual explanation when ETF portfolio outperforms AV-Depot
+- Retirement age slider replaces savings duration slider — duration derived automatically
 - Responsive layout for mobile and tablet screens
 - Personal scenario highlighting — selected preset is visually indicated
 - Preset scenario names update when switching language
@@ -13,12 +21,19 @@ All notable user-facing changes to the Altersvorsorgedepot-Rechner.
 - Tax refund bar clearly labeled as paid to bank account, not into the depot
 
 ### Changed
-- Default selection is now "Career Starter" preset instead of arbitrary values
+- Default selection is now "Career Starter" preset (retirement at 67) instead of arbitrary values
+- All presets now retire at 67 (career starter was 65)
+- High earner preset savings rate raised from €150/mo to €500/mo
+- Monthly savings slider max raised from €300 to €5,000
+- Gross annual salary slider max raised from €120,000 to €1,000,000
+- Adjusting starting age automatically recalculates duration to keep retirement age constant
 - Moved legislative description from header subtitle to detailed section at bottom
 - Stat cards (Final Capital / Purchasing Power) now equal height
 - Compound table summary bar: labels above values with vertical dividers, wraps on mobile
 - "Lost Decade" / "Verlorenes Jahrzehnt" written out in full (was abbreviated)
 - All hardcoded strings now bilingual (router error page, comparison bar labels)
+- All imports converted to fully qualified package:avdepot_rechner/ paths
+- Hardcoded colors extracted to AppColors constants
 - Simplified deployment docs for static hosting
 
 ### Fixed
@@ -56,12 +71,10 @@ All notable user-facing changes to the Altersvorsorgedepot-Rechner.
 
 ## Planned
 
-- Geringverdienerbonus (€175/yr for income ≤ €26,250)
 - Riester comparison mode (old vs. new Fördersystem)
 - PDF/CSV export of results
 - Persistent storage for custom scenarios
 - 2027 tax brackets update (when published by BMF)
-- Kirchensteuer option (8% or 9%)
 - Wohnwirtschaftliche Verwendung modeling
 - Leibrente vs. Auszahlplan comparison
 - Monte Carlo simulation (random return sequences)

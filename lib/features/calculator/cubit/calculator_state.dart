@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
-import '../../../core/l10n/app_strings.dart';
-import '../../../models/scenario.dart';
-import '../../../services/domain/calculator_service.dart';
+import 'package:avdepot_rechner/config/theme.dart';
+import 'package:avdepot_rechner/core/l10n/app_strings.dart';
+import 'package:avdepot_rechner/models/scenario.dart';
+import 'package:avdepot_rechner/services/domain/calculator_service.dart';
 
 class CalculatorState {
   final List<PersonalScenario> personalScenarios;
@@ -43,7 +43,7 @@ class CalculatorState {
           description: s.customDesc,
           rendite: customRendite,
           inflation: customInflation,
-          color: const Color(0xFF6B7280),
+          color: AppColors.gray,
           isCustom: true,
         )
       : currentMacro;

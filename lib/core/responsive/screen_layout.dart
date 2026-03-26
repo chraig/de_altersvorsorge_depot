@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../config/theme.dart';
+import 'package:avdepot_rechner/config/theme.dart';
 
 extension ScreenLayoutX on BuildContext {
   double get screenWidth => MediaQuery.sizeOf(this).width;
