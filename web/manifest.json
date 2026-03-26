@@ -1,0 +1,9 @@
+{
+  "name": "AV-Depot Rechner 2027",
+  "short_name": "AV-Rechner",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0066FF",
+  "description": "Altersvorsorgedepot vs. ETF-Depot Vergleichsrechner"
+}
