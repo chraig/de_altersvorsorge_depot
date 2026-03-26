@@ -1,0 +1,174 @@
+# CLAUDE.md - Altersvorsorgedepot-Rechner Project Guide
+
+## Project Overview
+
+Altersvorsorgedepot-Rechner 2027 is a **Flutter/Dart web application** that compares the new German **Altersvorsorgedepot** (AV-Depot) with a standard private **ETF savings plan**. Based on the Altersvorsorgereformgesetz as passed by the Bundestag on 27.03.2026 (Drucksache 21/4088).
+
+**Dart SDK:** >=3.2.0 <4.0.0 | **Flutter:** 3.x stable | **Platform:** Web (Chrome)
+
+---
+
+## Build & Run Commands
+
+```bash
+# Install dependencies
+flutter pub get
+
+# Run (development)
+flutter run -d chrome
+
+# Build (production)
+flutter build web --release --web-renderer canvaskit
+# Output in build/web/ — deploy to any static host
+
+# Analyze
+flutter analyze
+
+# Run all tests
+flutter test
+```
+
+---
+
+## Architecture
+
+### Layer Structure
+
+```
+UI (features/*/pages/, features/*/widgets/)
+  -> State Management (features/*/cubit/)
+    -> Services (services/domain/)
+      -> Models (models/)
+```
+
+### Directory Layout
+
+```
+lib/
+  main.dart                    # Entry point, BlocProvider setup, MaterialApp.router
+  config/                      # Build config, theme (design tokens, colors, typography)
+  core/                        # Routes (GoRouter), global state, locale management
+    l10n/                      # Bilingual strings (EN/DE) via AppStrings abstract class
+    routes/                    # GoRouter configuration
+    state/                     # AppSettings coordinator, AppSettingsScope, LocaleCubit
+  models/                      # Pure data classes (PersonalScenario, MacroScenario, results)
+  services/
+    domain/                    # Pure static calculation engine (CalculatorService)
+  features/                    # Feature modules (vertical slices)
+    calculator/                # Calculator feature (cubit + pages + widgets)
+  shared/                      # Reusable utilities and widgets
+    utils/                     # Formatters (Fmt)
+    widgets/                   # StatCard, MiniBar, ComparisonBar, ResultBanner
+```
+
+---
+
+## Key Conventions
+
+### Imports
+
+**All internal imports MUST use fully qualified `package:avdepot_rechner/` paths. Relative imports are NOT permitted.**
+
+```dart
+// CORRECT
+import 'package:avdepot_rechner/features/calculator/cubit/calculator_cubit.dart';
+import 'package:avdepot_rechner/core/state/app_settings.dart';
+
+// WRONG - never use relative imports
+import '../state/app_settings.dart';
+import './locale_cubit.dart';
+```
+
+### State Management: Cubit Only
+
+This project uses **Cubit** (not Bloc) for all state management — the data flows are straightforward enough that events/transformers are unnecessary.
+
+- `CalculatorCubit` — all calculator inputs, scenario CRUD, advanced settings
+- `LocaleCubit` — language switching (EN ↔ DE)
+
+### Cubit Patterns
+
+- States use **immutable classes** with `copyWith` for state changes
+- All state changes go through `emit(state.copyWith(...))` — never mutate state directly
+- Computed getters in `CalculatorState` call `CalculatorService` static methods (pull-based, never stale)
+- `AppSettingsScope` wraps the widget tree with `MultiBlocProvider`
+
+### File Naming
+
+- Widgets: `{widget_type}.dart` (e.g., `input_panel.dart`, `charts.dart`)
+- Services: `{domain}_service.dart` (e.g., `calculator_service.dart`)
+- Cubits: `{feature}_cubit.dart`, `{feature}_state.dart`
+- Strings: `app_strings.dart` (contains both EN and DE implementations)
+
+### Feature-First Organization
+
+- Each feature is self-contained in `features/{name}/` with its own pages, widgets, cubits
+- Cross-feature dependencies flow through services, not directly between features
+- `shared/widgets/` for components used by 2+ features
+- `shared/utils/` for formatting and helpers
+
+---
+
+## Design Token System
+
+All UI constants are centralized in `lib/config/theme.dart`:
+
+- **AppSpacing** — spacing scale (xs=2, sm=4, md=8, lg=12, xl=16, xxl=20, xxxl=24, section=28, hero=36)
+- **AppRadius** — border radii with semantic aliases (chip=8, card=12, panel=16)
+- **AppOpacity** — opacity scale (subtle=0.04, tint=0.1, faded=0.12, muted=0.25, disabled=0.3, half=0.5)
+- **AppBreakpoints** — responsive breakpoints (compact=480, medium=700, expanded=800)
+- **AppDimensions** — dimension tokens (maxContentWidth=1200, chartHeight=220, barHeight=22)
+- **AppColors** — full semantic color palette (accent, etf, surfaces, text, semantic, warning)
+- **AppPadding** — padding presets (page, card, panel, section, chip, button)
+- **AppTheme** — ThemeData, SliderTheme, text style helpers (mono, monoAccent, monoSmall)
+
+---
+
+## Localization
+
+Bilingual support (English + German) via `lib/core/l10n/app_strings.dart`:
+
+- `AppStrings` abstract class defines all UI strings
+- `StringsEn` and `StringsDe` implement all translations
+- `LocaleCubit` manages language state, toggled via `toggle()` method
+- Scenario presets receive `AppStrings` to generate localized names/descriptions
+- Access strings via `context.watch<LocaleCubit>().state.strings`
+
+---
+
+## Calculation Engine
+
+All financial logic lives in `lib/services/domain/calculator_service.dart` as pure static methods:
+
+- `calcGrundzulage()` — 50%/25% two-tier subsidy
+- `calcKinderzulage()` — up to €300/child 1:1 match
+- `calcBonus()` — €200/yr for 3 years (under 25)
+- `calcZulage()` — combined yearly subsidy (record return type)
+- `getGrenzsteuersatz()` — German marginal tax rate approximation (2024 brackets)
+- `calcGuenstigerpruefung()` — automatic tax optimization check
+- `simulateAV()` — year-by-year AV-Depot simulation with deferred taxation
+- `simulateETF()` — year-by-year ETF-Depot simulation with Vorabpauschale + Abgeltungssteuer
+- `simulateAllMacros()` — cross-product: person × all macros
+
+All methods are pure — no side effects, no state. Easy to unit test in isolation.
+
+---
+
+## Companion Documents
+
+| Document | Purpose |
+|----------|---------|
+| `docs/RESEARCH.md` | Legislative basis, formula derivations, data sources, tax brackets |
+| `docs/CONFIGURATION.md` | All adjustable parameters, defaults, valid ranges, legal basis |
+
+---
+
+## Rules for Code Changes
+
+1. Never modify files outside `lib/` and `test/` without asking
+2. Never remove existing tests unless explicitly instructed
+3. Always run tests after implementation changes
+4. Follow existing code patterns in the project
+5. Always use fully qualified `package:avdepot_rechner/` imports
+6. Use English (en) locale as default for initial app state
+7. Never mention AI involvement in commit messages, code comments, or documentation
