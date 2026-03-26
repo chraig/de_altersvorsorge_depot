@@ -97,14 +97,6 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
                       Center(child: Text(s.appSubtitle,
                         style: TextStyle(fontSize: compact ? 14 : 17, fontWeight: FontWeight.w500,
                           color: AppColors.muted))),
-                      const SizedBox(height: 10),
-                      Center(child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 520),
-                        child: Text(s.appDescription,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: compact ? 11 : 12, color: AppColors.muted, height: 1.5),
-                        ),
-                      )),
                       const SizedBox(height: AppSpacing.xxxl),
 
                       // ─── PERSONAL SCENARIOS ──────────────────
@@ -205,7 +197,11 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
                         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
                         child: Center(
                           child: OutlinedButton.icon(
-                            onPressed: () => cubit.resetToDefaults(s),
+                            onPressed: () {
+                              cubit.resetToDefaults(s);
+                              _tabController.animateTo(0);
+                              _macroTabController.animateTo(0);
+                            },
                             icon: const Icon(Icons.refresh, size: 14),
                             label: Text(s.resetAll, style: const TextStyle(fontSize: 11)),
                           ),
@@ -355,10 +351,16 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Wrap(spacing: AppSpacing.md, runSpacing: AppSpacing.md, children: [
-          StatCard(label: s.finalCapital, value: Fmt.eur(av.endkapital), accent: true),
-          StatCard(label: s.purchasingPowerToday, value: Fmt.eur(av.endkapitalReal), sub: s.inflationAdjusted),
-        ]),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: StatCard(label: s.finalCapital, value: Fmt.eur(av.endkapital), accent: true)),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(child: StatCard(label: s.purchasingPowerToday, value: Fmt.eur(av.endkapitalReal), sub: s.inflationAdjusted)),
+            ],
+          ),
+        ),
         const SizedBox(height: AppSpacing.xl),
 
         Container(
@@ -377,10 +379,11 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
                 maxValue: av.endkapital, color: AppColors.label, valueText: Fmt.eur(av.eigenBeitraege)),
               MiniBar(label: s.subsidiesLabel, value: av.zulagenGesamt,
                 maxValue: av.endkapital, color: AppColors.accent, valueText: Fmt.eur(av.zulagenGesamt)),
-              MiniBar(label: s.taxRefundLabel, value: av.steuererstattungGesamt,
-                maxValue: av.endkapital, color: AppColors.success, valueText: Fmt.eur(av.steuererstattungGesamt)),
               MiniBar(label: s.capitalGainsLabel, value: av.wertzuwachs,
                 maxValue: av.endkapital, color: AppColors.etf, valueText: Fmt.eur(av.wertzuwachs)),
+              if (av.steuererstattungGesamt > 0)
+                MiniBar(label: s.taxRefundNotInDepot, value: av.steuererstattungGesamt,
+                  maxValue: av.endkapital, color: AppColors.success, valueText: Fmt.eur(av.steuererstattungGesamt)),
             ],
           ),
         ),
@@ -445,6 +448,14 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
               ],
             ),
           )),
+          const Divider(height: 24),
+          Text(s.legislativeBasisTitle, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent)),
+          const SizedBox(height: 4),
+          Text(s.legislativeBasisDetail, style: const TextStyle(fontSize: 11, color: AppColors.label, height: 1.6)),
+          const SizedBox(height: 14),
+          Text(s.sourcesTitle, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent)),
+          const SizedBox(height: 4),
+          Text(s.sourcesDetail, style: const TextStyle(fontSize: 11, color: AppColors.label, height: 1.6)),
         ],
       ),
     );

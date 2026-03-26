@@ -66,6 +66,7 @@ abstract class AppStrings {
   String get compositionTitle;
   String get subsidiesLabel;
   String get taxRefundLabel;
+  String get taxRefundNotInDepot;
   String get capitalGainsLabel;
   String get taxLogicTitle;
   String get taxLogicDescription;
@@ -83,6 +84,12 @@ abstract class AppStrings {
   String get slTaxOptDetail;
   String get slPayoutLabel;
   String get slPayoutDetail;
+
+  // ─── LEGISLATIVE BASIS ───────────────────────────────────────────
+  String get legislativeBasisTitle;
+  String get legislativeBasisDetail;
+  String get sourcesTitle;
+  String get sourcesDetail;
 
   // ─── ERRORS ──────────────────────────────────────────────────────
   String pageNotFound(String uri);
@@ -266,6 +273,7 @@ class StringsEn extends AppStrings {
   String get compositionTitle => 'Composition';
   String get subsidiesLabel => 'Subsidies';
   String get taxRefundLabel => 'Tax Refund';
+  String get taxRefundNotInDepot => 'Tax Refund \u2013 paid to your bank account, not into the depot';
   String get capitalGainsLabel => 'Capital Gains';
   String get taxLogicTitle => 'Tax Logic';
   String get taxLogicDescription =>
@@ -295,6 +303,23 @@ class StringsEn extends AppStrings {
     '\u25B8 Payout plan until 85, up to 30% lump sum\n'
     '\u25B8 Deferred taxation';
 
+  // Legislative Basis
+  String get legislativeBasisTitle => 'Legislative Basis';
+  String get legislativeBasisDetail =>
+    '\u25B8 Altersvorsorgereformgesetz \u2013 Bundestag Drucksache 21/4088\n'
+    '\u25B8 Finanzausschuss amendments, 25 March 2026 (coalition agreement CDU/CSU + SPD)\n'
+    '\u25B8 Passed by Bundestag on 27 March 2026 (2nd + 3rd reading)\n'
+    '\u25B8 Key changes vs. original draft (Dec 2025): Grundzulage raised to 50%/25%, Kostendeckel lowered to 1.0%, '
+    'all self-employed now eligible, public provider mandated\n'
+    '\u25B8 Effective date: 1 January 2027';
+  String get sourcesTitle => 'Sources';
+  String get sourcesDetail =>
+    '\u25B8 BMF FAQ: bundesfinanzministerium.de/Content/DE/FAQ/reform-der-privaten-altersvorsorge.html\n'
+    '\u25B8 Bundestag vote: bundestag.de/presse/hib/kurzmeldungen-1157838\n'
+    '\u25B8 Bundestag hearing: bundestag.de/dokumente/textarchiv/2026/kw12-pa-finanzen-1152002\n'
+    '\u25B8 Finanztip: finanztip.de/altersvorsorge/altersvorsorgedepot\n'
+    '\u25B8 justETF: justetf.com/de/academy/altersvorsorgedepot-entwurf-2027.html';
+
   // Errors
   String pageNotFound(String uri) => 'Page not found: $uri';
 
@@ -303,8 +328,7 @@ class StringsEn extends AppStrings {
   String get disclaimer =>
     'Note: This calculator is for illustration purposes, not financial advice. '
     'Simplified assumptions (constant returns, linear tax rates, no church tax). '
-    'The macro scenarios are stylized models, not forecasts. '
-    'As of: Coalition agreement March 2026.';
+    'The macro scenarios are stylized models, not forecasts.';
 
   // Charts
   String get chartAllMacrosTitle => 'AV-Depot: All Macro Scenarios + ETF (dashed)';
@@ -465,6 +489,7 @@ class StringsDe extends AppStrings {
   String get compositionTitle => 'Zusammensetzung';
   String get subsidiesLabel => 'Zulagen';
   String get taxRefundLabel => 'Steuererstattung';
+  String get taxRefundNotInDepot => 'Steuererstattung \u2013 wird auf Ihr Konto ausgezahlt, nicht ins Depot';
   String get capitalGainsLabel => 'Wertzuwachs';
   String get taxLogicTitle => 'Steuerlogik';
   String get taxLogicDescription =>
@@ -493,6 +518,22 @@ class StringsDe extends AppStrings {
     '\u25B8 Auszahlplan bis 85, bis 30 % Einmalentnahme\n'
     '\u25B8 Nachgelagerte Besteuerung';
 
+  String get legislativeBasisTitle => 'Gesetzliche Grundlage';
+  String get legislativeBasisDetail =>
+    '\u25B8 Altersvorsorgereformgesetz \u2013 Bundestag-Drucksache 21/4088\n'
+    '\u25B8 Finanzausschuss-\u00C4nderungen, 25. M\u00E4rz 2026 (Koalitionseinigung CDU/CSU + SPD)\n'
+    '\u25B8 Verabschiedet am 27. M\u00E4rz 2026 im Bundestag (2. + 3. Lesung)\n'
+    '\u25B8 Wesentliche \u00C4nderungen gg\u00FC. Erstentwurf (Dez. 2025): Grundzulage auf 50 %/25 % erh\u00F6ht, Kostendeckel auf 1,0 % gesenkt, '
+    'alle Selbstst\u00E4ndigen f\u00F6rderberechtigt, \u00F6ffentlicher Tr\u00E4ger vorgeschrieben\n'
+    '\u25B8 Inkrafttreten: 1. Januar 2027';
+  String get sourcesTitle => 'Quellen';
+  String get sourcesDetail =>
+    '\u25B8 BMF FAQ: bundesfinanzministerium.de/Content/DE/FAQ/reform-der-privaten-altersvorsorge.html\n'
+    '\u25B8 Bundestag-Abstimmung: bundestag.de/presse/hib/kurzmeldungen-1157838\n'
+    '\u25B8 Bundestag-Anh\u00F6rung: bundestag.de/dokumente/textarchiv/2026/kw12-pa-finanzen-1152002\n'
+    '\u25B8 Finanztip: finanztip.de/altersvorsorge/altersvorsorgedepot\n'
+    '\u25B8 justETF: justetf.com/de/academy/altersvorsorgedepot-entwurf-2027.html';
+
   String pageNotFound(String uri) => 'Seite nicht gefunden: $uri';
 
   String get resetAll => 'Alle Werte zur\u00FCcksetzen';
@@ -500,7 +541,7 @@ class StringsDe extends AppStrings {
     'Hinweis: Dieser Rechner dient der Veranschaulichung, nicht als '
     'Finanzberatung. Vereinfachte Annahmen (konstante Rendite, lineare '
     'Steuers\u00E4tze, keine Kirchensteuer). Die Makro-Szenarien sind '
-    'stilisierte Modelle, keine Prognosen. Stand: Koalitionseinigung M\u00E4rz 2026.';
+    'stilisierte Modelle, keine Prognosen.';
 
   String get chartAllMacrosTitle => 'AV-Depot: Alle Makro-Szenarien + ETF (gestrichelt)';
   String chartWealthTitle(String icon, String name) => 'Verm\u00F6gensentwicklung \u2013 $icon $name';

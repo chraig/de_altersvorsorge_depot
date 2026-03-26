@@ -8,20 +8,14 @@ class CalculatorCubit extends Cubit<CalculatorState> {
       : super(_initialState(strings));
 
   static CalculatorState _initialState(AppStrings s) {
+    final persons = PersonalScenario.defaults(s);
     final macros = MacroScenario.defaults(s);
+    final starter = persons[0]; // Career Starter
     return CalculatorState(
-      personalScenarios: PersonalScenario.defaults(s),
+      personalScenarios: persons,
       macroScenarios: macros,
-      currentPerson: PersonalScenario(
-        name: s.currentLabel,
-        icon: '\uD83D\uDC64',
-        sparrate: 100,
-        brutto: 45000,
-        kinder: 0,
-        alterStart: 30,
-        spardauer: 37,
-        isCustom: true,
-      ),
+      currentPerson: starter.copyWith(),
+      selectedPersonalScenarioId: starter.id,
       currentMacro: macros[1], // Baseline
       costs: CostSettings(),
     );

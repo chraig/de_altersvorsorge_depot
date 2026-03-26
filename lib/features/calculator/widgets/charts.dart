@@ -253,10 +253,11 @@ class ComparisonChart extends StatelessWidget {
                     borderData: FlBorderData(show: false),
                     lineTouchData: LineTouchData(
                       touchTooltipData: LineTouchTooltipData(
-                        getTooltipItems: (spots) => spots.where((sp) => (sp.bar.color?.a ?? 0) > 0.3).map((sp) =>
-                          LineTooltipItem(Fmt.eur(sp.y), AppTheme.monoSmall.copyWith(
-                            fontSize: 10, color: sp.bar.color ?? AppColors.text))
-                        ).toList(),
+                        getTooltipItems: (spots) => spots.map((sp) {
+                          if ((sp.bar.color?.a ?? 0) <= 0.3) return null;
+                          return LineTooltipItem(Fmt.eur(sp.y), AppTheme.monoSmall.copyWith(
+                            fontSize: 10, color: sp.bar.color ?? AppColors.text));
+                        }).toList(),
                       ),
                     ),
                   )),
