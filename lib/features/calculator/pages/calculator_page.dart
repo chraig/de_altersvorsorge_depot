@@ -58,6 +58,14 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
         final compact = context.isCompact;
 
         return Scaffold(
+          bottomNavigationBar: _StickyFooter(
+            strings: s,
+            locale: localeCubit.state.locale,
+            onToggleLocale: () {
+              localeCubit.toggle();
+              context.read<CalculatorCubit>().updateLocale(localeCubit.state.strings);
+            },
+          ),
           body: SingleChildScrollView(
             child: Center(
               child: ConstrainedBox(
@@ -69,25 +77,12 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // ─── HEADER + LANGUAGE TOGGLE ───────────
+                      // ─── HEADER ──────────────────────────
                       SizedBox(height: compact ? AppSpacing.xl : AppSpacing.section),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Spacer(),
-                          Text(s.calculatorBadge,
-                            style: TextStyle(fontSize: compact ? 10 : 12, fontWeight: FontWeight.w700,
-                              color: AppColors.accent, letterSpacing: 2)),
-                          const Spacer(),
-                          _LanguageToggle(
-                            locale: localeCubit.state.locale,
-                            onToggle: () {
-                              localeCubit.toggle();
-                              final newStrings = localeCubit.state.strings;
-                              context.read<CalculatorCubit>().updateLocale(newStrings);
-                            },
-                          ),
-                        ],
+                      Center(
+                        child: Text(s.calculatorBadge,
+                          style: TextStyle(fontSize: compact ? 10 : 12, fontWeight: FontWeight.w700,
+                            color: AppColors.accent, letterSpacing: 2)),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       Center(child: Text(s.appTitle,
@@ -594,31 +589,76 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// LANGUAGE TOGGLE
+// STICKY FOOTER
 // ═══════════════════════════════════════════════════════════════════
 
-class _LanguageToggle extends StatelessWidget {
+class _StickyFooter extends StatelessWidget {
+  final AppStrings strings;
   final AppLocale locale;
-  final VoidCallback onToggle;
+  final VoidCallback onToggleLocale;
 
-  const _LanguageToggle({required this.locale, required this.onToggle});
+  const _StickyFooter({
+    required this.strings,
+    required this.locale,
+    required this.onToggleLocale,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onToggle,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: AppColors.border),
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.card,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(strings.copyrightNotice.split('\u2013')[0].trim(),
+            style: const TextStyle(fontSize: 10, color: AppColors.muted)),
+          _divider(),
+          _link(strings.impressumTitle, () => _showLegalDialog(context, strings.impressumTitle, strings.impressumDetail)),
+          _divider(),
+          _link(strings.datenschutzTitle, () => _showLegalDialog(context, strings.datenschutzTitle, strings.datenschutzDetail)),
+          _divider(),
+          GestureDetector(
+            onTap: onToggleLocale,
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.language, size: 13, color: AppColors.accent),
+              const SizedBox(width: 3),
+              Text(locale == AppLocale.en ? 'EN' : 'DE',
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.accent)),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _divider() => const Padding(
+    padding: EdgeInsets.symmetric(horizontal: 10),
+    child: Text('\u00B7', style: TextStyle(color: AppColors.muted)),
+  );
+
+  Widget _link(String label, VoidCallback onTap) => GestureDetector(
+    onTap: onTap,
+    child: Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.accent)),
+  );
+
+  void _showLegalDialog(BuildContext context, String title, String detail) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        content: SingleChildScrollView(
+          child: Text(detail, style: const TextStyle(fontSize: 13, color: AppColors.label, height: 1.6)),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(locale == AppLocale.en ? 'EN' : 'DE',
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.accent)),
-          const SizedBox(width: 3),
-          const Icon(Icons.language, size: 13, color: AppColors.accent),
-        ]),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }

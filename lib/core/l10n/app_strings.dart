@@ -1,5 +1,7 @@
 // ignore_for_file: annotate_overrides
 
+import 'package:avdepot_rechner/config/build_config.dart';
+
 abstract class AppStrings {
   // ─── HEADER ───────────────────────────────────────────────────────
   String get calculatorBadge;
@@ -130,6 +132,13 @@ abstract class AppStrings {
   String get simplificationsDetail;
   String get plannedFeaturesTitle;
   String get plannedFeaturesDetail;
+
+  // ─── LEGAL ──────────────────────────────────────────────────────
+  String get impressumTitle;
+  String get impressumDetail;
+  String get datenschutzTitle;
+  String get datenschutzDetail;
+  String get copyrightNotice;
 
   // ─── ETF TAX NOTE ──────────────────────────────────────────────
   String get etfTaxNote;
@@ -400,8 +409,12 @@ class StringsEn extends AppStrings {
   // Footer
   String get resetAll => 'Reset All Values';
   String get disclaimer =>
-    'Note: This calculator is for illustration purposes, not financial advice. '
-    'The macro scenarios are stylized models, not forecasts.';
+    'This calculator is for educational and illustrative purposes only. '
+    'It does not constitute investment advice, tax advice, or a recommendation '
+    'within the meaning of \u00A72 Abs. 4 WpHG. The calculations are based on '
+    'simplified assumptions and may differ significantly from actual outcomes. '
+    'Consult a qualified financial advisor (Steuerberater, Finanzberater) for '
+    'personal decisions. No warranty is provided. Use at your own risk.';
   String get includedFeaturesTitle => 'Included in This Calculator';
   String get includedFeaturesDetail =>
     '\u25B8 Grundzulage (50%/25% two-tier subsidy on up to \u20AC1,800/yr)\n'
@@ -430,6 +443,28 @@ class StringsEn extends AppStrings {
     '\u25B8 Leibrente vs. Auszahlplan comparison\n'
     '\u25B8 Monte Carlo simulation (random return sequences)\n'
     '\u25B8 PDF/CSV export';
+
+  // Legal
+  String get impressumTitle => 'Legal Notice (Impressum)';
+  String get impressumDetail =>
+    '${BuildConfig.ownerName}\n'
+    '${BuildConfig.postalAddress}\n'
+    '${BuildConfig.email}\n\n'
+    'Responsible for content according to \u00A718 Abs. 2 MStV: ${BuildConfig.ownerName}';
+  String get datenschutzTitle => 'Privacy Policy';
+  String get datenschutzDetail =>
+    'This website does not collect, store, or process any personal data. '
+    'All calculations are performed entirely in your browser \u2013 no data is '
+    'transmitted to any server.\n\n'
+    'No cookies are set. No tracking or analytics tools are used.\n\n'
+    'Your IP address is processed by the hosting provider (Hostinger) for the '
+    'sole purpose of delivering this website. This processing is based on '
+    'Art. 6 Abs. 1 lit. f DSGVO (legitimate interest in providing the website). '
+    'No further processing or storage of personal data takes place.';
+  String get copyrightNotice =>
+    '\u00A9 ${BuildConfig.copyrightYear} ${BuildConfig.ownerName} \u2013 All rights reserved. '
+    'The content, design, and calculations of this website may not be reproduced, '
+    'distributed, or reused in any form without prior written permission.';
 
   // Charts
   String get chartAllMacrosTitle => 'AV-Depot: All Macro Scenarios + ETF (dashed)';
@@ -676,8 +711,12 @@ class StringsDe extends AppStrings {
 
   String get resetAll => 'Alle Werte zur\u00FCcksetzen';
   String get disclaimer =>
-    'Hinweis: Dieser Rechner dient der Veranschaulichung, nicht als '
-    'Finanzberatung. Die Makro-Szenarien sind stilisierte Modelle, keine Prognosen.';
+    'Dieser Rechner dient ausschlie\u00DFlich der Veranschaulichung und Bildung. '
+    'Er stellt keine Anlageberatung, Steuerberatung oder Empfehlung im Sinne '
+    'des \u00A72 Abs. 4 WpHG dar. Die Berechnungen basieren auf vereinfachten '
+    'Annahmen und k\u00F6nnen erheblich von tats\u00E4chlichen Ergebnissen abweichen. '
+    'F\u00FCr pers\u00F6nliche Entscheidungen wenden Sie sich an einen qualifizierten '
+    'Finanzberater oder Steuerberater. Keine Gew\u00E4hrleistung. Nutzung auf eigenes Risiko.';
   String get includedFeaturesTitle => 'In diesem Rechner enthalten';
   String get includedFeaturesDetail =>
     '\u25B8 Grundzulage (50 %/25 % Zwei-Stufen-F\u00F6rderung auf bis zu 1.800 \u20AC/Jahr)\n'
@@ -706,6 +745,29 @@ class StringsDe extends AppStrings {
     '\u25B8 Leibrente vs. Auszahlplan-Vergleich\n'
     '\u25B8 Monte-Carlo-Simulation (zuf\u00E4llige Renditefolgen)\n'
     '\u25B8 PDF/CSV-Export';
+
+  String get impressumTitle => 'Impressum';
+  String get impressumDetail =>
+    '${BuildConfig.ownerName}\n'
+    '${BuildConfig.postalAddress}\n'
+    '${BuildConfig.email}\n\n'
+    'Verantwortlich f\u00FCr den Inhalt gem\u00E4\u00DF \u00A718 Abs. 2 MStV: ${BuildConfig.ownerName}';
+  String get datenschutzTitle => 'Datenschutzerkl\u00E4rung';
+  String get datenschutzDetail =>
+    'Diese Website erhebt, speichert und verarbeitet keine personenbezogenen Daten. '
+    'Alle Berechnungen werden vollst\u00E4ndig in Ihrem Browser durchgef\u00FChrt \u2013 '
+    'es werden keine Daten an einen Server \u00FCbertragen.\n\n'
+    'Es werden keine Cookies gesetzt. Es werden keine Tracking- oder Analyse-Tools verwendet.\n\n'
+    'Ihre IP-Adresse wird vom Hosting-Anbieter (Hostinger) ausschlie\u00DFlich zur '
+    'Auslieferung dieser Website verarbeitet. Diese Verarbeitung erfolgt auf Grundlage '
+    'von Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Bereitstellung '
+    'der Website). Eine weitergehende Verarbeitung oder Speicherung personenbezogener '
+    'Daten findet nicht statt.';
+  String get copyrightNotice =>
+    '\u00A9 ${BuildConfig.copyrightYear} ${BuildConfig.ownerName} \u2013 Alle Rechte vorbehalten. '
+    'Die Inhalte, das Design und die Berechnungen dieser Website d\u00FCrfen ohne '
+    'vorherige schriftliche Genehmigung nicht vervielf\u00E4ltigt, verbreitet oder '
+    'anderweitig verwendet werden.';
 
   String get chartAllMacrosTitle => 'AV-Depot: Alle Makro-Szenarien + ETF (gestrichelt)';
   String chartWealthTitle(String icon, String name) => 'Verm\u00F6gensentwicklung \u2013 $icon $name';

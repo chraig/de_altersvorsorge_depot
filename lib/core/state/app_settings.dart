@@ -11,9 +11,7 @@ class AppSettings {
       : localeCubit = LocaleCubit(),
         calculatorCubit = CalculatorCubit(StringsEn());
 
-  Future<void> initialize() async {
-    // Load persisted settings here in the future
-  }
+  Future<void> initialize() async {}
 
   void dispose() {
     localeCubit.close();
