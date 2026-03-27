@@ -58,14 +58,7 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
         final compact = context.isCompact;
 
         return Scaffold(
-          bottomNavigationBar: _StickyFooter(
-            strings: s,
-            locale: localeCubit.state.locale,
-            onToggleLocale: () {
-              localeCubit.toggle();
-              context.read<CalculatorCubit>().updateLocale(localeCubit.state.strings);
-            },
-          ),
+          bottomNavigationBar: _StickyFooter(strings: s),
           body: SingleChildScrollView(
             child: Center(
               child: ConstrainedBox(
@@ -77,12 +70,36 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // ─── HEADER ──────────────────────────
+                      // ─── HEADER + LANGUAGE TOGGLE ───────────
                       SizedBox(height: compact ? AppSpacing.xl : AppSpacing.section),
-                      Center(
-                        child: Text(s.calculatorBadge,
-                          style: TextStyle(fontSize: compact ? 10 : 12, fontWeight: FontWeight.w700,
-                            color: AppColors.accent, letterSpacing: 2)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Spacer(),
+                          Text(s.calculatorBadge,
+                            style: TextStyle(fontSize: compact ? 10 : 12, fontWeight: FontWeight.w700,
+                              color: AppColors.accent, letterSpacing: 2)),
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () {
+                              localeCubit.toggle();
+                              context.read<CalculatorCubit>().updateLocale(localeCubit.state.strings);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                Text(localeCubit.state.locale == AppLocale.en ? 'EN' : 'DE',
+                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.accent)),
+                                const SizedBox(width: 3),
+                                const Icon(Icons.language, size: 13, color: AppColors.accent),
+                              ]),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: AppSpacing.md),
                       Center(child: Text(s.appTitle,
@@ -594,14 +611,8 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
 
 class _StickyFooter extends StatelessWidget {
   final AppStrings strings;
-  final AppLocale locale;
-  final VoidCallback onToggleLocale;
 
-  const _StickyFooter({
-    required this.strings,
-    required this.locale,
-    required this.onToggleLocale,
-  });
+  const _StickyFooter({required this.strings});
 
   @override
   Widget build(BuildContext context) {
@@ -620,16 +631,6 @@ class _StickyFooter extends StatelessWidget {
           _link(strings.impressumTitle, () => _showLegalDialog(context, strings.impressumTitle, strings.impressumDetail)),
           _divider(),
           _link(strings.datenschutzTitle, () => _showLegalDialog(context, strings.datenschutzTitle, strings.datenschutzDetail)),
-          _divider(),
-          GestureDetector(
-            onTap: onToggleLocale,
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.language, size: 13, color: AppColors.accent),
-              const SizedBox(width: 3),
-              Text(locale == AppLocale.en ? 'EN' : 'DE',
-                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.accent)),
-            ]),
-          ),
         ],
       ),
     );

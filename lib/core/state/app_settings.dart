@@ -9,7 +9,7 @@ class AppSettings {
 
   AppSettings()
       : localeCubit = LocaleCubit(),
-        calculatorCubit = CalculatorCubit(StringsEn());
+        calculatorCubit = CalculatorCubit(StringsDe());
 
   Future<void> initialize() async {}
 

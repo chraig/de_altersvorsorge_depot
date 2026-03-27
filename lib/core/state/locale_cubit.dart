@@ -10,7 +10,7 @@ class LocaleState {
 }
 
 class LocaleCubit extends Cubit<LocaleState> {
-  LocaleCubit() : super(LocaleState(locale: AppLocale.en));
+  LocaleCubit() : super(LocaleState(locale: AppLocale.de));
 
   void setLocale(AppLocale locale) {
     emit(LocaleState(locale: locale));
