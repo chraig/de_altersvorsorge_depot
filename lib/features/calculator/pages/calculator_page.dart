@@ -112,6 +112,13 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
                       Center(child: Text(s.appSubtitle,
                         style: TextStyle(fontSize: compact ? 14 : 17, fontWeight: FontWeight.w500,
                           color: AppColors.muted))),
+                      const SizedBox(height: AppSpacing.lg),
+                      Center(child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 600),
+                        child: Text(s.disclaimer,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: compact ? 9 : 10, color: AppColors.muted, height: 1.5)),
+                      )),
                       const SizedBox(height: AppSpacing.xxxl),
 
                       // ─── PERSONAL SCENARIOS ──────────────────

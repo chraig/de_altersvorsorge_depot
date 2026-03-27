@@ -1,6 +1,54 @@
 import 'dart:math';
 import 'package:avdepot_rechner/models/scenario.dart';
 
+/// All legislative and tax parameters in one place.
+/// Update these when tax brackets change or legislation is amended.
+class CalcConstants {
+  const CalcConstants._();
+
+  // ─── GRUNDZULAGE ─────────────────────────────────────────────
+  static const double grundzulageStufe1Rate = 0.50;
+  static const double grundzulageStufe1Cap = 360.0;
+  static const double grundzulageStufe2Rate = 0.25;
+  static const double grundzulageMaxBeitrag = 1800.0;
+
+  // ─── KINDERZULAGE ────────────────────────────────────────────
+  static const double kinderzulageMax = 300.0;
+
+  // ─── BERUFSEINSTEIGERBONUS ───────────────────────────────────
+  static const double bonusBetrag = 200.0;
+  static const int bonusMaxJahre = 3;
+  static const int bonusMaxAlter = 25;
+
+  // ─── GERINGVERDIENERBONUS ───────────────────────────────────
+  static const double geringverdienerBetrag = 175.0;
+  static const double geringverdienerGrenze = 26250.0;
+  static const double mindestbeitrag = 120.0;
+
+  // ─── TAX BRACKETS (2024, §32a EStG) ─────────────────────────
+  static const double grundfreibetrag = 11784;
+  static const double zone2Ende = 17005;
+  static const double zone2Satz = 0.14;
+  static const double zone3Ende = 66760;
+  static const double zone3StartSatz = 0.2397;
+  static const double spitzensteuersatz = 0.42;
+  static const double zone4Ende = 277825;
+  static const double reichensteuersatz = 0.45;
+
+  // ─── ETF TAXATION ───────────────────────────────────────────
+  static const double teilfreistellung = 0.30;
+  static const double vorabpauschaleDrag = 0.002;
+
+  // ─── PAYOUT ─────────────────────────────────────────────────
+  static const int payoutEndAge = 85;
+
+  // ─── PENSION ESTIMATION ─────────────────────────────────────
+  static const double rentenwert = 39.32;
+  static const double durchschnittsentgelt = 45358.0;
+  static const double bbg = 90600.0;
+  static const int arbeitsbeginn = 25;
+}
+
 /// Core calculation engine for AV-Depot and ETF-Depot simulations.
 /// All methods are static and pure -- no side effects.
 class CalculatorService {
@@ -9,25 +57,28 @@ class CalculatorService {
 
   /// Grundzulage: 50% on first 360 EUR, 25% on 361-1800 EUR
   static double calcGrundzulage(double jahresbeitrag) {
-    final capped = min(jahresbeitrag, 1800.0);
+    final capped = min(jahresbeitrag, CalcConstants.grundzulageMaxBeitrag);
     if (capped <= 0) return 0;
-    return min(capped, 360.0) * 0.50 + max(0.0, capped - 360.0) * 0.25;
+    return min(capped, CalcConstants.grundzulageStufe1Cap) * CalcConstants.grundzulageStufe1Rate
+        + max(0.0, capped - CalcConstants.grundzulageStufe1Cap) * CalcConstants.grundzulageStufe2Rate;
   }
 
-  /// Kinderzulage: up to 300 EUR per child per year (1:1 match up to 300 EUR)
+  /// Kinderzulage: up to 300 EUR per child per year (1:1 match)
   static double calcKinderzulage(double jahresbeitrag, int kinder) {
     if (kinder <= 0 || jahresbeitrag <= 0) return 0;
-    return min(jahresbeitrag, 300.0) * kinder;
+    return min(jahresbeitrag, CalcConstants.kinderzulageMax) * kinder;
   }
 
   /// Berufseinsteigerbonus: 200 EUR/year for first 3 years if under 25
   static double calcBonus(int alter, int bonusJahre) {
-    return (alter < 25 && bonusJahre < 3) ? 200.0 : 0.0;
+    return (alter < CalcConstants.bonusMaxAlter && bonusJahre < CalcConstants.bonusMaxJahre)
+        ? CalcConstants.bonusBetrag : 0.0;
   }
 
-  /// Geringverdienerbonus: 175 EUR/year if brutto <= 26250 and eigenbeitrag >= 120
+  /// Geringverdienerbonus: 175 EUR/year if brutto <= 26,250 and eigenbeitrag >= 120
   static double calcGeringverdienerbonus(double brutto, double jahresbeitrag) {
-    return (brutto <= 26250 && jahresbeitrag >= 120) ? 175.0 : 0.0;
+    return (brutto <= CalcConstants.geringverdienerGrenze && jahresbeitrag >= CalcConstants.mindestbeitrag)
+        ? CalcConstants.geringverdienerBetrag : 0.0;
   }
 
   /// Combined yearly subsidy
@@ -42,11 +93,15 @@ class CalculatorService {
 
   /// German marginal tax rate approximation
   static double getGrenzsteuersatz(double brutto) {
-    if (brutto <= 11784) return 0;
-    if (brutto <= 17005) return 0.14;
-    if (brutto <= 66760) return 0.2397 + (brutto - 17005) / (66760 - 17005) * (0.42 - 0.2397);
-    if (brutto <= 277825) return 0.42;
-    return 0.45;
+    if (brutto <= CalcConstants.grundfreibetrag) return 0;
+    if (brutto <= CalcConstants.zone2Ende) return CalcConstants.zone2Satz;
+    if (brutto <= CalcConstants.zone3Ende) {
+      return CalcConstants.zone3StartSatz
+          + (brutto - CalcConstants.zone2Ende) / (CalcConstants.zone3Ende - CalcConstants.zone2Ende)
+          * (CalcConstants.spitzensteuersatz - CalcConstants.zone3StartSatz);
+    }
+    if (brutto <= CalcConstants.zone4Ende) return CalcConstants.spitzensteuersatz;
+    return CalcConstants.reichensteuersatz;
   }
 
   /// Guenstigerpruefung: check if Sonderausgabenabzug beats Zulagen
@@ -134,13 +189,13 @@ class CalculatorService {
       double totalEP = 0;
       // Pre-savings contribution years (from age 25 to alterStart)
       final preSavingsYears = (person.alterStart - 25).clamp(0, 45);
-      totalEP += preSavingsYears * min(person.brutto, 90600.0) / 45358.0;
+      totalEP += preSavingsYears * min(person.brutto, CalcConstants.bbg) / CalcConstants.durchschnittsentgelt;
       // Savings period with income growth
       for (int j = 0; j < person.spardauer; j++) {
         final bruttoJ = incomeDev.bruttoForYear(person.brutto, j);
-        totalEP += min(bruttoJ, 90600.0) / 45358.0;
+        totalEP += min(bruttoJ, CalcConstants.bbg) / CalcConstants.durchschnittsentgelt;
       }
-      effectiveRente = totalEP * 39.32;
+      effectiveRente = totalEP * CalcConstants.rentenwert;
     } else {
       effectiveRente = person.gesetzlicheRente;
     }
@@ -177,7 +232,7 @@ class CalculatorService {
     required CostSettings costs,
   }) {
     final jb = person.jahresbeitrag;
-    final nettoRendite = macro.rendite - costs.kostenETF - 0.002; // Vorabpauschale drag
+    final nettoRendite = macro.rendite - costs.kostenETF - CalcConstants.vorabpauschaleDrag;
 
     double depot = 0;
     double eigenBeitraege = 0;
@@ -202,7 +257,7 @@ class CalculatorService {
 
     // Payout: Abgeltungssteuer on gains with Teilfreistellung
     final gewinn = depot - eigenBeitraege;
-    const teilfreistellung = 0.30;
+    const teilfreistellung = CalcConstants.teilfreistellung;
     final steuerpflichtigerGewinn = gewinn * (1 - teilfreistellung);
     final steuer = steuerpflichtigerGewinn * costs.abgeltungssteuersatz;
     final nachSteuer = depot - steuer;

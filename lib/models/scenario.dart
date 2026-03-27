@@ -2,18 +2,13 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:avdepot_rechner/core/l10n/app_strings.dart';
+import 'package:avdepot_rechner/services/domain/calculator_service.dart';
 
 const _uuid = Uuid();
 
 // ═══════════════════════════════════════════════════════════════════
 // PERSONAL SCENARIO
 // ═══════════════════════════════════════════════════════════════════
-
-/// Pension estimation constants (2024 values).
-const _rentenwert = 39.32; // EUR per Entgeltpunkt per month (West, July 2024)
-const _durchschnittsentgelt = 45358.0; // EUR average gross income (2024)
-const _bbg = 90600.0; // Beitragsbemessungsgrenze (2024, West) — no pension points above this
-const _arbeitsbeginn = 25; // assumed start of working life (conservative: university graduates)
 
 class PersonalScenario {
   final String id;
@@ -59,16 +54,16 @@ class PersonalScenario {
 
   int get rentenalter => alterStart + spardauer;
   double get jahresbeitrag => sparrate * 12;
-  int get auszahlungsDauer => (85 - rentenalter).clamp(5, 30);
+  int get auszahlungsDauer => (CalcConstants.payoutEndAge - rentenalter).clamp(5, 30);
 
   /// Estimated monthly state pension derived from gross income.
   /// Formula: min(Brutto, BBG) / Durchschnittsentgelt × Beitragsjahre × Rentenwert
   /// BBG caps pensionable income; arbeitsbeginn assumed at 25 (conservative).
   double get geschaetzteRente {
-    final beitragsjahre = (rentenalter - _arbeitsbeginn).clamp(0, 45);
-    final cappedBrutto = brutto < _bbg ? brutto : _bbg;
-    final entgeltpunkteProJahr = cappedBrutto / _durchschnittsentgelt;
-    return entgeltpunkteProJahr * beitragsjahre * _rentenwert;
+    final beitragsjahre = (rentenalter - CalcConstants.arbeitsbeginn).clamp(0, 45);
+    final cappedBrutto = brutto < CalcConstants.bbg ? brutto : CalcConstants.bbg;
+    final entgeltpunkteProJahr = cappedBrutto / CalcConstants.durchschnittsentgelt;
+    return entgeltpunkteProJahr * beitragsjahre * CalcConstants.rentenwert;
   }
 
   /// Effective monthly state pension: override if set, otherwise derived.
