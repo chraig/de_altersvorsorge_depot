@@ -176,7 +176,7 @@ All methods are pure — no side effects, no state. Each module can be replaced 
 |----------|---------|
 | `docs/RESEARCH.md` | Legislative basis, formula derivations, data sources, tax brackets |
 | `docs/CONFIGURATION.md` | All adjustable parameters, defaults, valid ranges, legal basis |
-| `docs/INCOME_DEVELOPMENT.md` | Income development: current implementation + planned extensions |
+| `docs/INCOME_SCENARIOS.md` | Income scenarios: modeling choices, current implementation + planned extensions |
 
 ---
 
