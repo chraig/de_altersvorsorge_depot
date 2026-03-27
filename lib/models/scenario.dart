@@ -1,8 +1,9 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:avdepot_rechner/core/l10n/app_strings.dart';
 import 'package:avdepot_rechner/services/domain/calculator_service.dart';
+
+export 'package:avdepot_rechner/models/income_dev_settings.dart';
 
 const _uuid = Uuid();
 
@@ -137,29 +138,6 @@ class MacroScenario {
       description: s.macroLostDecadeDesc,
       rendite: 0.03, inflation: 0.02, color: const Color(0xFF6B7280)),
   ];
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// INCOME DEVELOPMENT
-// ═══════════════════════════════════════════════════════════════════
-
-class IncomeDevSettings {
-  final bool enabled;
-  final double growthRate; // annual growth, e.g. 0.02 = 2%
-
-  const IncomeDevSettings({this.enabled = false, this.growthRate = 0.02});
-
-  IncomeDevSettings copyWith({bool? enabled, double? growthRate}) =>
-    IncomeDevSettings(
-      enabled: enabled ?? this.enabled,
-      growthRate: growthRate ?? this.growthRate,
-    );
-
-  /// Compute gross income for year j given a starting brutto.
-  double bruttoForYear(double brutto, int j) {
-    if (!enabled) return brutto;
-    return brutto * pow(1 + growthRate, j);
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════

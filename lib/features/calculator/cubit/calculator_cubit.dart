@@ -109,8 +109,54 @@ class CalculatorCubit extends Cubit<CalculatorState> {
     emit(state.copyWith(incomeDev: state.incomeDev.copyWith(enabled: !state.incomeDev.enabled)));
   }
 
+  void setGrowthCurve(GrowthCurve v) {
+    emit(state.copyWith(incomeDev: state.incomeDev.copyWith(curve: v)));
+  }
+
   void setIncomeGrowthRate(double v) {
     emit(state.copyWith(incomeDev: state.incomeDev.copyWith(growthRate: v)));
+  }
+
+  void setPromotionInterval(int v) {
+    emit(state.copyWith(incomeDev: state.incomeDev.copyWith(promotionInterval: v)));
+  }
+
+  void setPromotionIncrease(double v) {
+    emit(state.copyWith(incomeDev: state.incomeDev.copyWith(promotionIncrease: v)));
+  }
+
+  void setSalaryCap(double v) {
+    emit(state.copyWith(incomeDev: state.incomeDev.copyWith(salaryCap: v)));
+  }
+
+  void setPartTimeStartYear(int? v) {
+    emit(state.copyWith(incomeDev: state.incomeDev.copyWith(
+      partTimeStartYear: v, clearPartTime: v == null)));
+  }
+
+  void setPartTimeDuration(int v) {
+    emit(state.copyWith(incomeDev: state.incomeDev.copyWith(partTimeDuration: v)));
+  }
+
+  void setPartTimePercent(double v) {
+    emit(state.copyWith(incomeDev: state.incomeDev.copyWith(partTimePercent: v)));
+  }
+
+  void addChildArrivalYear(int year) {
+    final years = [...state.incomeDev.childArrivalYears, year]..sort();
+    emit(state.copyWith(incomeDev: state.incomeDev.copyWith(childArrivalYears: years)));
+  }
+
+  void updateChildArrivalYear(int index, int year) {
+    final years = [...state.incomeDev.childArrivalYears];
+    years[index] = year;
+    years.sort();
+    emit(state.copyWith(incomeDev: state.incomeDev.copyWith(childArrivalYears: years)));
+  }
+
+  void removeChildArrivalYear(int index) {
+    final years = [...state.incomeDev.childArrivalYears]..removeAt(index);
+    emit(state.copyWith(incomeDev: state.incomeDev.copyWith(childArrivalYears: years)));
   }
 
   void toggleAdvanced() {

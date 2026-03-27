@@ -194,17 +194,16 @@ class InputPanel extends StatelessWidget {
                 AppSlider(label: s.inflationPa, value: state.effectiveInflation,
                   min: 0.005, max: 0.06, step: 0.005, display: Fmt.pct(state.effectiveInflation),
                   onChanged: cubit.setCustomInflation, hint: s.hintInflation),
-                const SizedBox(height: AppSpacing.md),
+                const Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.lg), child: Divider()),
                 _KirchensteuerToggle(
                   value: state.costs.kirchensteuer,
                   onChanged: cubit.setKirchensteuer,
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                _IncomeDevToggle(
-                  enabled: state.incomeDev.enabled,
-                  growthRate: state.incomeDev.growthRate,
-                  onToggle: cubit.toggleIncomeDev,
-                  onGrowthChanged: cubit.setIncomeGrowthRate,
+                const Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.lg), child: Divider()),
+                _IncomeScenarioPanel(
+                  settings: state.incomeDev,
+                  spardauer: state.currentPerson.spardauer,
+                  cubit: cubit,
                 ),
               ],
             ],
@@ -425,20 +424,18 @@ class _KirchensteuerToggle extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// INCOME DEVELOPMENT TOGGLE
+// INCOME SCENARIO PANEL
 // ═══════════════════════════════════════════════════════════════════
 
-class _IncomeDevToggle extends StatelessWidget {
-  final bool enabled;
-  final double growthRate;
-  final VoidCallback onToggle;
-  final ValueChanged<double> onGrowthChanged;
+class _IncomeScenarioPanel extends StatelessWidget {
+  final IncomeDevSettings settings;
+  final int spardauer;
+  final CalculatorCubit cubit;
 
-  const _IncomeDevToggle({
-    required this.enabled,
-    required this.growthRate,
-    required this.onToggle,
-    required this.onGrowthChanged,
+  const _IncomeScenarioPanel({
+    required this.settings,
+    required this.spardauer,
+    required this.cubit,
   });
 
   @override
@@ -447,13 +444,14 @@ class _IncomeDevToggle extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ─── MAIN TOGGLE ────────────────────────────────────────
         Row(
           children: [
             SizedBox(
               height: 24, width: 36,
               child: Switch(
-                value: enabled,
-                onChanged: (_) => onToggle(),
+                value: settings.enabled,
+                onChanged: (_) => cubit.toggleIncomeDev(),
                 activeThumbColor: AppColors.accent,
                 activeTrackColor: AppColors.accentLight,
               ),
@@ -466,17 +464,154 @@ class _IncomeDevToggle extends StatelessWidget {
         ),
         Text(s.hintIncomeDev,
           style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
-        if (enabled) ...[
+
+        if (settings.enabled) ...[
+          const SizedBox(height: AppSpacing.xl),
+
+          // ─── GROWTH CURVE SELECTOR ────────────────────────────
+          Wrap(spacing: AppSpacing.md, runSpacing: AppSpacing.sm, children: [
+            _curveChip(s.curveLinear, GrowthCurve.linear),
+            _curveChip(s.curveStepwise, GrowthCurve.stepwise),
+            _curveChip(s.curveLogarithmic, GrowthCurve.logarithmic),
+          ]),
+          const SizedBox(height: AppSpacing.lg),
+
+          // ─── CURVE-SPECIFIC PARAMS ────────────────────────────
+          if (settings.curve == GrowthCurve.linear)
+            AppSlider(label: s.incomeDevGrowthRate, value: settings.growthRate,
+              min: 0.0, max: 0.08, step: 0.005, display: Fmt.pct(settings.growthRate),
+              onChanged: cubit.setIncomeGrowthRate,
+              hint: s.hintGrowthLinear),
+
+          if (settings.curve == GrowthCurve.stepwise) ...[
+            AppSlider(label: s.promotionInterval, value: settings.promotionInterval.toDouble(),
+              min: 1, max: 15, step: 1, display: '${settings.promotionInterval} yr',
+              onChanged: (v) => cubit.setPromotionInterval(v.round()),
+              hint: s.hintPromotionInterval),
+            AppSlider(label: s.promotionIncrease, value: settings.promotionIncrease,
+              min: 0.05, max: 0.50, step: 0.05, display: Fmt.pct(settings.promotionIncrease),
+              onChanged: cubit.setPromotionIncrease,
+              hint: s.hintPromotionIncrease),
+          ],
+
+          if (settings.curve == GrowthCurve.logarithmic) ...[
+            AppSlider(label: s.salaryCap, value: settings.salaryCap,
+              min: 40000, max: 200000, step: 5000, display: Fmt.eur(settings.salaryCap),
+              onChanged: cubit.setSalaryCap,
+              hint: s.hintSalaryCap),
+          ],
+
+          // ─── PART-TIME PHASE ──────────────────────────────────
+          const Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.lg), child: Divider()),
+          Row(
+            children: [
+              SizedBox(
+                height: 24, width: 36,
+                child: Switch(
+                  value: settings.hasPartTime,
+                  onChanged: (v) {
+                    if (v) {
+                      cubit.setPartTimeStartYear(5);
+                      cubit.setPartTimeDuration(3);
+                    } else {
+                      cubit.setPartTimeStartYear(null);
+                    }
+                  },
+                  activeThumbColor: AppColors.accent,
+                  activeTrackColor: AppColors.accentLight,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(child: Text(s.partTimeToggle.toUpperCase(),
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
+                  color: AppColors.label, letterSpacing: 0.3))),
+            ],
+          ),
+          Text(s.hintPartTime,
+            style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
+          if (settings.hasPartTime) ...[
+            const SizedBox(height: AppSpacing.lg),
+            AppSlider(label: s.partTimeStart, value: (settings.partTimeStartYear ?? 5).toDouble(),
+              min: 0, max: (spardauer - 1).toDouble().clamp(1, 45), step: 1,
+              display: '${settings.partTimeStartYear ?? 5}',
+              onChanged: (v) => cubit.setPartTimeStartYear(v.round()),
+              hint: s.hintPartTimeStart),
+            AppSlider(label: s.partTimeDuration, value: settings.partTimeDuration.toDouble(),
+              min: 1, max: 10, step: 1, display: '${settings.partTimeDuration} yr',
+              onChanged: (v) => cubit.setPartTimeDuration(v.round()),
+              hint: s.hintPartTimeDuration),
+            AppSlider(label: s.partTimePercent, value: settings.partTimePercent,
+              min: 0.2, max: 0.8, step: 0.1, display: Fmt.pct(settings.partTimePercent),
+              onChanged: cubit.setPartTimePercent,
+              hint: s.hintPartTimePercent),
+          ],
+
+          // ─── CHILD ARRIVAL TIMING ─────────────────────────────
+          const Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.lg), child: Divider()),
+          Text(s.childTimingLabel.toUpperCase(),
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
+              color: AppColors.label, letterSpacing: 0.3)),
+          Text(s.hintChildTiming,
+            style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
           const SizedBox(height: AppSpacing.md),
-          AppSlider(
-            label: s.incomeDevGrowthRate,
-            value: growthRate,
-            min: 0.0, max: 0.08, step: 0.005,
-            display: Fmt.pct(growthRate),
-            onChanged: onGrowthChanged,
+          ...settings.childArrivalYears.asMap().entries.map((e) =>
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: AppSlider(
+                      label: '${s.childTimingLabel} ${e.key + 1}',
+                      value: e.value.toDouble(),
+                      min: 0, max: (spardauer - 1).toDouble().clamp(1, 45), step: 1,
+                      display: s.childArrivalLabel(e.value),
+                      onChanged: (v) => cubit.updateChildArrivalYear(e.key, v.round()),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => cubit.removeChildArrivalYear(e.key),
+                    child: const Padding(
+                      padding: EdgeInsets.only(left: AppSpacing.sm),
+                      child: Icon(Icons.close, size: 16, color: AppColors.danger),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () => cubit.addChildArrivalYear(
+              settings.childArrivalYears.isEmpty ? 3 : (settings.childArrivalYears.last + 3).clamp(0, spardauer - 1)),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.chip),
+                border: Border.all(color: AppColors.accent),
+              ),
+              child: Text(s.addChildBtn,
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.accent)),
+            ),
           ),
         ],
       ],
+    );
+  }
+
+  Widget _curveChip(String label, GrowthCurve curve) {
+    final selected = settings.curve == curve;
+    return GestureDetector(
+      onTap: () => cubit.setGrowthCurve(curve),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.accent : AppColors.card,
+          borderRadius: BorderRadius.circular(AppRadius.chip),
+          border: Border.all(color: selected ? AppColors.accent : AppColors.border),
+        ),
+        child: Text(label, style: TextStyle(
+          fontSize: 11, fontWeight: FontWeight.w600,
+          color: selected ? Colors.white : AppColors.label)),
+      ),
     );
   }
 }

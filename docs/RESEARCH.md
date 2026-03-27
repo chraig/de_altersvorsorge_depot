@@ -283,36 +283,52 @@ For j = 0 to Spardauer - 1:
   Brutto_j = IncomeDev.bruttoForYear(Brutto, j)  // static or growing
   Grenzsteuersatz_j = Grenzsteuersatz(Brutto_j)
   Zulage_j = Zulage(j)                           // uses Brutto_j for Geringverdienerbonus
+  // Sonderausgabenabzug capped at min(Jahresbeitrag, 1800) + Zulagen (§10a EStG-E)
   Günstigerprüfung:
-    Steuerersparnis = (Jahresbeitrag + Zulage_j) × Grenzsteuersatz_j
+    CappedBeitrag = min(Jahresbeitrag, 1800)
+    Steuerersparnis = (CappedBeitrag + Zulage_j) × Grenzsteuersatz_j
     Zusätzlich = max(0, Steuerersparnis - Zulage_j)  // → Girokonto, NOT depot
-  Zufluss = Jahresbeitrag + Zulage_j               // own contribution + subsidies → depot
-  Depot = (Depot + Zufluss) × (1 + Rendite - KostenAV)
+
+  // Gefördert bucket: subsidized portion (up to €1,800/yr + subsidies)
+  JB_Gefördert = min(Jahresbeitrag, 1800)
+  JB_Ungefördert = min(Jahresbeitrag, 6840) - JB_Gefördert  // max €6,840/yr per contract
+  Depot_Gefördert = (Depot_Gefördert + JB_Gefördert + Zulage_j) × (1 + Rendite - KostenAV)
+  Depot_Ungefördert = (Depot_Ungefördert + JB_Ungefördert) × (1 + Rendite - KostenAV)
+  Depot = Depot_Gefördert + Depot_Ungefördert
 ```
 
 ### AV-Depot Payout
 
+Two tax regimes apply depending on whether contributions were subsidized:
+
 ```
 Auszahlungsdauer = (85 - Rentenalter), clamped to 5–30 years
   // 85 = CalcConstants.payoutEndAge (§89 Abs. 8 EStG-E)
-Monatlich_Brutto = Depot / (Auszahlungsdauer × 12)  // [EUR → EUR/month] output conversion
 
-// Pension estimation for retirement tax calculation:
+// ── Pension estimation for retirement tax calculation ──
 If manual override set:
   EffectiveRente = gesetzlicheRenteOverride         // [EUR/month]
 Else if income development enabled:
   TotalEP = Σ min(Brutto_j, BBG) / Durchschnittsentgelt  // accumulated per year
     + preSavingsYears × min(Brutto, BBG) / Durchschnittsentgelt
   EffectiveRente = TotalEP × Rentenwert             // [EUR/month]
-  // BBG = 90,600 | Durchschnittsentgelt = 45,358 | Rentenwert = 39.32 | Arbeitsbeginn = 25
 Else:
-  EffectiveRente = geschaetzteRente                 // static estimate from PersonalScenario
+  EffectiveRente = geschaetzteRente                 // static estimate
 
-// Retirement tax based on combined retirement income:
-AV_Jahresauszahlung = Depot / Auszahlungsdauer      // [EUR/year]
-Renteneinkommen = AV_Jahresauszahlung + EffectiveRente × 12 + SonstigeEinkünfte  // all [EUR/year]
+// ── Gefördert: nachgelagerte Besteuerung (100% of payout taxed as income) ──
+Monatlich_Gefördert = Depot_Gefördert / (Auszahlungsdauer × 12)
+Renteneinkommen = (Depot_Gefördert / Auszahlungsdauer) + EffectiveRente × 12 + Sonstige
 Steuersatz_Rente = Grenzsteuersatz(Renteneinkommen) × (1 + Kirchensteuer)
-Monatlich_Netto = Monatlich_Brutto × (1 - Steuersatz_Rente)
+Netto_Gefördert = Monatlich_Gefördert × (1 - Steuersatz_Rente)
+
+// ── Ungefördert: Halbeinkünfteverfahren (50% of gains taxed, §20 Abs. 1 Nr. 6) ──
+// Conditions: contract 12+ years, contributions 5+ years (assumed met for long savings)
+Monatlich_Ungefördert = Depot_Ungefördert / (Auszahlungsdauer × 12)
+Gewinn_Anteil = (Depot_Ungefördert - Σ JB_Ungefördert) / Depot_Ungefördert
+Steuerpflichtig = Monatlich_Ungefördert × Gewinn_Anteil × 50%
+Netto_Ungefördert = Monatlich_Ungefördert - Steuerpflichtig × Steuersatz_Rente × (1 + KiSt)
+
+Monatlich_Netto = Netto_Gefördert + Netto_Ungefördert
 
 Note: Uses marginal rate (overstates tax vs. actual average rate). See Design Decisions.
 ```
@@ -320,7 +336,8 @@ Note: Uses marginal rate (overstates tax vs. actual average rate). See Design De
 ### ETF-Depot Year-by-Year Accumulation
 
 ```
-VorabpauschaleDrag = 0.002                          // simplified annual drag (CalcConstants)
+VorabpauschaleDrag = 0.003                          // simplified annual drag (CalcConstants)
+  // Based on Basiszins ~2.3-3.2% (2024-2026). Effective: Basiszins × 0.7 × 0.70 × 0.26375
 
 For j = 0 to Spardauer - 1:
   Depot = (Depot + Jahresbeitrag) × (1 + Rendite - KostenETF - VorabpauschaleDrag)

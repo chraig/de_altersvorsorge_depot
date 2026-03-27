@@ -36,7 +36,11 @@ class GermanTax2024 implements TaxModule {
   @override
   ({double steuerersparnis, double zusaetzlich, bool vorteil})
   calcGuenstigerpruefung(double jahresbeitrag, double zulageTotal, double grenzsteuersatz) {
-    final gesamtBeitrag = jahresbeitrag + zulageTotal;
+    // Sonderausgabenabzug is capped at min(Jahresbeitrag, 1800) + Zulagen
+    // per §10a EStG-E and BMF FAQ. Contributions above €1,800 are not deductible.
+    final cappedBeitrag = jahresbeitrag < CalcConstants.grundzulageMaxBeitrag
+        ? jahresbeitrag : CalcConstants.grundzulageMaxBeitrag;
+    final gesamtBeitrag = cappedBeitrag + zulageTotal;
     final steuerersparnis = gesamtBeitrag * grenzsteuersatz;
     final zusaetzlich = steuerersparnis > zulageTotal ? steuerersparnis - zulageTotal : 0.0;
     return (steuerersparnis: steuerersparnis, zusaetzlich: zusaetzlich, vorteil: steuerersparnis > zulageTotal);

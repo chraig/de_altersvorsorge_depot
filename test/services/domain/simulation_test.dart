@@ -134,7 +134,7 @@ void main() {
       final etf = engine.simulateETF(person: p, macro: m, costs: costs);
 
       final jb = 1200.0;
-      final nettoRendite = 0.07 - 0.002 - 0.002; // rendite - kostenETF - vorabpauschale
+      final nettoRendite = 0.07 - 0.002 - CalcConstants.vorabpauschaleDrag; // rendite - kostenETF - vorabpauschale
       final expected = jb * (1 + nettoRendite);
       expect(etf.endkapital, closeTo(expected, 1));
       expect(etf.eigenBeitraege, closeTo(jb, 0.01));
@@ -224,6 +224,60 @@ void main() {
 
       // Growing income → higher Grenzsteuersatz → higher Günstigerprüfung refund
       expect(avGrow.steuererstattungGesamt, greaterThanOrEqualTo(avStatic.steuererstattungGesamt));
+    });
+
+    test('stepwise curve flows through full AV simulation', () {
+      final p = makePerson(sparrate: 100, brutto: 35000, alterStart: 25, spardauer: 30);
+      final m = makeMacro();
+      const dev = IncomeDevSettings(
+        enabled: true, curve: GrowthCurve.stepwise,
+        promotionInterval: 5, promotionIncrease: 0.15,
+      );
+      final av = engine.simulateAV(person: p, macro: m, costs: CostSettings(), incomeDev: dev);
+      expect(av.endkapital, greaterThan(0));
+      expect(av.jahresWerte.length, 30);
+      // Stepwise growth should produce higher refund than static (promotions → higher tax bracket)
+      final avStatic = engine.simulateAV(person: p, macro: m, costs: CostSettings());
+      expect(av.steuererstattungGesamt, greaterThanOrEqualTo(avStatic.steuererstattungGesamt));
+    });
+
+    test('logarithmic curve flows through full AV simulation', () {
+      final p = makePerson(sparrate: 100, brutto: 35000, alterStart: 25, spardauer: 30);
+      final m = makeMacro();
+      const dev = IncomeDevSettings(
+        enabled: true, curve: GrowthCurve.logarithmic, salaryCap: 80000,
+      );
+      final av = engine.simulateAV(person: p, macro: m, costs: CostSettings(), incomeDev: dev);
+      expect(av.endkapital, greaterThan(0));
+    });
+
+    test('part-time phase reduces AV subsidies during that period', () {
+      final p = makePerson(sparrate: 50, brutto: 50000, alterStart: 30, spardauer: 20);
+      final m = makeMacro();
+      const devNoPt = IncomeDevSettings(enabled: true, curve: GrowthCurve.linear, growthRate: 0.02);
+      const devPt = IncomeDevSettings(
+        enabled: true, curve: GrowthCurve.linear, growthRate: 0.02,
+        partTimeStartYear: 5, partTimeDuration: 3, partTimePercent: 0.5,
+      );
+      final avNoPt = engine.simulateAV(person: p, macro: m, costs: CostSettings(), incomeDev: devNoPt);
+      final avPt = engine.simulateAV(person: p, macro: m, costs: CostSettings(), incomeDev: devPt);
+      // Part-time reduces income → may qualify for Geringverdienerbonus in those years
+      // or reduce Günstigerprüfung → different total
+      expect(avPt.steuererstattungGesamt, isNot(avNoPt.steuererstattungGesamt));
+    });
+
+    test('child arrival increases Kinderzulage mid-simulation', () {
+      final p = makePerson(sparrate: 100, brutto: 45000, kinder: 0, alterStart: 30, spardauer: 20);
+      final m = makeMacro();
+      const devNoChild = IncomeDevSettings(enabled: true, curve: GrowthCurve.linear, growthRate: 0.02);
+      const devChild = IncomeDevSettings(
+        enabled: true, curve: GrowthCurve.linear, growthRate: 0.02,
+        childArrivalYears: [3],
+      );
+      final avNo = engine.simulateAV(person: p, macro: m, costs: CostSettings(), incomeDev: devNoChild);
+      final avChild = engine.simulateAV(person: p, macro: m, costs: CostSettings(), incomeDev: devChild);
+      // Child arriving at year 3 → Kinderzulage from year 3 onward → more total subsidies
+      expect(avChild.zulagenGesamt, greaterThan(avNo.zulagenGesamt));
     });
   });
 

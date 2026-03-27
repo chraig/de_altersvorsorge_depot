@@ -24,6 +24,9 @@ class CalcConstants {
   static const double grundzulageStufe2Rate = 0.25;
   /// Maximum subsidized contribution: €1,800/yr. Above this, no subsidy.
   static const double grundzulageMaxBeitrag = 1800.0;
+  /// Maximum total contribution per contract: €6,840/yr (BMF FAQ).
+  /// Contributions above this are not allowed in the AV-Depot.
+  static const double maxBeitragProVertrag = 6840.0;
 
   // ─── KINDERZULAGE (§89 Abs. 2 EStG-E) ─────────────────────────
   /// Max €300 per child per year, 1:1 match on own contributions
@@ -66,12 +69,18 @@ class CalcConstants {
   /// Partial exemption for equity funds (≥51% equity): 30% of gains tax-free
   static const double teilfreistellung = 0.30;
   /// Simplified annual Vorabpauschale drag on ETF returns.
-  /// Reality: depends on Basiszins (ECB reference rate × 0.7). This is an approximation.
-  static const double vorabpauschaleDrag = 0.002;
+  /// Formula: Basiszins × 0.7 × 0.70 (Teilfreistellung) × 0.26375 (AbgSt+Soli).
+  /// At Basiszins 2.29% (2024): effective ~0.30%. At 3.20% (2026): ~0.41%.
+  /// Using 0.30% as a reasonable mid-range approximation.
+  static const double vorabpauschaleDrag = 0.003;
 
   // ─── PAYOUT PHASE ─────────────────────────────────────────────
   /// Auszahlplan must run until this age (§89 Abs. 8 EStG-E)
   static const int payoutEndAge = 85;
+  /// Halbeinkünfteverfahren: only 50% of gains are taxed at personal income rate.
+  /// Applies to ungeförderte AV-Depot Auszahlplan if contract ran 12+ years
+  /// and contributions were made for 5+ years (§20 Abs. 1 Nr. 6 EStG).
+  static const double halbeinkunfteAnteil = 0.50;
 
   // ─── PENSION ESTIMATION (Deutsche Rentenversicherung) ──────────
   /// EUR per Entgeltpunkt per month (West Germany, July 2024).
@@ -149,10 +158,17 @@ class SimulationEngine {
     IncomeDevSettings incomeDev = const IncomeDevSettings(),
   }) {
     final jb = person.jahresbeitrag;
+    // Cap total contribution at max per contract (€6,840/yr)
+    final jbCapped = jb < CalcConstants.maxBeitragProVertrag ? jb : CalcConstants.maxBeitragProVertrag;
+    // Split into gefördert (up to €1,800) and ungefördert (above)
+    final jbGefoerdert = jbCapped < CalcConstants.grundzulageMaxBeitrag ? jbCapped : CalcConstants.grundzulageMaxBeitrag;
+    final jbUngefoerdert = jbCapped - jbGefoerdert;
     final nettoRendite = macro.rendite - costs.kostenAV;
 
     // ── Accumulation phase ──────────────────────────────────────
-    double depot = 0;
+    // Two buckets grow in the same depot but tracked separately for payout tax.
+    double depotGefoerdert = 0; // subsidized bucket: full nachgelagerte Besteuerung
+    double depotUngefoerdert = 0; // unsubsidized bucket: Ertragsanteilbesteuerung
     double eigenBeitraege = 0;
     double zulagenGesamt = 0;
     double steuererstattungGesamt = 0;
@@ -161,17 +177,23 @@ class SimulationEngine {
     for (int j = 0; j < person.spardauer; j++) {
       final alter = person.alterStart + j;
       final bruttoJ = incomeDev.bruttoForYear(person.brutto, j);
+      final kinderJ = incomeDev.kinderAtYear(person.kinder, j);
       final gstJ = tax.getGrenzsteuersatz(bruttoJ);
-      final z = subsidy.calcZulage(jb, person.kinder, alter, j, bruttoJ);
-      final gp = tax.calcGuenstigerpruefung(jb, z.total, gstJ);
+      final z = subsidy.calcZulage(jbGefoerdert, kinderJ, alter, j, bruttoJ);
+      final gp = tax.calcGuenstigerpruefung(jbGefoerdert, z.total, gstJ);
 
-      final zufluss = jb + z.total;
-      depot = (depot + zufluss) * (1 + nettoRendite);
+      // Gefördert bucket: contribution + subsidies
+      depotGefoerdert = (depotGefoerdert + jbGefoerdert + z.total) * (1 + nettoRendite);
+      // Ungefördert bucket: excess contribution only
+      if (jbUngefoerdert > 0) {
+        depotUngefoerdert = (depotUngefoerdert + jbUngefoerdert) * (1 + nettoRendite);
+      }
 
-      eigenBeitraege += jb;
+      eigenBeitraege += jbCapped;
       zulagenGesamt += z.total;
       steuererstattungGesamt += gp.zusaetzlich;
 
+      final depot = depotGefoerdert + depotUngefoerdert;
       jahresWerte.add(YearlyDataPoint(
         year: j + 1,
         alter: alter + 1,
@@ -184,18 +206,34 @@ class SimulationEngine {
     }
 
     // ── Payout phase ────────────────────────────────────────────
+    final depot = depotGefoerdert + depotUngefoerdert;
     final auszahlungsDauer = person.auszahlungsDauer;
-    final monatlich = depot / (auszahlungsDauer * 12);
 
-    // ── Retirement tax on combined income ───────────────────────
+    // Gefördert: full nachgelagerte Besteuerung (100% of payout taxed as income)
     final effectiveRente = pension.estimateMonthlyPension(person, incomeDev);
-    final avJahresAuszahlung = depot / auszahlungsDauer;
-    final rentenEinkommen = avJahresAuszahlung
-        + effectiveRente * 12
-        + person.sonstigeEinkuenfte;
+    final monatlichGefoerdert = depotGefoerdert / (auszahlungsDauer * 12);
+    final jahresGefoerdert = depotGefoerdert / auszahlungsDauer;
+    final rentenEinkommen = jahresGefoerdert + effectiveRente * 12 + person.sonstigeEinkuenfte;
     final gstRente = tax.getGrenzsteuersatz(rentenEinkommen);
     final kirchensteuerFaktor = 1 + costs.kirchensteuer;
-    final netto = monatlich * (1 - gstRente * kirchensteuerFaktor);
+    final nettoGefoerdert = monatlichGefoerdert * (1 - gstRente * kirchensteuerFaktor);
+
+    // Ungefördert: Halbeinkünfteverfahren — 50% of gains taxed at personal rate.
+    // Requires: contract 12+ years, 5+ years contributions (§20 Abs. 1 Nr. 6 EStG).
+    // We assume these conditions are met for typical long-term savings.
+    double nettoUngefoerdert = 0;
+    if (depotUngefoerdert > 0) {
+      final monatlichUngef = depotUngefoerdert / (auszahlungsDauer * 12);
+      final eigenAnteilUngef = jbUngefoerdert * person.spardauer; // total unsubsidized contributions
+      final gewinnAnteil = depotUngefoerdert > eigenAnteilUngef
+          ? (depotUngefoerdert - eigenAnteilUngef) / depotUngefoerdert
+          : 0.0;
+      final taxableUngef = monatlichUngef * gewinnAnteil * CalcConstants.halbeinkunfteAnteil;
+      nettoUngefoerdert = monatlichUngef - taxableUngef * gstRente * kirchensteuerFaktor;
+    }
+
+    final monatlich = monatlichGefoerdert + (depotUngefoerdert > 0 ? depotUngefoerdert / (auszahlungsDauer * 12) : 0);
+    final netto = nettoGefoerdert + nettoUngefoerdert;
 
     return AVResult(
       endkapital: depot,

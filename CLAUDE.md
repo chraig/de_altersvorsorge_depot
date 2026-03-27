@@ -184,8 +184,9 @@ All methods are pure — no side effects, no state. Each module can be replaced 
 
 1. Never modify files outside `lib/` and `test/` without asking
 2. Never remove existing tests unless explicitly instructed
-3. Always run tests after implementation changes
+3. **All tests must pass before committing** — run `flutter test` after every implementation change. Do not commit if tests fail. Add new tests for new functionality.
 4. Follow existing code patterns in the project
 5. Always use fully qualified `package:avdepot_rechner/` imports
-6. Use English (en) locale as default for initial app state
+6. Use German (de) locale as default for initial app state
 7. Never mention AI involvement in commit messages, code comments, or documentation
+8. **Evaluate new functionality for modularization** — if a new feature has distinct logic (e.g., a different tax system, subsidy regime, or estimation method), implement it as a separate module with an abstract interface, not inline in existing code

@@ -49,7 +49,7 @@ Located in: `lib/services/domain/calculator_service.dart`
 | Abgeltungssteuersatz | 26.3750% (default) | §43a + §4 SolZG | `CostSettings.abgeltungssteuersatz` |
 | Kirchensteuer | 0% / 8% / 9% | Toggle in Advanced Settings | `CostSettings.kirchensteuer` |
 | Teilfreistellung Aktienfonds | 30% | §20 InvStG | `simulateETF()` |
-| Vorabpauschale drag | 0.2% p.a. | Simplified estimate | `simulateETF()` |
+| Vorabpauschale drag | 0.3% p.a. | Simplified (Basiszins ~2.3-3.2%) | `simulateETF()` |
 | Retirement tax factor | 0.7× working rate | Simplification | `simulateAV()` |
 
 ### To update tax brackets:

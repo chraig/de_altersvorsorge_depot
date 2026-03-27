@@ -157,7 +157,7 @@ Rate: 26.3750% (25% + 5.5% Soli)
 With 8% Kirchensteuer (Bayern/BaWü): 27.8186%
 With 9% Kirchensteuer (other states):  27.9951%
 Teilfreistellung: 30% for Aktien-ETFs (≥51% equity)
-Vorabpauschale drag: ~0.2% p.a. (simplified)
+Vorabpauschale drag: ~0.3% p.a. (simplified, based on Basiszins ~2.3-3.2%)
 // Kirchensteuer is configurable via Advanced Settings toggle
 ```
 
@@ -303,7 +303,7 @@ Payout phase (20 years, age 65–85):
 ```
 For each year j = 0 ... spardauer-1:
   1. depot = (depot + jahresbeitrag) × (1 + rendite - kosten_etf - 0.002)
-     → 0.002 = simplified Vorabpauschale drag
+     → 0.003 = simplified Vorabpauschale drag (Basiszins ~2.3-3.2%)
 
 Payout phase:
   gewinn = depot - eigenbeitraege
@@ -322,7 +322,7 @@ Payout phase:
 | Tax brackets | Static (2024 values) | Adjusted ~annually |
 | Kirchensteuer | Optional toggle (0%/8%/9%) | Affects both AV payout tax and Abgeltungssteuer |
 | Soli | Included in base rate | May change |
-| Vorabpauschale | Fixed 0.2% drag | Depends on Basiszins |
+| Vorabpauschale | Fixed 0.3% drag | Depends on Basiszins (2.3-3.2% in 2024-2026) |
 | Retirement tax rate | Marginal rate on combined retirement income | Average rate would be lower; marginal overstates tax |
 | Günstigerprüfung refund | Not reinvested | Could be reinvested manually |
 | Quellensteuer on fund level | Not modeled | ~0.3% p.a. already in fund returns |
@@ -511,7 +511,7 @@ Recommended: Serve over **HTTPS** (enabled by default on most hosting providers)
 ## Known Limitations
 
 1. **Constant returns**: Real markets are volatile; sequence-of-returns risk is not modeled
-2. **Simplified Vorabpauschale**: Uses fixed 0.2% drag instead of actual Basiszins calculation
+2. **Simplified Vorabpauschale**: Uses fixed 0.3% drag (based on Basiszins ~2.3-3.2%) instead of actual yearly Basiszins calculation
 3. **No partial-year contributions**: Assumes full-year contributions from year 1
 4. **Retirement tax rate**: Uses marginal rate on combined retirement income (state pension + AV payout + other); average rate would be lower, so AV payout tax is slightly overstated
 5. **Günstigerprüfung refund not reinvested**: In practice, you could invest the tax refund in a separate ETF

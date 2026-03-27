@@ -51,6 +51,28 @@ abstract class AppStrings {
   String get incomeDevToggle;
   String get incomeDevGrowthRate;
   String get hintIncomeDev;
+  String get curveLinear;
+  String get curveStepwise;
+  String get curveLogarithmic;
+  String get promotionInterval;
+  String get promotionIncrease;
+  String get salaryCap;
+  String get partTimeToggle;
+  String get partTimeStart;
+  String get partTimeDuration;
+  String get partTimePercent;
+  String get hintGrowthLinear;
+  String get hintPromotionInterval;
+  String get hintPromotionIncrease;
+  String get hintSalaryCap;
+  String get hintPartTime;
+  String get hintPartTimeStart;
+  String get hintPartTimeDuration;
+  String get hintPartTimePercent;
+  String get hintChildTiming;
+  String get childTimingLabel;
+  String get addChildBtn;
+  String childArrivalLabel(int year);
   String get kirchensteuerLabel;
   String get kirchensteuerNone;
   String get kirchensteuerBayBw;
@@ -204,7 +226,6 @@ abstract class AppStrings {
   String get defaultScenarioName;
 
   // ─── INLINE LABELS ─────────────────────────────────────────────────
-  String get currentLabel;
   String get customName;
   String get customShort;
   String get customDesc;
@@ -297,7 +318,7 @@ class StringsEn extends AppStrings {
   String get hintLowIncomeBonus => '€175/yr extra if gross income ≤ €26,250. Paid into the depot.';
   String get hintSubsidyRate => 'Total subsidies as percentage of your own contribution. Higher = more government leverage.';
   String get hintTaxRefund => 'Paid to your bank account, not into the depot. Does not affect the comparison.';
-  String get hintMonthlySavings => 'Your monthly contribution to the depot. Subsidized up to €150/mo, above that unsubsidized.';
+  String get hintMonthlySavings => 'Your monthly contribution. Subsidized up to €150/mo (€1,800/yr). Max €570/mo (€6,840/yr) per contract. Above €150, no subsidy but preferential tax on payout.';
   String get hintGrossSalary => 'Your yearly gross income before taxes. Determines your tax rate and subsidy eligibility.';
   String get hintChildren => 'Number of children eligible for Kindergeld. Each child adds up to €300/yr subsidy.';
   String get hintStartingAge => 'Age when you start saving. Younger start = longer compounding.';
@@ -308,7 +329,29 @@ class StringsEn extends AppStrings {
   String get hintInflation => 'Expected annual inflation rate. Reduces purchasing power of future payouts.';
   String get incomeDevToggle => 'Model Income Growth';
   String get incomeDevGrowthRate => 'Annual Income Growth';
-  String get hintIncomeDev => 'When enabled, gross income grows annually at this rate. Affects subsidies, tax rate, and pension estimate year by year.';
+  String get hintIncomeDev => 'When enabled, gross income changes over time. Affects subsidies, tax rate, and pension estimate year by year.';
+  String get hintGrowthLinear => 'Income grows by this percentage every year (compound). E.g. 2% = typical inflation-adjusted raise.';
+  String get hintPromotionInterval => 'How often you expect a significant raise or promotion.';
+  String get hintPromotionIncrease => 'Percentage salary jump per promotion. E.g. 15% for a typical role change.';
+  String get hintSalaryCap => 'Income ceiling your career approaches over time. Growth slows as you near this value.';
+  String get hintPartTime => 'Model a period of reduced income, e.g. for parental leave or caring responsibilities.';
+  String get hintPartTimeStart => 'Savings year when part-time begins (0 = first year).';
+  String get hintPartTimeDuration => 'How many years the reduced income phase lasts.';
+  String get hintPartTimePercent => 'Your income during part-time as a fraction of full income. E.g. 50% = half-time.';
+  String get hintChildTiming => 'Add children at specific savings years. Each child adds up to €300/yr Kinderzulage from that year onward.';
+  String get curveLinear => 'Linear';
+  String get curveStepwise => 'Step-wise';
+  String get curveLogarithmic => 'Logarithmic';
+  String get promotionInterval => 'Promotion every';
+  String get promotionIncrease => 'Promotion raise';
+  String get salaryCap => 'Income ceiling';
+  String get partTimeToggle => 'Part-time phase';
+  String get partTimeStart => 'Starts in year';
+  String get partTimeDuration => 'Duration';
+  String get partTimePercent => 'Income during part-time';
+  String get childTimingLabel => 'Child arrival';
+  String get addChildBtn => '+ Child';
+  String childArrivalLabel(int year) => 'Child arrives in savings year $year';
   String get kirchensteuerLabel => 'Church Tax';
   String get kirchensteuerNone => 'None';
   String get kirchensteuerBayBw => '8% (Bavaria/BaWü)';
@@ -413,7 +456,7 @@ class StringsEn extends AppStrings {
   String get proGuenstigerpruefung => 'Tax optimization check yields additional refund';
   String get proLongDuration => 'Long savings duration – subsidies compound over decades';
   String get proTaxFreeGrowth => 'Tax-free growth during accumulation (no Vorabpauschale, no capital gains tax)';
-  String get conLowSubsidyLeverage => 'Contributions above €150/mo receive no subsidy – but entire payout is taxed';
+  String get conLowSubsidyLeverage => 'Contributions above €150/mo receive no subsidy. Subsidized portion fully taxed at income rate; unsubsidized portion taxed more favorably.';
   String get conHighRetirementTax => 'High marginal tax rate – deferred taxation at high rate reduces advantage';
   String get proEtfOnlyGainsTaxed => 'Only gains are taxed – your contributions are returned tax-free';
   String get proEtfTeilfreistellung => '30% partial exemption (Teilfreistellung) reduces taxable gains';
@@ -444,7 +487,7 @@ class StringsEn extends AppStrings {
     '▸ Günstigerprüfung (automatic tax optimization check)\n'
     '▸ Kirchensteuer (optional: None / 8% / 9%)\n'
     '▸ Abgeltungssteuer with 30% Teilfreistellung for ETF\n'
-    '▸ Vorabpauschale (simplified as 0.2% annual drag)\n'
+    '▸ Vorabpauschale (simplified as 0.3% annual drag)\n'
     '▸ Nachgelagerte Besteuerung (deferred taxation on AV-Depot payouts)\n'
     '▸ 6 macro scenario presets + custom scenarios\n'
     '▸ 5 personal scenario presets + custom input';
@@ -453,7 +496,7 @@ class StringsEn extends AppStrings {
     'Both: Constant annual returns (no sequence-of-returns risk)\n'
     'Both: No partial-year contributions\n'
     'Both: Fund-level withholding tax (~0.3% p.a.) not separately modeled\n'
-    'ETF: Vorabpauschale simplified as 0.2% annual drag (actual depends on Basiszins)\n'
+    'ETF: Vorabpauschale simplified as 0.3% annual drag (actual depends on Basiszins)\n'
     'AV: Retirement tax uses marginal rate on combined income (slightly overstates tax vs. actual average rate)\n'
     'AV: Günstigerprüfung tax refund paid to bank account, not reinvested\n'
     'AV: State pension estimated from gross income (Entgeltpunkte formula, 2024 Rentenwert) – adjustable';
@@ -537,7 +580,6 @@ class StringsEn extends AppStrings {
   String get defaultScenarioName => 'New Scenario';
 
   // Inline labels
-  String get currentLabel => 'Current';
   String get customName => 'Custom';
   String get customShort => 'Custom';
   String get customDesc => 'Manually configured';
@@ -618,7 +660,7 @@ class StringsDe extends AppStrings {
   String get hintLowIncomeBonus => '175 €/J extra bei Bruttoeinkommen ≤ 26.250 €. Fließt ins Depot.';
   String get hintSubsidyRate => 'Gesamtzulagen als Prozentsatz Ihres Eigenbeitrags. Höher = mehr staatliche Hebelwirkung.';
   String get hintTaxRefund => 'Wird auf Ihr Bankkonto ausgezahlt, nicht ins Depot. Beeinflusst den Vergleich nicht.';
-  String get hintMonthlySavings => 'Ihr monatlicher Beitrag ins Depot. Gefördert bis 150 €/Mt, darüber ungefördert.';
+  String get hintMonthlySavings => 'Ihr monatlicher Beitrag. Gefördert bis 150 €/Mt (1.800 €/J). Max 570 €/Mt (6.840 €/J) pro Vertrag. Über 150 € keine Zulage, aber begünstigte Besteuerung bei Auszahlung.';
   String get hintGrossSalary => 'Ihr jährliches Bruttoeinkommen vor Steuern. Bestimmt Ihren Steuersatz und die Förderberechtigung.';
   String get hintChildren => 'Anzahl kindergeldberechtigter Kinder. Jedes Kind bringt bis zu 300 €/Jahr Zulage.';
   String get hintStartingAge => 'Alter beim Start des Sparens. Früherer Start = längerer Zinseszins.';
@@ -629,7 +671,29 @@ class StringsDe extends AppStrings {
   String get hintInflation => 'Erwartete jährliche Inflationsrate. Mindert die Kaufkraft zukünftiger Auszahlungen.';
   String get incomeDevToggle => 'Einkommensentwicklung modellieren';
   String get incomeDevGrowthRate => 'Jährliches Einkommenswachstum';
-  String get hintIncomeDev => 'Wenn aktiviert, wächst das Bruttoeinkommen jährlich um diesen Satz. Beeinflusst Zulagen, Steuersatz und Rentenschätzung pro Jahr.';
+  String get hintIncomeDev => 'Wenn aktiviert, verändert sich das Bruttoeinkommen über die Zeit. Beeinflusst Zulagen, Steuersatz und Rentenschätzung pro Jahr.';
+  String get hintGrowthLinear => 'Einkommen wächst jährlich um diesen Prozentsatz (Zinseszins). Z.B. 2 % = typische inflationsbereinigte Erhöhung.';
+  String get hintPromotionInterval => 'Wie oft Sie eine deutliche Gehaltserhöhung oder Beförderung erwarten.';
+  String get hintPromotionIncrease => 'Prozentualer Gehaltssprung pro Beförderung. Z.B. 15 % bei typischem Rollenwechsel.';
+  String get hintSalaryCap => 'Einkommensobergrenze, der sich Ihre Karriere über die Zeit annähert. Wachstum verlangsamt sich in der Nähe.';
+  String get hintPartTime => 'Modelliert eine Phase mit reduziertem Einkommen, z.B. Elternzeit oder Pflegezeit.';
+  String get hintPartTimeStart => 'Sparjahr, in dem die Teilzeit beginnt (0 = erstes Jahr).';
+  String get hintPartTimeDuration => 'Wie viele Jahre die Phase mit reduziertem Einkommen dauert.';
+  String get hintPartTimePercent => 'Ihr Einkommen in Teilzeit als Anteil des Vollzeiteinkommens. Z.B. 50 % = Halbtagsstelle.';
+  String get hintChildTiming => 'Fügen Sie Kinder zu bestimmten Sparjahren hinzu. Jedes Kind bringt ab diesem Jahr bis zu 300 €/Jahr Kinderzulage.';
+  String get curveLinear => 'Linear';
+  String get curveStepwise => 'Stufenweise';
+  String get curveLogarithmic => 'Logarithmisch';
+  String get promotionInterval => 'Beförderung alle';
+  String get promotionIncrease => 'Gehaltssprung';
+  String get salaryCap => 'Einkommensobergrenze';
+  String get partTimeToggle => 'Teilzeitphase';
+  String get partTimeStart => 'Beginnt im Jahr';
+  String get partTimeDuration => 'Dauer';
+  String get partTimePercent => 'Einkommen in Teilzeit';
+  String get childTimingLabel => 'Kindergeburten';
+  String get addChildBtn => '+ Kind';
+  String childArrivalLabel(int year) => 'Kind kommt im Sparjahr $year';
   String get kirchensteuerLabel => 'Kirchensteuer';
   String get kirchensteuerNone => 'Keine';
   String get kirchensteuerBayBw => '8 % (Bayern/BaWü)';
@@ -727,7 +791,7 @@ class StringsDe extends AppStrings {
   String get proGuenstigerpruefung => 'Günstigerprüfung bringt zusätzliche Steuererstattung';
   String get proLongDuration => 'Lange Spardauer – Zulagen verzinsen sich über Jahrzehnte';
   String get proTaxFreeGrowth => 'Steuerfreies Wachstum in der Ansparphase (keine Vorabpauschale, keine Abgeltungssteuer)';
-  String get conLowSubsidyLeverage => 'Beiträge über 150 €/Monat erhalten keine Zulage – aber die gesamte Auszahlung wird versteuert';
+  String get conLowSubsidyLeverage => 'Beiträge über 150 €/Mt erhalten keine Zulage. Geförderter Teil wird voll mit Einkommensteuer besteuert; ungeförderter Teil begünstigt (Ertragsanteil).';
   String get conHighRetirementTax => 'Hoher Grenzsteuersatz – nachgelagerte Besteuerung zu hohem Satz mindert den Vorteil';
   String get proEtfOnlyGainsTaxed => 'Nur Gewinne werden besteuert – Ihre Einzahlungen erhalten Sie steuerfrei zurück';
   String get proEtfTeilfreistellung => '30 % Teilfreistellung reduziert die steuerpflichtigen Gewinne';
@@ -756,7 +820,7 @@ class StringsDe extends AppStrings {
     '▸ Günstigerprüfung (automatische Steueroptimierung)\n'
     '▸ Kirchensteuer (optional: Keine / 8 % / 9 %)\n'
     '▸ Abgeltungssteuer mit 30 % Teilfreistellung für ETF\n'
-    '▸ Vorabpauschale (vereinfacht als 0,2 % jährlicher Abzug)\n'
+    '▸ Vorabpauschale (vereinfacht als 0,3 % jährlicher Abzug)\n'
     '▸ Nachgelagerte Besteuerung der AV-Depot-Auszahlungen\n'
     '▸ 6 Makro-Szenarien + eigene Szenarien\n'
     '▸ 5 persönliche Szenarien + freie Eingabe';
@@ -765,7 +829,7 @@ class StringsDe extends AppStrings {
     'Beide: Konstante jährliche Rendite (kein Reihenfolge-Risiko)\n'
     'Beide: Keine unterjährigen Beiträge\n'
     'Beide: Quellensteuer auf Fondsebene (~0,3 % p.a.) nicht separat modelliert\n'
-    'ETF: Vorabpauschale vereinfacht als 0,2 % jährlicher Abzug (tatsächlich abhängig vom Basiszins)\n'
+    'ETF: Vorabpauschale vereinfacht als 0,3 % jährlicher Abzug (tatsächlich abhängig vom Basiszins)\n'
     'AV: Grenzsteuersatz auf Gesamteinkommen im Ruhestand (überschätzt Steuer leicht ggü. tatsächlichem Durchschnittssteuersatz)\n'
     'AV: Günstigerprüfung-Erstattung wird auf Bankkonto ausgezahlt, nicht reinvestiert\n'
     'AV: Gesetzl. Rente aus Bruttoeinkommen geschätzt (Entgeltpunkte-Formel, Rentenwert 2024) – anpassbar';
@@ -846,7 +910,6 @@ class StringsDe extends AppStrings {
   String get fieldDuration => 'Spardauer (Jahre)';
   String get defaultScenarioName => 'Neues Szenario';
 
-  String get currentLabel => 'Aktuell';
   String get customName => 'Eigene Werte';
   String get customShort => 'Eigen';
   String get customDesc => 'Manuell eingestellt';
