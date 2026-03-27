@@ -523,22 +523,28 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
     final jbGef = jbCapped < CalcConstants.grundzulageMaxBeitrag ? jbCapped : CalcConstants.grundzulageMaxBeitrag;
     final jbUngef = jbCapped - jbGef;
 
-    Widget rule(String label, String value) => Padding(
-      padding: const EdgeInsets.only(bottom: 3),
+    Widget check(bool active, String label, [String? detail]) => Padding(
+      padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('• ', style: const TextStyle(fontSize: 10, color: AppColors.muted)),
-          Expanded(child: RichText(text: TextSpan(children: [
-            TextSpan(text: '$label: ', style: const TextStyle(fontSize: 10, color: AppColors.label)),
-            TextSpan(text: value, style: AppTheme.monoSmall.copyWith(fontSize: 10, fontWeight: FontWeight.w600)),
-          ]))),
+          Text(active ? '✓ ' : '✗ ', style: TextStyle(fontSize: 11,
+            color: active ? AppColors.success : AppColors.muted, fontWeight: FontWeight.w700)),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: TextStyle(fontSize: 10,
+                color: active ? AppColors.text : AppColors.muted,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w400)),
+              if (detail != null) Text(detail, style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
+            ],
+          )),
         ],
       ),
     );
 
     Widget heading(String text) => Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.sm),
+      padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm),
       child: Text(text, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent)),
     );
 
@@ -554,48 +560,90 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
         children: [
           Text(s.calcBasisTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
 
-          // ── General ──────────────────────────────────────────
-          heading(s.calcBasisGeneral),
-          rule(s.monthlySavings, '${Fmt.eur(p.sparrate)} (${Fmt.eur(jbCapped)}/yr)'),
-          if (jbUngef > 0) rule('Subsidized / Unsubsidized', '${Fmt.eur(jbGef)} / ${Fmt.eur(jbUngef)} per year'),
-          rule(s.grossAnnualSalary, Fmt.eur(p.brutto)),
-          rule(s.retirementAge, '${p.rentenalter} → ${p.auszahlungsDauer} years payout'),
-          rule(s.marginalTaxRate, Fmt.pct(av.grenzsteuersatz)),
-          rule(s.retirementTaxRate, Fmt.pct(av.grenzsteuersatzRente)),
-          rule(s.statePensionMonthly, Fmt.eur(p.gesetzlicheRente)),
-          if (p.sonstigeEinkuenfte > 0) rule(s.otherRetirementIncome, Fmt.eur(p.sonstigeEinkuenfte)),
-          if (costs.kirchensteuer > 0) rule(s.kirchensteuerLabel, '${(costs.kirchensteuer * 100).toStringAsFixed(0)}%'),
-          if (dev.enabled) ...[
-            rule(s.incomeDevToggle, dev.curve == GrowthCurve.linear
-              ? '${s.curveLinear} ${Fmt.pct(dev.growthRate)}/yr'
-              : dev.curve == GrowthCurve.stepwise
-                ? '${s.curveStepwise} +${Fmt.pct(dev.promotionIncrease)} every ${dev.promotionInterval} yr'
-                : '${s.curveLogarithmic} → ${Fmt.eur(dev.salaryCap)}'),
-            if (dev.hasPartTime) rule(s.partTimeToggle,
-              'Year ${dev.partTimeStartYear}–${dev.partTimeStartYear! + dev.partTimeDuration}, ${Fmt.pct(dev.partTimePercent)}'),
-            if (dev.hasChildTiming) rule(s.childTimingLabel,
-              dev.childArrivalYears.map((y) => 'Year $y').join(', ')),
-          ],
-
-          // ── AV-Depot ─────────────────────────────────────────
+          // ── Subsidies ────────────────────────────────────────
           heading(s.calcBasisAV),
-          rule(s.baseGrant, '${Fmt.eur(sub.grundzulage)}/yr'),
-          if (sub.kinderzulage > 0) rule(s.childGrant, '${Fmt.eur(sub.kinderzulage)}/yr (${p.kinder} children)'),
-          if (sub.bonus > 0) rule(s.entryBonus, '${Fmt.eur(sub.bonus)} (one-time)'),
-          if (sub.geringverdienerbonus > 0) rule(s.lowIncomeBonus, '${Fmt.eur(sub.geringverdienerbonus)}/yr'),
-          rule(s.subsidyRate, Fmt.pct(sub.foerderquote)),
-          if (sub.steuererstattung > 0) rule(s.taxRefundYear, '${Fmt.eur(sub.steuererstattung)}/yr → bank account'),
-          rule('Subsidized payout tax', '100% taxed at ${Fmt.pct(av.grenzsteuersatzRente)} (nachgelagert)'),
-          if (jbUngef > 0) rule('Unsubsidized payout tax', '50% of gains taxed (Halbeinkünfteverfahren)'),
-          rule('AV cost', Fmt.pct(costs.kostenAV)),
+          check(true, '${s.baseGrant}: ${Fmt.eur(sub.grundzulage)}/yr',
+            '50%/25% on contributions up to €1,800/yr'),
+          check(sub.kinderzulage > 0,
+            sub.kinderzulage > 0
+              ? '${s.childGrant}: ${Fmt.eur(sub.kinderzulage)}/yr (${p.kinder} children)'
+              : '${s.childGrant}: no children',
+            sub.kinderzulage > 0 ? '€300/child/yr, 1:1 match' : null),
+          check(sub.bonus > 0,
+            sub.bonus > 0
+              ? '${s.entryBonus}: ${Fmt.eur(sub.bonus)} (one-time)'
+              : '${s.entryBonus}: not eligible (age ${p.alterStart}, must be under 25)'),
+          check(sub.geringverdienerbonus > 0,
+            sub.geringverdienerbonus > 0
+              ? '${s.lowIncomeBonus}: ${Fmt.eur(sub.geringverdienerbonus)}/yr'
+              : '${s.lowIncomeBonus}: not eligible (${Fmt.eur(p.brutto)} > €26,250)',
+            sub.geringverdienerbonus > 0 ? 'Gross income ≤ €26,250' : null),
+          check(sub.steuererstattung > 0,
+            sub.steuererstattung > 0
+              ? '${s.viaTaxOptimization}: ${Fmt.eur(sub.steuererstattung)}/yr'
+              : '${s.viaTaxOptimization}: Zulagen already optimal',
+            sub.steuererstattung > 0 ? 'Refund goes to bank account, NOT into depot' : null),
 
-          // ── ETF ──────────────────────────────────────────────
+          const Divider(height: AppSpacing.xxxl),
+
+          // ── Contribution split ───────────────────────────────
+          check(true, 'Contribution: ${Fmt.eur(p.sparrate)}/mo (${Fmt.eur(jbCapped)}/yr)',
+            '${s.subsidyRate}: ${Fmt.pct(sub.foerderquote)}'),
+          check(true, 'Subsidized (gefördert): ${Fmt.eur(jbGef)}/yr',
+            '100% of payout taxed at income rate (nachgelagerte Besteuerung)'),
+          check(jbUngef > 0,
+            jbUngef > 0
+              ? 'Unsubsidized (ungefördert): ${Fmt.eur(jbUngef)}/yr'
+              : 'Unsubsidized: none (contribution ≤ €1,800/yr)',
+            jbUngef > 0 ? '50% of gains taxed at payout (Halbeinkünfteverfahren)' : null),
+
+          const Divider(height: AppSpacing.xxxl),
+
+          // ── Tax rates ────────────────────────────────────────
+          check(true, '${s.marginalTaxRate}: ${Fmt.pct(av.grenzsteuersatz)}',
+            'Based on gross income. Affects Günstigerprüfung during savings.'),
+          check(true, '${s.retirementTaxRate}: ${Fmt.pct(av.grenzsteuersatzRente)}',
+            'Based on combined: AV payout + pension (${Fmt.eur(p.gesetzlicheRente)}/mo) + other income'),
+          check(costs.kirchensteuer > 0,
+            costs.kirchensteuer > 0
+              ? '${s.kirchensteuerLabel}: ${(costs.kirchensteuer * 100).toStringAsFixed(0)}%'
+              : '${s.kirchensteuerLabel}: none'),
+
+          const Divider(height: AppSpacing.xxxl),
+
+          // ── Income development ───────────────────────────────
+          check(dev.enabled,
+            dev.enabled
+              ? '${s.incomeDevToggle}: ${dev.curve == GrowthCurve.linear
+                  ? '${s.curveLinear} ${Fmt.pct(dev.growthRate)}/yr'
+                  : dev.curve == GrowthCurve.stepwise
+                    ? '${s.curveStepwise} +${Fmt.pct(dev.promotionIncrease)} every ${dev.promotionInterval} yr'
+                    : '${s.curveLogarithmic} → ${Fmt.eur(dev.salaryCap)}'}'
+              : '${s.incomeDevToggle}: disabled (static income)',
+            dev.enabled ? 'Affects tax rate, Geringverdienerbonus eligibility, pension EP. Does NOT change subsidies (contribution is fixed).' : null),
+          check(dev.hasPartTime,
+            dev.hasPartTime
+              ? '${s.partTimeToggle}: Year ${dev.partTimeStartYear}–${dev.partTimeStartYear! + dev.partTimeDuration} at ${Fmt.pct(dev.partTimePercent)}'
+              : '${s.partTimeToggle}: not active'),
+          check(dev.hasChildTiming,
+            dev.hasChildTiming
+              ? '${s.childTimingLabel}: ${dev.childArrivalYears.map((y) => 'Year $y').join(', ')}'
+              : '${s.childTimingLabel}: no dynamic children'),
+
+          // ── ETF rules ────────────────────────────────────────
           heading(s.calcBasisETF),
-          rule('Vorabpauschale', '${Fmt.pct(CalcConstants.vorabpauschaleDrag)} annual drag'),
-          rule('Teilfreistellung', '${Fmt.pct(CalcConstants.teilfreistellung)} (30% of gains exempt)'),
-          rule('Abgeltungssteuer', Fmt.pct(costs.abgeltungssteuersatz)),
-          rule('Tax base', 'Only gains taxed — contributions returned tax-free'),
-          rule('ETF cost', Fmt.pct(costs.kostenETF)),
+          check(true, 'Vorabpauschale: ${Fmt.pct(CalcConstants.vorabpauschaleDrag)} annual drag',
+            'Simplified. Actual depends on Basiszins (2.3–3.2% in 2024–2026).'),
+          check(true, 'Teilfreistellung: ${Fmt.pct(CalcConstants.teilfreistellung)}',
+            '30% of gains are tax-exempt for equity funds (≥51% equity).'),
+          check(true, 'Abgeltungssteuer: ${Fmt.pct(costs.abgeltungssteuersatz)}',
+            'Only gains taxed — contributions returned tax-free.'),
+
+          // ── Payout ───────────────────────────────────────────
+          const Divider(height: AppSpacing.xxxl),
+          check(true, 'Payout duration: ${p.auszahlungsDauer} years (age ${p.rentenalter}–85)',
+            'AV-Depot Auszahlplan until age 85 (§89 Abs. 8 EStG-E).'),
+          check(true, 'AV cost: ${Fmt.pct(costs.kostenAV)} p.a. | ETF cost: ${Fmt.pct(costs.kostenETF)} p.a.'),
         ],
       ),
     );

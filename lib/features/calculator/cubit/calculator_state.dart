@@ -11,7 +11,6 @@ class CalculatorState {
   final CostSettings costs;
   final IncomeDevSettings incomeDev;
   final String? selectedPersonalScenarioId;
-  final bool showAdvanced;
   final bool useCustomRendite;
   final double customRendite;
   final double customInflation;
@@ -23,7 +22,6 @@ class CalculatorState {
     required this.costs,
     this.incomeDev = const IncomeDevSettings(),
     this.selectedPersonalScenarioId,
-    this.showAdvanced = false,
     this.useCustomRendite = false,
     this.customRendite = 0.07,
     this.customInflation = 0.02,
@@ -81,7 +79,6 @@ class CalculatorState {
     IncomeDevSettings? incomeDev,
     String? selectedPersonalScenarioId,
     bool clearSelectedPersonal = false,
-    bool? showAdvanced,
     bool? useCustomRendite,
     double? customRendite,
     double? customInflation,
@@ -94,7 +91,6 @@ class CalculatorState {
       costs: costs ?? this.costs,
       incomeDev: incomeDev ?? this.incomeDev,
       selectedPersonalScenarioId: clearSelectedPersonal ? null : (selectedPersonalScenarioId ?? this.selectedPersonalScenarioId),
-      showAdvanced: showAdvanced ?? this.showAdvanced,
       useCustomRendite: useCustomRendite ?? this.useCustomRendite,
       customRendite: customRendite ?? this.customRendite,
       customInflation: customInflation ?? this.customInflation,

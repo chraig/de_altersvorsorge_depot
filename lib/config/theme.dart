@@ -67,6 +67,7 @@ class AppDimensions {
   static const double sliderTrackHeight = 4;
   static const double barHeight = 22;
   static const double progressBarHeight = 6;
+  static const double switchScale = 0.7;
 }
 
 // ═══════════════════════════════════════════════════════════════════

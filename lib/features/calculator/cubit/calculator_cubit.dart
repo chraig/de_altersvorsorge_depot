@@ -159,10 +159,6 @@ class CalculatorCubit extends Cubit<CalculatorState> {
     emit(state.copyWith(incomeDev: state.incomeDev.copyWith(childArrivalYears: years)));
   }
 
-  void toggleAdvanced() {
-    emit(state.copyWith(showAdvanced: !state.showAdvanced));
-  }
-
   // ─── SCENARIO MANAGEMENT ─────────────────────────────────────────
 
   void addPersonalScenario(PersonalScenario s) {

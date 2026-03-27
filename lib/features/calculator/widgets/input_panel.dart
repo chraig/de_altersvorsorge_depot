@@ -259,7 +259,7 @@ class _InputPanelState extends State<InputPanel> with TickerProviderStateMixin {
       AppSlider(label: s.inflationPa, value: state.effectiveInflation,
         min: 0.005, max: 0.06, step: 0.005, display: Fmt.pct(state.effectiveInflation),
         onChanged: cubit.setCustomInflation, hint: s.hintInflation),
-      const SizedBox(height: AppSpacing.lg),
+      const Divider(height: AppSpacing.xxxl),
       _KirchensteuerToggle(
         value: state.costs.kirchensteuer,
         onChanged: cubit.setKirchensteuer,
@@ -511,16 +511,13 @@ class _IncomeScenarioPanel extends StatelessWidget {
         // ─── MAIN TOGGLE ────────────────────────────────────────
         Row(
           children: [
-            SizedBox(
-              height: 24, width: 36,
-              child: Switch(
-                value: settings.enabled,
-                onChanged: (_) => cubit.toggleIncomeDev(),
-                activeThumbColor: AppColors.accent,
-                activeTrackColor: AppColors.accentLight,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
+            Transform.scale(scale: AppDimensions.switchScale, child: Switch(
+              value: settings.enabled,
+              onChanged: (_) => cubit.toggleIncomeDev(),
+              activeThumbColor: AppColors.accent,
+              activeTrackColor: AppColors.accentLight,
+            )),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(child: Text(s.incomeDevToggle.toUpperCase(),
               style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
                 color: AppColors.label, letterSpacing: 0.3))),
@@ -566,26 +563,23 @@ class _IncomeScenarioPanel extends StatelessWidget {
           ],
 
           // ─── PART-TIME PHASE ──────────────────────────────────
-          const Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.lg), child: Divider()),
+          const Divider(height: AppSpacing.xxxl),
           Row(
             children: [
-              SizedBox(
-                height: 24, width: 36,
-                child: Switch(
-                  value: settings.hasPartTime,
-                  onChanged: (v) {
-                    if (v) {
-                      cubit.setPartTimeStartYear(5);
-                      cubit.setPartTimeDuration(3);
-                    } else {
-                      cubit.setPartTimeStartYear(null);
-                    }
-                  },
-                  activeThumbColor: AppColors.accent,
-                  activeTrackColor: AppColors.accentLight,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
+              Transform.scale(scale: AppDimensions.switchScale, child: Switch(
+                value: settings.hasPartTime,
+                onChanged: (v) {
+                  if (v) {
+                    cubit.setPartTimeStartYear(5);
+                    cubit.setPartTimeDuration(3);
+                  } else {
+                    cubit.setPartTimeStartYear(null);
+                  }
+                },
+                activeThumbColor: AppColors.accent,
+                activeTrackColor: AppColors.accentLight,
+              )),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(child: Text(s.partTimeToggle.toUpperCase(),
                 style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
                   color: AppColors.label, letterSpacing: 0.3))),
@@ -611,7 +605,7 @@ class _IncomeScenarioPanel extends StatelessWidget {
           ],
 
           // ─── CHILD ARRIVAL TIMING ─────────────────────────────
-          const Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.lg), child: Divider()),
+          const Divider(height: AppSpacing.xxxl),
           Text(s.childTimingLabel.toUpperCase(),
             style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
               color: AppColors.label, letterSpacing: 0.3)),
