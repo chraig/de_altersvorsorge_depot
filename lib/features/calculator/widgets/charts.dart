@@ -118,6 +118,8 @@ class MacroOverlayChart extends StatelessWidget {
                     borderData: FlBorderData(show: false),
                     lineTouchData: LineTouchData(
                       touchTooltipData: LineTouchTooltipData(
+                        getTooltipColor: (_) => AppColors.bg,
+                        tooltipBorder: const BorderSide(color: AppColors.border),
                         getTooltipItems: (spots) => spots.map((sp) =>
                           LineTooltipItem(Fmt.eur(sp.y), AppTheme.monoSmall.copyWith(
                             fontSize: 10, color: sp.bar.color ?? AppColors.text))
@@ -253,6 +255,8 @@ class ComparisonChart extends StatelessWidget {
                     borderData: FlBorderData(show: false),
                     lineTouchData: LineTouchData(
                       touchTooltipData: LineTouchTooltipData(
+                        getTooltipColor: (_) => AppColors.bg,
+                        tooltipBorder: const BorderSide(color: AppColors.border),
                         getTooltipItems: (spots) => spots.map((sp) {
                           if ((sp.bar.color?.a ?? 0) <= 0.3) return null;
                           return LineTooltipItem(Fmt.eur(sp.y), AppTheme.monoSmall.copyWith(
