@@ -72,31 +72,34 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
                     children: [
                       // ─── HEADER + LANGUAGE TOGGLE ───────────
                       SizedBox(height: compact ? AppSpacing.xl : AppSpacing.section),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      Stack(
+                        alignment: Alignment.center,
                         children: [
-                          const Spacer(),
-                          Text(s.calculatorBadge,
-                            style: TextStyle(fontSize: compact ? 10 : 12, fontWeight: FontWeight.w700,
-                              color: AppColors.accent, letterSpacing: 2)),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: () {
-                              localeCubit.toggle();
-                              context.read<CalculatorCubit>().updateLocale(localeCubit.state.strings);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: AppColors.border),
+                          Center(
+                            child: Text(s.calculatorBadge,
+                              style: TextStyle(fontSize: compact ? 10 : 12, fontWeight: FontWeight.w700,
+                                color: AppColors.accent, letterSpacing: 2)),
+                          ),
+                          Positioned(
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: () {
+                                localeCubit.toggle();
+                                context.read<CalculatorCubit>().updateLocale(localeCubit.state.strings);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                  Text(localeCubit.state.locale == AppLocale.en ? 'EN' : 'DE',
+                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.accent)),
+                                  const SizedBox(width: 3),
+                                  const Icon(Icons.language, size: 13, color: AppColors.accent),
+                                ]),
                               ),
-                              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                Text(localeCubit.state.locale == AppLocale.en ? 'EN' : 'DE',
-                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.accent)),
-                                const SizedBox(width: 3),
-                                const Icon(Icons.language, size: 13, color: AppColors.accent),
-                              ]),
                             ),
                           ),
                         ],
