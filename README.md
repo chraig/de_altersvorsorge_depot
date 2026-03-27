@@ -142,7 +142,7 @@ Maximum Grundzulage: €540/yr
 €1 per €1 match up to €300/child/yr (full at €25/mo)
 
 // Berufseinsteigerbonus
-€200/yr for first 3 years (age < 25 at contract start)
+One-time €200 bonus (age < 25 at contract start, first year only)
 
 // Payout taxation
 Retirement tax rate: grenzsteuersatz × 0.7 (simplified)
@@ -153,9 +153,9 @@ Payout period: 20 years (age 65–85)
 
 ```dart
 // Abgeltungssteuer (default, without Kirchensteuer)
-Rate: 26.375% (25% + 5.5% Soli)
-With 8% Kirchensteuer (Bayern/BaWü): ~27.82%
-With 9% Kirchensteuer (other states):  ~27.99%
+Rate: 26.3750% (25% + 5.5% Soli)
+With 8% Kirchensteuer (Bayern/BaWü): 27.8186%
+With 9% Kirchensteuer (other states):  27.9951%
 Teilfreistellung: 30% for Aktien-ETFs (≥51% equity)
 Vorabpauschale drag: ~0.2% p.a. (simplified)
 // Kirchensteuer is configurable via Advanced Settings toggle
@@ -223,7 +223,7 @@ lib/
 │       └── calculator_service.dart    # Pure static calculation engine
 │           ├── calcGrundzulage()      # 50%/25% two-tier subsidy
 │           ├── calcKinderzulage()     # Up to €300/child 1:1 match
-│           ├── calcBonus()            # €200/yr for 3 years (under 25)
+│           ├── calcBonus()            # One-time €200 (under 25, first year)
 │           ├── calcZulage()           # Combined yearly subsidy (record return type)
 │           ├── getGrenzsteuersatz()   # German marginal tax rate approximation
 │           ├── calcGuenstigerpruefung()
@@ -308,7 +308,7 @@ For each year j = 0 ... spardauer-1:
 Payout phase:
   gewinn = depot - eigenbeitraege
   steuerpflichtiger_gewinn = gewinn × (1 - 0.30)   // 30% Teilfreistellung
-  steuer = steuerpflichtiger_gewinn × abgeltungssteuersatz  // 26.375% default, higher with Kirchensteuer
+  steuer = steuerpflichtiger_gewinn × abgeltungssteuersatz  // 26.3750% default, 27.8186% with 8% KiSt, 27.9951% with 9% KiSt
   netto = depot - steuer
   monthly = netto / 240
 ```
@@ -323,7 +323,7 @@ Payout phase:
 | Kirchensteuer | Optional toggle (0%/8%/9%) | Affects both AV payout tax and Abgeltungssteuer |
 | Soli | Included in base rate | May change |
 | Vorabpauschale | Fixed 0.2% drag | Depends on Basiszins |
-| Retirement tax rate | Based on estimated combined retirement income | Actual rate depends on total taxable income |
+| Retirement tax rate | Marginal rate on combined retirement income | Average rate would be lower; marginal overstates tax |
 | Günstigerprüfung refund | Not reinvested | Could be reinvested manually |
 | Quellensteuer on fund level | Not modeled | ~0.3% p.a. already in fund returns |
 | Wohnwirtschaftliche Verwendung | Not modeled | Tax-free withdrawal for property |
@@ -364,7 +364,7 @@ Source: Finanzausschuss amendment to Drucksache 21/4088, §89 EStG-E
 | Kostendeckel Standard | 1.5% Effektivkosten | **1.0%** Effektivkosten |
 | Selbstständige | Excluded | **Included** |
 | Öffentlicher Träger | Not planned | **Mandated** (Standarddepot) |
-| Berufseinsteigerbonus | €200/yr, 3 years | **Unchanged** |
+| Berufseinsteigerbonus | One-time €200 | **Unchanged** |
 | Geringverdienerbonus | €175/yr under €26,250 | **Unchanged** |
 
 ### Macro Scenario Assumptions
@@ -513,12 +513,12 @@ Recommended: Serve over **HTTPS** (enabled by default on most hosting providers)
 1. **Constant returns**: Real markets are volatile; sequence-of-returns risk is not modeled
 2. **Simplified Vorabpauschale**: Uses fixed 0.2% drag instead of actual Basiszins calculation
 3. **No partial-year contributions**: Assumes full-year contributions from year 1
-4. **Retirement tax rate**: Based on estimated combined income (state pension + AV payout + other); actual rate depends on total taxable income in retirement
+4. **Retirement tax rate**: Uses marginal rate on combined retirement income (state pension + AV payout + other); average rate would be lower, so AV payout tax is slightly overstated
 5. **Günstigerprüfung refund not reinvested**: In practice, you could invest the tax refund in a separate ETF
 6. **No Wohnriester/wohnwirtschaftliche Verwendung**: Tax-free withdrawal for property not modeled
 7. **No Riester comparison**: Only compares AV-Depot vs. free ETF; old Riester not included
 8. **No mortality tables**: Leibrente option would require actuarial calculations
-10. **2024 tax brackets**: Should be updated when 2027 brackets are published
+9. **2024 tax brackets**: Should be updated when 2027 brackets are published
 
 ---
 

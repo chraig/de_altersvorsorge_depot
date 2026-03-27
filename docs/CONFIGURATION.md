@@ -19,8 +19,7 @@ Located in: `lib/services/domain/calculator_service.dart`
 | Max Grundzulage | €540/yr | Derived | — | Calculated |
 | Kinderzulage per child | up to €300/yr | Fixed | §89 Abs. 2 EStG-E | `calcKinderzulage()` |
 | Kinderzulage match rate | 1:1 | Fixed | §89 Abs. 2 EStG-E | `calcKinderzulage()` |
-| Berufseinsteigerbonus | €200/yr | Fixed | §89 Abs. 3 EStG-E | `calcBonus()` |
-| Bonus max years | 3 | Fixed | §89 Abs. 3 EStG-E | `calcBonus()` |
+| Berufseinsteigerbonus | €200 (one-time) | Fixed | §89 Abs. 3 EStG-E | `calcBonus()` |
 | Bonus max age | 24 (under 25) | Fixed | §89 Abs. 3 EStG-E | `calcBonus()` |
 | Geringverdienerbonus | €175/yr | Fixed | §89 Abs. 4 EStG-E | `calcGeringverdienerbonus()` |
 | Geringverdiener threshold | €26,250 brutto | Fixed | §89 Abs. 4 EStG-E | `calcGeringverdienerbonus()` |
@@ -47,7 +46,7 @@ Located in: `lib/services/domain/calculator_service.dart`
 | Spitzensteuersatz | 42% | §32a EStG | `getGrenzsteuersatz()` |
 | Reichensteuersatz start | €277,826 | §32a EStG 2024 | `getGrenzsteuersatz()` |
 | Reichensteuersatz | 45% | §32a EStG | `getGrenzsteuersatz()` |
-| Abgeltungssteuersatz | 26.375% (default) | §43a + §4 SolZG | `CostSettings.abgeltungssteuersatz` |
+| Abgeltungssteuersatz | 26.3750% (default) | §43a + §4 SolZG | `CostSettings.abgeltungssteuersatz` |
 | Kirchensteuer | 0% / 8% / 9% | Toggle in Advanced Settings | `CostSettings.kirchensteuer` |
 | Teilfreistellung Aktienfonds | 30% | §20 InvStG | `simulateETF()` |
 | Vorabpauschale drag | 0.2% p.a. | Simplified estimate | `simulateETF()` |
@@ -68,8 +67,8 @@ approximation. For production use, consider implementing the exact §32a formula
 
 Kirchensteuer is implemented as a toggle in Advanced Settings (None / 8% / 9%):
 
-- **ETF side**: Uses the reduced KapESt formula: `KapESt = 25% / (1 + KiSt_rate)`, then adds Soli and KiSt
-  - None: 26.375% | 8%: ~27.82% | 9%: ~27.99%
+- **ETF side**: Uses the reduced KapESt formula: `KapESt = 25% / (1 + 25% × KiSt_rate)` (§32d Abs. 1 Satz 3 EStG), then adds Soli and KiSt
+  - None: 26.3750% | 8%: 27.8186% | 9%: 27.9951%
 - **AV side**: Retirement payout tax multiplied by `(1 + KiSt_rate)`
 - Code: `CostSettings.abgeltungssteuersatz` (computed getter) and `CostSettings.kirchensteuer`
 
@@ -130,7 +129,7 @@ Located in: `lib/models/scenario.dart` → `PersonalScenario.defaults()`
 
 | Preset | Sparrate | Brutto | Kinder | Alter | Dauer | Rationale |
 |---|---|---|---|---|---|---|
-| Berufseinsteiger 🎓 | €50/mo | €32,000 | 0 | 23 | 44 | Entry-level salary, long horizon, retirement at 67 |
+| Berufseinsteiger 🎓 | €50/mo | €32,000 | 0 | 23 | 44 | Entry-level income, long horizon, retirement at 67 |
 | Single Mitte 30 💼 | €150/mo | €55,000 | 0 | 35 | 32 | Median income, max. contribution |
 | Familie 2 Kinder 👨‍👩‍👧‍👦 | €100/mo | €45,000 | 2 | 32 | 35 | Dual-earner household, one partner |
 | Gutverdiener 📈 | €500/mo | €85,000 | 0 | 40 | 27 | High income, contributions above subsidy cap |
@@ -145,6 +144,8 @@ Located in: `lib/models/scenario.dart` → `PersonalScenario.defaults()`
 | Kinder | 0 | 5 | 1 | — |
 | Alter bei Start | 18 | 60 | 1 | Jahre |
 | Rentenalter | 60 | 75 | 1 | Jahre |
+| Gesetzliche Rente | 0 | 5,000 | 50 | €/Monat |
+| Sonstige Einkünfte | 0 | 100,000 | 500 | €/Jahr |
 | Rendite p.a. | 1.0% | 14.0% | 0.5% | — |
 | Kosten AV | 0.1% | 1.5% | 0.1% | — |
 | Kosten ETF | 0.1% | 1.0% | 0.1% | — |
@@ -212,9 +213,15 @@ Located in: `lib/config/theme.dart`
 
 ---
 
-## 8. Feature Flags / Planned Toggles
+## 8. Feature Flags
 
-Recommended for future versions:
+### Already Implemented
+
+- Kirchensteuer toggle (None / 8% Bayern-BaWü / 9% other states)
+- Geringverdienerbonus (€175/yr for gross ≤ €26,250)
+- Income development toggle (linear growth, 0–8% p.a.)
+
+### Planned for Future Versions
 
 ```dart
 class FeatureFlags {
@@ -223,10 +230,11 @@ class FeatureFlags {
   static const bool enableMonteCarloSim = false;
   static const bool enablePDFExport = false;
   static const bool enableDarkMode = false;
+  static const bool enableIncomeGrowthCurves = false; // step-wise, logarithmic
+  static const bool enablePartTimePhases = false;
+  static const bool enableChildArrivalTiming = false;
 }
 ```
-
-Already implemented: Kirchensteuer toggle (None/8%/9%), Geringverdienerbonus (€175/yr).
 
 ---
 

@@ -1,5 +1,8 @@
 import 'dart:math';
 import 'package:avdepot_rechner/models/scenario.dart';
+import 'package:avdepot_rechner/services/domain/tax_module.dart';
+import 'package:avdepot_rechner/services/domain/subsidy_module.dart';
+import 'package:avdepot_rechner/services/domain/pension_module.dart';
 
 /// All legislative and tax parameters in one place.
 /// Update these when tax brackets change or legislation is amended.
@@ -27,10 +30,9 @@ class CalcConstants {
   static const double kinderzulageMax = 300.0;
 
   // ─── BERUFSEINSTEIGERBONUS (§89 Abs. 3 EStG-E) ────────────────
-  /// Flat bonus per year for career starters
+  /// One-time bonus for career starters (first year of contract only).
+  /// Source: BMF FAQ — "einmalig 200 Euro"
   static const double bonusBetrag = 200.0;
-  /// Number of years the bonus is paid
-  static const int bonusMaxJahre = 3;
   /// Must be under this age at contract start to qualify
   static const int bonusMaxAlter = 25;
 
@@ -88,119 +90,43 @@ class CalcConstants {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// CALCULATION ENGINE
+// SIMULATION ENGINE
 // ═══════════════════════════════════════════════════════════════════
 
-/// Core calculation engine for AV-Depot and ETF-Depot simulations.
+/// Simulation engine with injectable modules.
 ///
-/// All methods are static and pure — no side effects, no state.
-/// The engine is modularized into independent, replaceable components:
+/// Each module (tax, subsidy, pension) can be replaced independently:
+/// ```dart
+/// final engine = SimulationEngine(
+///   tax: GermanTax2024(),          // or a custom/updated implementation
+///   subsidy: AVDepotSubsidy2027(), // or a different subsidy regime
+///   pension: EntgeltpunkteEstimator(), // or a different pension system
+/// );
+/// ```
 ///
-/// **Subsidy module** (can be replaced for different subsidy regimes):
-///   [calcGrundzulage], [calcKinderzulage], [calcBonus],
-///   [calcGeringverdienerbonus], [calcZulage], [calcSubsidyBreakdown]
-///
-/// **Tax module** (can be replaced for different tax systems):
-///   [getGrenzsteuersatz], [calcGuenstigerpruefung]
-///
-/// **Simulation module** (orchestrates subsidy + tax per year):
-///   [simulateAV] — AV-Depot accumulation + payout
-///   [simulateETF] — ETF-Depot accumulation + payout
-///
-/// **Composition module** (combines AV + ETF for comparison):
-///   [simulateCombined], [simulateAllMacros]
-///
-/// **Pension estimation** is embedded in [simulateAV] payout phase.
-/// To replace it, modify the `effectiveRente` computation block.
-class CalculatorService {
+/// Default constructor uses the standard 2024/2027 implementations.
+class SimulationEngine {
+  final TaxModule tax;
+  final SubsidyModule subsidy;
+  final PensionModule pension;
 
-  // ═════════════════════════════════════════════════════════════════
-  // SUBSIDY MODULE — Förderung calculations
-  // Each method is independent and can be replaced individually.
-  // ═════════════════════════════════════════════════════════════════
+  const SimulationEngine({
+    this.tax = const GermanTax2024(),
+    this.subsidy = const AVDepotSubsidy2027(),
+    this.pension = const EntgeltpunkteEstimator(),
+  });
 
-  /// Grundzulage: two-tier percentage match on own contributions.
-  /// Returns the annual Grundzulage amount in EUR.
-  static double calcGrundzulage(double jahresbeitrag) {
-    final capped = min(jahresbeitrag, CalcConstants.grundzulageMaxBeitrag);
-    if (capped <= 0) return 0;
-    return min(capped, CalcConstants.grundzulageStufe1Cap) * CalcConstants.grundzulageStufe1Rate
-        + max(0.0, capped - CalcConstants.grundzulageStufe1Cap) * CalcConstants.grundzulageStufe2Rate;
-  }
+  /// Default engine with standard modules.
+  static const standard = SimulationEngine();
 
-  /// Kinderzulage: 1:1 match on contributions up to max per child.
-  /// Returns the annual Kinderzulage amount in EUR.
-  static double calcKinderzulage(double jahresbeitrag, int kinder) {
-    if (kinder <= 0 || jahresbeitrag <= 0) return 0;
-    return min(jahresbeitrag, CalcConstants.kinderzulageMax) * kinder;
-  }
+  // ─── SUBSIDY BREAKDOWN (for UI display) ────────────────────────
 
-  /// Berufseinsteigerbonus: flat annual bonus for young contract holders.
-  /// Returns EUR amount (200) or 0 if not eligible.
-  static double calcBonus(int alter, int bonusJahre) {
-    return (alter < CalcConstants.bonusMaxAlter && bonusJahre < CalcConstants.bonusMaxJahre)
-        ? CalcConstants.bonusBetrag : 0.0;
-  }
-
-  /// Geringverdienerbonus: extra subsidy for low-income earners.
-  /// Returns EUR amount (175) or 0 if not eligible.
-  static double calcGeringverdienerbonus(double brutto, double jahresbeitrag) {
-    return (brutto <= CalcConstants.geringverdienerGrenze && jahresbeitrag >= CalcConstants.mindestbeitrag)
-        ? CalcConstants.geringverdienerBetrag : 0.0;
-  }
-
-  /// Combined yearly subsidy: aggregates all four subsidy components.
-  /// Returns a record with individual amounts and total.
-  static ({double grund, double kind, double bonus, double gering, double total})
-  calcZulage(double jahresbeitrag, int kinder, int alter, int bonusJahre, double brutto) {
-    final grund = calcGrundzulage(jahresbeitrag);
-    final kind = calcKinderzulage(jahresbeitrag, kinder);
-    final bonus = calcBonus(alter, bonusJahre);
-    final gering = calcGeringverdienerbonus(brutto, jahresbeitrag);
-    return (grund: grund, kind: kind, bonus: bonus, gering: gering, total: grund + kind + bonus + gering);
-  }
-
-  // ═════════════════════════════════════════════════════════════════
-  // TAX MODULE — Income tax and tax optimization
-  // Replace getGrenzsteuersatz when tax brackets change.
-  // ═════════════════════════════════════════════════════════════════
-
-  /// German marginal tax rate (Grenzsteuersatz).
-  /// Piecewise linear approximation of §32a EStG.
-  /// Input: annual gross income (zu versteuerndes Einkommen approximation).
-  /// Output: marginal tax rate (0.0 – 0.45).
-  ///
-  /// Note: Uses Brutto as proxy for zvE. In reality, zvE = Brutto - Werbungskosten
-  /// - Sonderausgaben etc., which would lower the rate by a few percentage points.
-  static double getGrenzsteuersatz(double brutto) {
-    if (brutto <= CalcConstants.grundfreibetrag) return 0;
-    if (brutto <= CalcConstants.zone2Ende) return CalcConstants.zone2Satz;
-    if (brutto <= CalcConstants.zone3Ende) {
-      return CalcConstants.zone3StartSatz
-          + (brutto - CalcConstants.zone2Ende) / (CalcConstants.zone3Ende - CalcConstants.zone2Ende)
-          * (CalcConstants.spitzensteuersatz - CalcConstants.zone3StartSatz);
-    }
-    if (brutto <= CalcConstants.zone4Ende) return CalcConstants.spitzensteuersatz;
-    return CalcConstants.reichensteuersatz;
-  }
-
-  /// Günstigerprüfung: automatic tax optimization check.
-  /// Compares Sonderausgabenabzug vs. keeping Zulagen.
-  /// Additional refund (if any) goes to Girokonto, NOT into the depot.
-  static ({double steuerersparnis, double zusaetzlich, bool vorteil})
-  calcGuenstigerpruefung(double jahresbeitrag, double zulageTotal, double grenzsteuersatz) {
-    final gesamtBeitrag = jahresbeitrag + zulageTotal;
-    final steuerersparnis = gesamtBeitrag * grenzsteuersatz;
-    final zusaetzlich = max(0.0, steuerersparnis - zulageTotal);
-    return (steuerersparnis: steuerersparnis, zusaetzlich: zusaetzlich, vorteil: steuerersparnis > zulageTotal);
-  }
-
-  /// Full subsidy breakdown for year 1 (used for the subsidy detail table).
-  static SubsidyBreakdown calcSubsidyBreakdown(PersonalScenario person) {
+  /// Full subsidy breakdown for year 1.
+  SubsidyBreakdown calcSubsidyBreakdown(PersonalScenario person) {
     final jb = person.jahresbeitrag;
-    final z = calcZulage(jb, person.kinder, person.alterStart, 0, person.brutto);
-    final gst = getGrenzsteuersatz(person.brutto);
-    final gp = calcGuenstigerpruefung(jb, z.total, gst);
+    final z = subsidy.calcZulage(jb, person.kinder, person.alterStart, 0, person.brutto);
+    final gst = tax.getGrenzsteuersatz(person.brutto);
+    final gp = tax.calcGuenstigerpruefung(jb, z.total, gst);
     final fq = jb > 0 ? z.total / jb : 0.0;
     return SubsidyBreakdown(
       grundzulage: z.grund,
@@ -214,13 +140,9 @@ class CalculatorService {
     );
   }
 
-  // ═════════════════════════════════════════════════════════════════
-  // AV-DEPOT SIMULATION
-  // Accumulation phase: year-by-year with subsidies + tax-free growth.
-  // Payout phase: deferred taxation on combined retirement income.
-  // ═════════════════════════════════════════════════════════════════
+  // ─── AV-DEPOT SIMULATION ──────────────────────────────────────
 
-  static AVResult simulateAV({
+  AVResult simulateAV({
     required PersonalScenario person,
     required MacroScenario macro,
     required CostSettings costs,
@@ -239,16 +161,16 @@ class CalculatorService {
     for (int j = 0; j < person.spardauer; j++) {
       final alter = person.alterStart + j;
       final bruttoJ = incomeDev.bruttoForYear(person.brutto, j);
-      final gstJ = getGrenzsteuersatz(bruttoJ);
-      final z = calcZulage(jb, person.kinder, alter, j, bruttoJ);
-      final gp = calcGuenstigerpruefung(jb, z.total, gstJ);
+      final gstJ = tax.getGrenzsteuersatz(bruttoJ);
+      final z = subsidy.calcZulage(jb, person.kinder, alter, j, bruttoJ);
+      final gp = tax.calcGuenstigerpruefung(jb, z.total, gstJ);
 
-      final zufluss = jb + z.total; // own contribution + subsidies → into depot
+      final zufluss = jb + z.total;
       depot = (depot + zufluss) * (1 + nettoRendite);
 
       eigenBeitraege += jb;
       zulagenGesamt += z.total;
-      steuererstattungGesamt += gp.zusaetzlich; // tracked but NOT in depot
+      steuererstattungGesamt += gp.zusaetzlich;
 
       jahresWerte.add(YearlyDataPoint(
         year: j + 1,
@@ -265,15 +187,13 @@ class CalculatorService {
     final auszahlungsDauer = person.auszahlungsDauer;
     final monatlich = depot / (auszahlungsDauer * 12);
 
-    // ── Pension estimation (for retirement tax calculation) ─────
-    final effectiveRente = _computeEffectiveRente(person, incomeDev);
-
     // ── Retirement tax on combined income ───────────────────────
+    final effectiveRente = pension.estimateMonthlyPension(person, incomeDev);
     final avJahresAuszahlung = depot / auszahlungsDauer;
     final rentenEinkommen = avJahresAuszahlung
         + effectiveRente * 12
         + person.sonstigeEinkuenfte;
-    final gstRente = getGrenzsteuersatz(rentenEinkommen);
+    final gstRente = tax.getGrenzsteuersatz(rentenEinkommen);
     final kirchensteuerFaktor = 1 + costs.kirchensteuer;
     final netto = monatlich * (1 - gstRente * kirchensteuerFaktor);
 
@@ -285,41 +205,16 @@ class CalculatorService {
       steuererstattungGesamt: steuererstattungGesamt,
       monatlicheAuszahlung: monatlich,
       nettoMonatlich: netto,
-      grenzsteuersatz: getGrenzsteuersatz(person.brutto),
+      grenzsteuersatz: tax.getGrenzsteuersatz(person.brutto),
       grenzsteuersatzRente: gstRente,
       wertzuwachs: depot - eigenBeitraege - zulagenGesamt,
       jahresWerte: jahresWerte,
     );
   }
 
-  /// Compute effective monthly state pension.
-  /// Priority: manual override > income-development-based EP accumulation > static estimate.
-  static double _computeEffectiveRente(PersonalScenario person, IncomeDevSettings incomeDev) {
-    if (person.gesetzlicheRenteOverride != null) {
-      return person.gesetzlicheRenteOverride!;
-    }
-    if (incomeDev.enabled) {
-      double totalEP = 0;
-      // Pre-savings contribution years (from arbeitsbeginn to alterStart)
-      final preSavingsYears = (person.alterStart - CalcConstants.arbeitsbeginn).clamp(0, 45);
-      totalEP += preSavingsYears * min(person.brutto, CalcConstants.bbg) / CalcConstants.durchschnittsentgelt;
-      // Savings period with growing income
-      for (int j = 0; j < person.spardauer; j++) {
-        final bruttoJ = incomeDev.bruttoForYear(person.brutto, j);
-        totalEP += min(bruttoJ, CalcConstants.bbg) / CalcConstants.durchschnittsentgelt;
-      }
-      return totalEP * CalcConstants.rentenwert;
-    }
-    return person.gesetzlicheRente; // static estimate from PersonalScenario
-  }
+  // ─── ETF-DEPOT SIMULATION ────────────────────────────────────
 
-  // ═════════════════════════════════════════════════════════════════
-  // ETF-DEPOT SIMULATION
-  // Accumulation phase: year-by-year with Vorabpauschale drag.
-  // Payout phase: Abgeltungssteuer on gains with Teilfreistellung.
-  // ═════════════════════════════════════════════════════════════════
-
-  static ETFResult simulateETF({
+  ETFResult simulateETF({
     required PersonalScenario person,
     required MacroScenario macro,
     required CostSettings costs,
@@ -368,12 +263,9 @@ class CalculatorService {
     );
   }
 
-  // ═════════════════════════════════════════════════════════════════
-  // COMPOSITION MODULE — Combines AV + ETF for comparison
-  // ═════════════════════════════════════════════════════════════════
+  // ─── COMPOSITION ─────────────────────────────────────────────
 
-  /// Run both simulations for a single macro scenario.
-  static CombinedResult simulateCombined({
+  CombinedResult simulateCombined({
     required PersonalScenario person,
     required MacroScenario macro,
     required CostSettings costs,
@@ -386,8 +278,7 @@ class CalculatorService {
     );
   }
 
-  /// Run all macro scenarios for a given person (cross-product).
-  static List<CombinedResult> simulateAllMacros({
+  List<CombinedResult> simulateAllMacros({
     required PersonalScenario person,
     required List<MacroScenario> macros,
     required CostSettings costs,
@@ -395,4 +286,49 @@ class CalculatorService {
   }) {
     return macros.map((m) => simulateCombined(person: person, macro: m, costs: costs, incomeDev: incomeDev)).toList();
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BACKWARD COMPATIBILITY — static access via CalculatorService
+// ═══════════════════════════════════════════════════════════════════
+
+/// Static facade over [SimulationEngine.standard] for backward compatibility.
+/// Existing code using `CalculatorService.simulateAV(...)` continues to work.
+class CalculatorService {
+  CalculatorService._();
+
+  static final _engine = SimulationEngine.standard;
+
+  static SubsidyBreakdown calcSubsidyBreakdown(PersonalScenario person) =>
+      _engine.calcSubsidyBreakdown(person);
+
+  static AVResult simulateAV({
+    required PersonalScenario person,
+    required MacroScenario macro,
+    required CostSettings costs,
+    IncomeDevSettings incomeDev = const IncomeDevSettings(),
+  }) => _engine.simulateAV(person: person, macro: macro, costs: costs, incomeDev: incomeDev);
+
+  static ETFResult simulateETF({
+    required PersonalScenario person,
+    required MacroScenario macro,
+    required CostSettings costs,
+  }) => _engine.simulateETF(person: person, macro: macro, costs: costs);
+
+  static CombinedResult simulateCombined({
+    required PersonalScenario person,
+    required MacroScenario macro,
+    required CostSettings costs,
+    IncomeDevSettings incomeDev = const IncomeDevSettings(),
+  }) => _engine.simulateCombined(person: person, macro: macro, costs: costs, incomeDev: incomeDev);
+
+  static List<CombinedResult> simulateAllMacros({
+    required PersonalScenario person,
+    required List<MacroScenario> macros,
+    required CostSettings costs,
+    IncomeDevSettings incomeDev = const IncomeDevSettings(),
+  }) => _engine.simulateAllMacros(person: person, macros: macros, costs: costs, incomeDev: incomeDev);
+
+  /// Direct access to the tax module (for UI display of Grenzsteuersatz).
+  static double getGrenzsteuersatz(double brutto) => _engine.tax.getGrenzsteuersatz(brutto);
 }

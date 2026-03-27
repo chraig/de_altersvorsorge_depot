@@ -3,6 +3,10 @@
 This document records the legislative basis, data sources, formula derivations, and
 design decisions behind the calculator's financial logic.
 
+**Code reference:** All numeric constants described here are implemented in
+`lib/services/domain/calculator_service.dart` as the `CalcConstants` class.
+Update that class when legislation changes; this document serves as the authoritative reference.
+
 ---
 
 ## 1. Legislative Timeline
@@ -12,7 +16,7 @@ design decisions behind the calculator's financial logic.
 | Sep 2024 | BMF publishes first concept paper for AV-Depot reform | BMF Eckpunktepapier |
 | Oct 2024 | Finanztip publishes initial analysis of the reform proposal | finanztip.de/altersvorsorge/altersvorsorgedepot |
 | Dec 2025 | Bundeskabinett approves Gesetzentwurf (Drucksache 21/4088) | bundesfinanzministerium.de |
-| 10 Mar 2026 | Finanzausschuss public hearing (Sachverständigenanhörung) | bundestag.de/kw12-pa-finanzen-1152002 |
+| 16 Mar 2026 | Finanzausschuss public hearing (Sachverständigenanhörung) | bundestag.de/kw12-pa-finanzen-1152002 |
 | 25 Mar 2026 | Finanzausschuss amends the bill (Koalitionseinigung CDU/CSU + SPD) | Finanzausschuss Beschlussempfehlung |
 | 27 Mar 2026 | Bundestag passes Altersvorsorgereformgesetz in 2. und 3. Lesung | bundestag.de/presse/hib/kurzmeldungen-1157838 |
 | 01 Jan 2027 | Planned start: Anbieter may offer AV-Depot products | §89 EStG-E |
@@ -85,12 +89,13 @@ Koalitionseinigung lowered threshold to €25/mo.
 **Legal basis**: §89 Abs. 3 EStG-E
 
 ```
-Bonus = €200 if (alter_bei_abschluss < 25) AND (vertragsjahr ≤ 3)
+Bonus = €200 if (alter_bei_abschluss < 25) AND (vertragsjahr == 1)
 ```
 
-- Flat €200/yr, not proportional to contributions
+- One-time €200 bonus in the first year of contract (BMF FAQ: "einmalig 200 Euro")
+- Not proportional to contributions
 - Requires active contributions (Mindestbeitrag €120/yr)
-- Available for first 3 years of contract only
+- Must be under 25 at contract start
 
 ### 2.4 Geringverdienerbonus
 
@@ -164,7 +169,7 @@ This replaces the earlier simplification of `Grenzsteuersatz × 0.7`.
 **Legal basis**: §20 Abs. 1 Nr. 7 EStG (existing law)
 
 **During accumulation**:
-- Vorabpauschale: annual tax on unrealized gains (Basiszins × 0.7 × ETF value × 0.7 Teilfreistellung × 26.375%)
+- Vorabpauschale: annual tax on unrealized gains (Basiszins × 0.7 × ETF value × 0.7 Teilfreistellung × 26.3750%)
 - Simplified in calculator as 0.2% annual drag on returns
 
 **At payout/sale**:
@@ -175,9 +180,9 @@ Steuer = Steuerpflichtiger_Gewinn × Abgeltungssteuersatz
 
 Where:
   Teilfreistellung = 30% for Aktienfonds (≥51% equity, §20 InvStG)
-  Abgeltungssteuersatz = 26.375% without Kirchensteuer (25% + 5.5% Soli)
-  With Kirchensteuer: KapESt = 25% / (1 + KiSt_rate), plus Soli + KiSt
-    → 8% KiSt (Bayern/BaWü): ~27.82%  |  9% KiSt (other): ~27.99%
+  Abgeltungssteuersatz = 26.3750% without Kirchensteuer (25.0000% + 1.3750% Soli)
+  With Kirchensteuer: KapESt = 25% / (1 + 25% × KiSt_rate)  // §32d Abs. 1 Satz 3 EStG, plus Soli + KiSt
+    → 8% KiSt (Bayern/BaWü): 27.8186%  |  9% KiSt (other): 27.9951%
 ```
 
 **Key difference**: In the ETF depot, only the GAIN is taxed (and with 30% exemption).
@@ -194,26 +199,49 @@ Configurable in the calculator as None / 8% (Bayern/BaWü) / 9% (other states).
 **ETF side — reduced KapESt formula:**
 
 ```
-KapESt = 25% / (1 + KiSt_rate)
+KapESt = 25% / (1 + 25% × KiSt_rate)  // §32d Abs. 1 Satz 3 EStG
 Soli = KapESt × 5.5%
 KiSt = KapESt × KiSt_rate
 Abgeltungssteuersatz = KapESt + Soli + KiSt
 
 Results:
-  None:  26.375%
-  8%:    ~27.82%
-  9%:    ~27.99%
+  None:  26.3750%
+  8%:    27.8186%
+  9%:    27.9951%
 ```
 
-**AV side — income tax multiplier:**
+**AV side — retirement payout taxation:**
 
 ```
-Steuersatz_Rente = Grenzsteuersatz × 0.7 × (1 + KiSt_rate)
+Steuersatz_Rente = Grenzsteuersatz(Renteneinkommen) × (1 + KiSt_rate)
+
+Where Renteneinkommen = AV_Jahresauszahlung + GesetzlicheRente × 12 + SonstigeEinkünfte
 ```
+
+Note: Uses marginal rate (Grenzsteuersatz), which slightly overstates tax compared
+to the actual average rate (Durchschnittssteuersatz). See Design Decisions below.
 
 ---
 
 ## 3.5 Simulation Formulas (as implemented in code)
+
+All constants below reference `CalcConstants` in `calculator_service.dart`.
+
+### Individual Subsidy Formulas
+
+```
+Grundzulage(jb) = min(jb, 360) × 50% + max(0, min(jb, 1800) - 360) × 25%
+  // jb = Jahresbeitrag [EUR/year]. Max: €540/year.
+
+Kinderzulage(jb, kinder) = min(jb, 300) × kinder
+  // Max: €300/child/year. Full grant from €25/month contribution.
+
+Berufseinsteigerbonus(alter, j) = €200 if (alter < 25) AND (j == 0), else 0
+  // One-time bonus in first savings year only. Source: BMF FAQ "einmalig".
+
+Geringverdienerbonus(brutto, jb) = €175 if (brutto ≤ 26,250) AND (jb ≥ 120), else 0
+  // Mindestbeitrag: €120/year. Stacks on top of Grundzulage.
+```
 
 ### Combined Yearly Subsidy
 
@@ -221,31 +249,44 @@ Steuersatz_Rente = Grenzsteuersatz × 0.7 × (1 + KiSt_rate)
 Zulage(j) = Grundzulage(Jahresbeitrag)
            + Kinderzulage(Jahresbeitrag, Kinder)
            + Berufseinsteigerbonus(Alter, j)
-           + Geringverdienerbonus(Brutto, Jahresbeitrag)
+           + Geringverdienerbonus(Brutto_j, Jahresbeitrag)
 ```
 
-### German Marginal Tax Rate (piecewise approximation)
+### German Marginal Tax Rate (piecewise approximation, §32a EStG 2024)
 
 ```
 Grenzsteuersatz(Brutto) =
-  0%      if Brutto ≤ 11,784   (Grundfreibetrag)
-  14%     if Brutto ≤ 17,005   (Eingangssteuersatz)
+  0%       if Brutto ≤ 11,784   (Grundfreibetrag)
+  14%      if Brutto ≤ 17,005   (Eingangssteuersatz)
   23.97% + (Brutto - 17,005) / (66,760 - 17,005) × (42% - 23.97%)
-          if Brutto ≤ 66,760   (Progressive zone, linear interpolation)
-  42%     if Brutto ≤ 277,825  (Spitzensteuersatz)
-  45%     if Brutto > 277,825  (Reichensteuersatz)
+           if Brutto ≤ 66,760   (Progressive zone, linear interpolation)
+  42%      if Brutto ≤ 277,825  (Spitzensteuersatz)
+  45%      if Brutto > 277,825  (Reichensteuersatz)
+```
+
+### Income Development (opt-in, linear growth)
+
+```
+If enabled:
+  Brutto_j = Brutto × (1 + GrowthRate)^j    // compound annual growth
+Else:
+  Brutto_j = Brutto                          // static income (default)
 ```
 
 ### AV-Depot Year-by-Year Accumulation
 
 ```
+Jahresbeitrag = Sparrate × 12               // [EUR/month → EUR/year] input conversion
+
 For j = 0 to Spardauer - 1:
   Alter = AlterStart + j
-  Zulage = Zulage(j)                          // see above
+  Brutto_j = IncomeDev.bruttoForYear(Brutto, j)  // static or growing
+  Grenzsteuersatz_j = Grenzsteuersatz(Brutto_j)
+  Zulage_j = Zulage(j)                           // uses Brutto_j for Geringverdienerbonus
   Günstigerprüfung:
-    Steuerersparnis = (Jahresbeitrag + Zulage) × Grenzsteuersatz
-    Zusätzlich = max(0, Steuerersparnis - Zulage)  // → Girokonto, NOT depot
-  Zufluss = Jahresbeitrag + Zulage
+    Steuerersparnis = (Jahresbeitrag + Zulage_j) × Grenzsteuersatz_j
+    Zusätzlich = max(0, Steuerersparnis - Zulage_j)  // → Girokonto, NOT depot
+  Zufluss = Jahresbeitrag + Zulage_j               // own contribution + subsidies → depot
   Depot = (Depot + Zufluss) × (1 + Rendite - KostenAV)
 ```
 
@@ -253,33 +294,49 @@ For j = 0 to Spardauer - 1:
 
 ```
 Auszahlungsdauer = (85 - Rentenalter), clamped to 5–30 years
-Monatlich_Brutto = Depot / (Auszahlungsdauer × 12)
+  // 85 = CalcConstants.payoutEndAge (§89 Abs. 8 EStG-E)
+Monatlich_Brutto = Depot / (Auszahlungsdauer × 12)  // [EUR → EUR/month] output conversion
+
+// Pension estimation for retirement tax calculation:
+If manual override set:
+  EffectiveRente = gesetzlicheRenteOverride         // [EUR/month]
+Else if income development enabled:
+  TotalEP = Σ min(Brutto_j, BBG) / Durchschnittsentgelt  // accumulated per year
+    + preSavingsYears × min(Brutto, BBG) / Durchschnittsentgelt
+  EffectiveRente = TotalEP × Rentenwert             // [EUR/month]
+  // BBG = 90,600 | Durchschnittsentgelt = 45,358 | Rentenwert = 39.32 | Arbeitsbeginn = 25
+Else:
+  EffectiveRente = geschaetzteRente                 // static estimate from PersonalScenario
 
 // Retirement tax based on combined retirement income:
-AV_Jahresauszahlung = Depot / Auszahlungsdauer
-Renteneinkommen = AV_Jahresauszahlung + GesetzlicheRente × 12 + SonstigeEinkünfte
+AV_Jahresauszahlung = Depot / Auszahlungsdauer      // [EUR/year]
+Renteneinkommen = AV_Jahresauszahlung + EffectiveRente × 12 + SonstigeEinkünfte  // all [EUR/year]
 Steuersatz_Rente = Grenzsteuersatz(Renteneinkommen) × (1 + Kirchensteuer)
 Monatlich_Netto = Monatlich_Brutto × (1 - Steuersatz_Rente)
+
+Note: Uses marginal rate (overstates tax vs. actual average rate). See Design Decisions.
 ```
 
 ### ETF-Depot Year-by-Year Accumulation
 
 ```
+VorabpauschaleDrag = 0.002                          // simplified annual drag (CalcConstants)
+
 For j = 0 to Spardauer - 1:
-  Depot = (Depot + Jahresbeitrag) × (1 + Rendite - KostenETF - 0.002)
-  // 0.002 = simplified Vorabpauschale drag
+  Depot = (Depot + Jahresbeitrag) × (1 + Rendite - KostenETF - VorabpauschaleDrag)
 ```
 
 ### ETF-Depot Payout
 
 ```
 Gewinn = Depot - Eigenbeiträge
-Teilfreistellung = 30%
+Teilfreistellung = 30%                               // §20 InvStG, Aktienfonds ≥51% equity
 Steuerpflichtiger_Gewinn = Gewinn × (1 - Teilfreistellung)
 Steuer = Steuerpflichtiger_Gewinn × Abgeltungssteuersatz
-  // Abgeltungssteuersatz depends on Kirchensteuer setting (see 3.4)
+  // Abgeltungssteuersatz: 26.3750% without KiSt, 27.8186% with 8%, 27.9951% with 9%
+  // Formula: KapESt = 25% / (1 + 25% × KiSt_rate), then + Soli + KiSt (see §3.4)
 Netto = Depot - Steuer
-Monatlich = Netto / (Auszahlungsdauer × 12)
+Monatlich = Netto / (Auszahlungsdauer × 12)          // [EUR → EUR/month] output conversion
 ```
 
 ### Inflation Adjustment
@@ -288,6 +345,28 @@ Monatlich = Netto / (Auszahlungsdauer × 12)
 Endkapital_Real = Depot / (1 + Inflation)^Spardauer
 Depot_Real(j) = Depot(j) / (1 + Inflation)^(j+1)
 ```
+
+### Design Decisions: Units and Simplifications
+
+**Yearly-core calculation architecture**: All core simulation loops operate on yearly
+steps. This is intentional — German subsidies (Grundzulage, Kinderzulage etc.) are
+defined as annual amounts in legislation. Tax brackets are annual. Converting to monthly
+would require artificially distributing annual subsidies across 12 months, introducing
+rounding errors without improving accuracy.
+
+**Unit boundaries**:
+- Input boundary: `sparrate` (EUR/month) and `gesetzlicheRente` (EUR/month) are converted
+  to yearly via `jahresbeitrag = sparrate × 12` and `rente × 12` at the simulation boundary.
+- Core: All subsidy, tax, and accumulation calculations use yearly amounts.
+- Output boundary: `monatlicheAuszahlung = depot / (auszahlungsDauer × 12)` converts back.
+
+**Marginal vs. average tax rate for retirement payout**: The calculator uses the
+Grenzsteuersatz (marginal rate) on combined retirement income. In reality, the
+Durchschnittssteuersatz (average rate) would be more precise — the actual tax on
+€30,000 retirement income is not 30,000 × marginalRate, but the sum of tax across
+all brackets. Using the marginal rate **overstates** the tax on AV-Depot payouts,
+making the comparison slightly conservative (favoring ETF). This is a documented
+simplification.
 
 ---
 
@@ -388,7 +467,7 @@ When users create custom macros, recommended ranges:
 **Calculator implementation**: Piecewise linear approximation (see `CalculatorService.getGrenzsteuersatz()` in `lib/services/domain/calculator_service.dart`).
 This gives the marginal rate, which is what matters for the Günstigerprüfung.
 
-**Note**: The calculator uses Bruttojahresgehalt as a proxy for zvE. In reality, zvE =
+**Note**: The calculator uses Bruttojahreseinkommen as a proxy for zvE. In reality, zvE =
 Brutto - Werbungskosten - Sonderausgaben - etc. This simplification overstates the
 Grenzsteuersatz for most users by a few percentage points.
 

@@ -138,20 +138,35 @@ Bilingual support (English + German) via `lib/core/l10n/app_strings.dart`:
 
 ## Calculation Engine
 
-All financial logic lives in `lib/services/domain/calculator_service.dart` as pure static methods:
+All financial logic lives in `lib/services/domain/calculator_service.dart`.
+Constants are centralized in `CalcConstants` — update this class when legislation changes.
 
+**Subsidy module** (replaceable for different subsidy regimes):
 - `calcGrundzulage()` — 50%/25% two-tier subsidy
 - `calcKinderzulage()` — up to €300/child 1:1 match
-- `calcBonus()` — €200/yr for 3 years (under 25)
+- `calcBonus()` — one-time €200 (under 25, first year)
 - `calcGeringverdienerbonus()` — €175/yr if gross ≤ €26,250
 - `calcZulage()` — combined yearly subsidy (record return type)
-- `getGrenzsteuersatz()` — German marginal tax rate approximation (2024 brackets)
-- `calcGuenstigerpruefung()` — automatic tax optimization check
-- `simulateAV()` — year-by-year AV-Depot simulation with deferred taxation + Kirchensteuer
-- `simulateETF()` — year-by-year ETF-Depot simulation with Vorabpauschale + Abgeltungssteuer + Kirchensteuer
-- `simulateAllMacros()` — cross-product: person × all macros
+- `calcSubsidyBreakdown()` — full year-1 breakdown for UI display
 
-All methods are pure — no side effects, no state. Easy to unit test in isolation.
+**Tax module** (replaceable for different tax brackets):
+- `getGrenzsteuersatz()` — German marginal tax rate (2024 brackets, piecewise linear)
+- `calcGuenstigerpruefung()` — automatic tax optimization check
+
+**Simulation module**:
+- `simulateAV()` — AV-Depot accumulation + payout with deferred taxation + Kirchensteuer
+- `simulateETF()` — ETF-Depot accumulation + payout with Abgeltungssteuer + Kirchensteuer
+- `simulateCombined()` / `simulateAllMacros()` — cross-product for comparison
+
+**Pension module**:
+- `_computeEffectiveRente()` — state pension estimation (override > income-dev EP > static)
+
+**Income development** (`lib/models/scenario.dart` → `IncomeDevSettings`):
+- Opt-in toggle, linear compound growth rate (0–8%)
+- When enabled: year-by-year varying brutto affects subsidies, tax, and pension EP
+- `bruttoForYear(brutto, j)` — computes income for savings year j
+
+All methods are pure — no side effects, no state. Each module can be replaced independently.
 
 ---
 
@@ -161,6 +176,7 @@ All methods are pure — no side effects, no state. Easy to unit test in isolati
 |----------|---------|
 | `docs/RESEARCH.md` | Legislative basis, formula derivations, data sources, tax brackets |
 | `docs/CONFIGURATION.md` | All adjustable parameters, defaults, valid ranges, legal basis |
+| `docs/INCOME_DEVELOPMENT.md` | Income development: current implementation + planned extensions |
 
 ---
 

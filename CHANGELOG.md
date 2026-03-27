@@ -2,7 +2,7 @@
 
 All notable user-facing changes to the Altersvorsorgedepot-Rechner.
 
-## [1.1.0] — 2026-03-26
+## [1.1.0] — 2026-03-27
 
 ### Added
 - Geringverdienerbonus (€175/yr for gross ≤ €26,250) with green banner when active
@@ -25,7 +25,7 @@ All notable user-facing changes to the Altersvorsorgedepot-Rechner.
 - All presets now retire at 67 (career starter was 65)
 - High earner preset savings rate raised from €150/mo to €500/mo
 - Monthly savings slider max raised from €300 to €5,000
-- Gross annual salary slider max raised from €120,000 to €1,000,000
+- Gross annual income slider max raised from €120,000 to €1,000,000
 - Adjusting starting age automatically recalculates duration to keep retirement age constant
 - Moved legislative description from header subtitle to detailed section at bottom
 - Stat cards (Final Capital / Purchasing Power) now equal height
@@ -71,6 +71,7 @@ All notable user-facing changes to the Altersvorsorgedepot-Rechner.
 
 ## Planned
 
+- Income development: step-wise/logarithmic growth curves, part-time phases, child arrival timing
 - Riester comparison mode (old vs. new Fördersystem)
 - PDF/CSV export of results
 - Persistent storage for custom scenarios

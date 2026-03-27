@@ -14,13 +14,13 @@ class PersonalScenario {
   final String id;
   String name;
   String icon;
-  double sparrate;           // monthly savings
-  double brutto;             // yearly gross salary
-  int kinder;
-  int alterStart;
-  int spardauer;
-  double? gesetzlicheRenteOverride; // manual override, null = auto-derive
-  double sonstigeEinkuenfte;  // other yearly retirement income
+  double sparrate;           // [EUR/month] monthly savings contribution
+  double brutto;             // [EUR/year] yearly gross income
+  int kinder;                // [count] number of children eligible for Kindergeld
+  int alterStart;            // [years] age at start of savings
+  int spardauer;             // [years] savings duration (derived: retirementAge - startAge)
+  double? gesetzlicheRenteOverride; // [EUR/month] manual override, null = auto-derive
+  double sonstigeEinkuenfte;  // [EUR/year] other retirement income (rental, private pension etc.)
   bool isCustom;
 
   PersonalScenario({
@@ -52,9 +52,9 @@ class PersonalScenario {
     isCustom: isCustom ?? this.isCustom,
   );
 
-  int get rentenalter => alterStart + spardauer;
-  double get jahresbeitrag => sparrate * 12;
-  int get auszahlungsDauer => (CalcConstants.payoutEndAge - rentenalter).clamp(5, 30);
+  int get rentenalter => alterStart + spardauer;           // [years] retirement age
+  double get jahresbeitrag => sparrate * 12;                // [EUR/year] annual contribution (input→core conversion)
+  int get auszahlungsDauer => (CalcConstants.payoutEndAge - rentenalter).clamp(5, 30); // [years] payout phase
 
   /// Estimated monthly state pension derived from gross income.
   /// Formula: min(Brutto, BBG) / Durchschnittsentgelt × Beitragsjahre × Rentenwert
@@ -173,10 +173,13 @@ class CostSettings {
 
   CostSettings({this.kostenAV = 0.005, this.kostenETF = 0.002, this.kirchensteuer = 0.0});
 
-  /// Abgeltungssteuer + Soli + optional Kirchensteuer
+  /// Abgeltungssteuer + Soli + optional Kirchensteuer.
+  /// Formula per §32d Abs. 1 Satz 3 EStG: KapESt is reduced because
+  /// Kirchensteuer is deductible from the tax base.
+  /// KapESt = 25% / (1 + 25% × KiSt_rate)
   double get abgeltungssteuersatz {
     if (kirchensteuer == 0) return 0.26375;
-    final kapEst = 0.25 / (1 + kirchensteuer);
+    final kapEst = 0.25 / (1 + 0.25 * kirchensteuer);
     final soli = kapEst * 0.055;
     final kiSt = kapEst * kirchensteuer;
     return kapEst + soli + kiSt;
@@ -194,15 +197,16 @@ class CostSettings {
 // SUBSIDY (ZULAGE) BREAKDOWN
 // ═══════════════════════════════════════════════════════════════════
 
+/// All values are per year (matching German subsidy law).
 class SubsidyBreakdown {
-  final double grundzulage;
-  final double kinderzulage;
-  final double bonus;
-  final double geringverdienerbonus;
-  final double total;
-  final double foerderquote;
-  final double steuererstattung;
-  final double grenzsteuersatz;
+  final double grundzulage;        // [EUR/year]
+  final double kinderzulage;       // [EUR/year]
+  final double bonus;              // [EUR/year] (one-time, only in year 1)
+  final double geringverdienerbonus; // [EUR/year]
+  final double total;              // [EUR/year] sum of all subsidies
+  final double foerderquote;       // [ratio] total / jahresbeitrag
+  final double steuererstattung;   // [EUR/year] Günstigerprüfung refund (NOT in depot)
+  final double grenzsteuersatz;    // [ratio] marginal tax rate
 
   const SubsidyBreakdown({
     required this.grundzulage,
@@ -220,14 +224,15 @@ class SubsidyBreakdown {
 // YEARLY DATA POINT
 // ═══════════════════════════════════════════════════════════════════
 
+/// Snapshot of depot state at end of each savings year.
 class YearlyDataPoint {
-  final int year;
-  final int alter;
-  final double depot;
-  final double depotReal;
-  final double eigenBeitraege;
-  final double zulagen;
-  final double zulageJahr;
+  final int year;              // [count] savings year (1-based)
+  final int alter;             // [years] age at end of this year
+  final double depot;          // [EUR] nominal depot value
+  final double depotReal;      // [EUR] inflation-adjusted depot value
+  final double eigenBeitraege; // [EUR] cumulative own contributions
+  final double zulagen;        // [EUR] cumulative subsidies
+  final double zulageJahr;     // [EUR/year] subsidy received this year
 
   const YearlyDataPoint({
     required this.year,
@@ -244,17 +249,19 @@ class YearlyDataPoint {
 // SIMULATION RESULTS
 // ═══════════════════════════════════════════════════════════════════
 
+/// AV-Depot simulation result.
+/// Accumulation in yearly steps; payout converted to monthly at output boundary.
 class AVResult {
-  final double endkapital;
-  final double endkapitalReal;
-  final double eigenBeitraege;
-  final double zulagenGesamt;
-  final double steuererstattungGesamt;
-  final double monatlicheAuszahlung;
-  final double nettoMonatlich;
-  final double grenzsteuersatz;
-  final double grenzsteuersatzRente;
-  final double wertzuwachs;
+  final double endkapital;            // [EUR] gross depot value at retirement
+  final double endkapitalReal;        // [EUR] inflation-adjusted depot value
+  final double eigenBeitraege;        // [EUR] cumulative own contributions
+  final double zulagenGesamt;         // [EUR] cumulative subsidies (in depot)
+  final double steuererstattungGesamt; // [EUR] cumulative Günstigerprüfung refunds (NOT in depot)
+  final double monatlicheAuszahlung;  // [EUR/month] gross monthly payout (core→output conversion)
+  final double nettoMonatlich;        // [EUR/month] net monthly payout after retirement tax
+  final double grenzsteuersatz;       // [ratio] marginal tax rate during working life
+  final double grenzsteuersatzRente;  // [ratio] marginal tax rate on combined retirement income
+  final double wertzuwachs;           // [EUR] capital gains (endkapital - eigen - zulagen)
   final List<YearlyDataPoint> jahresWerte;
 
   const AVResult({
@@ -272,14 +279,16 @@ class AVResult {
   });
 }
 
+/// ETF-Depot simulation result.
+/// Accumulation in yearly steps; payout converted to monthly at output boundary.
 class ETFResult {
-  final double endkapital;
-  final double endkapitalReal;
-  final double eigenBeitraege;
-  final double gewinn;
-  final double steuerAufGewinn;
-  final double nachSteuer;
-  final double monatlicheAuszahlung;
+  final double endkapital;            // [EUR] gross depot value at retirement
+  final double endkapitalReal;        // [EUR] inflation-adjusted depot value
+  final double eigenBeitraege;        // [EUR] cumulative own contributions
+  final double gewinn;                // [EUR] total gains (endkapital - eigenBeitraege)
+  final double steuerAufGewinn;       // [EUR] Abgeltungssteuer on gains (after Teilfreistellung)
+  final double nachSteuer;            // [EUR] depot value after tax
+  final double monatlicheAuszahlung;  // [EUR/month] net monthly payout (core→output conversion)
   final List<YearlyDataPoint> jahresWerte;
 
   const ETFResult({
