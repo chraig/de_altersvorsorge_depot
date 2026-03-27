@@ -323,7 +323,7 @@ Payout phase:
 | Kirchensteuer | Optional toggle (0%/8%/9%) | Affects both AV payout tax and Abgeltungssteuer |
 | Soli | Included in base rate | May change |
 | Vorabpauschale | Fixed 0.2% drag | Depends on Basiszins |
-| Retirement tax rate | 70% of working rate | Depends on total retirement income |
+| Retirement tax rate | Based on estimated combined retirement income | Actual rate depends on total taxable income |
 | Günstigerprüfung refund | Not reinvested | Could be reinvested manually |
 | Quellensteuer on fund level | Not modeled | ~0.3% p.a. already in fund returns |
 | Wohnwirtschaftliche Verwendung | Not modeled | Tax-free withdrawal for property |
@@ -513,7 +513,7 @@ Recommended: Serve over **HTTPS** (enabled by default on most hosting providers)
 1. **Constant returns**: Real markets are volatile; sequence-of-returns risk is not modeled
 2. **Simplified Vorabpauschale**: Uses fixed 0.2% drag instead of actual Basiszins calculation
 3. **No partial-year contributions**: Assumes full-year contributions from year 1
-4. **Retirement tax rate**: Simplified as 70% of working rate; real rate depends on total income in retirement
+4. **Retirement tax rate**: Based on estimated combined income (state pension + AV payout + other); actual rate depends on total taxable income in retirement
 5. **Günstigerprüfung refund not reinvested**: In practice, you could invest the tax refund in a separate ETF
 6. **No Wohnriester/wohnwirtschaftliche Verwendung**: Tax-free withdrawal for property not modeled
 7. **No Riester comparison**: Only compares AV-Depot vs. free ETF; old Riester not included

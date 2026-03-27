@@ -83,9 +83,9 @@ class CalculatorService {
     required PersonalScenario person,
     required MacroScenario macro,
     required CostSettings costs,
+    IncomeDevSettings incomeDev = const IncomeDevSettings(),
   }) {
     final jb = person.jahresbeitrag;
-    final gst = getGrenzsteuersatz(person.brutto);
     final nettoRendite = macro.rendite - costs.kostenAV;
 
     double depot = 0;
@@ -96,8 +96,10 @@ class CalculatorService {
 
     for (int j = 0; j < person.spardauer; j++) {
       final alter = person.alterStart + j;
-      final z = calcZulage(jb, person.kinder, alter, j, person.brutto);
-      final gp = calcGuenstigerpruefung(jb, z.total, gst);
+      final bruttoJ = incomeDev.bruttoForYear(person.brutto, j);
+      final gstJ = getGrenzsteuersatz(bruttoJ);
+      final z = calcZulage(jb, person.kinder, alter, j, bruttoJ);
+      final gp = calcGuenstigerpruefung(jb, z.total, gstJ);
 
       final zufluss = jb + z.total;
       depot = (depot + zufluss) * (1 + nettoRendite);
@@ -119,12 +121,38 @@ class CalculatorService {
       ));
     }
 
-    // Payout phase: 20 years, deferred taxation
-    const auszahlungsDauer = 20;
+    // Payout phase: until age 85, deferred taxation
+    final auszahlungsDauer = person.auszahlungsDauer;
     final monatlich = depot / (auszahlungsDauer * 12);
-    final steuersatzRente = gst * 0.7; // typically lower in retirement
+
+    // Compute effective state pension
+    double effectiveRente;
+    if (person.gesetzlicheRenteOverride != null) {
+      effectiveRente = person.gesetzlicheRenteOverride!;
+    } else if (incomeDev.enabled) {
+      // Accumulate Entgeltpunkte year by year with growing income
+      double totalEP = 0;
+      // Pre-savings contribution years (from age 25 to alterStart)
+      final preSavingsYears = (person.alterStart - 25).clamp(0, 45);
+      totalEP += preSavingsYears * min(person.brutto, 90600.0) / 45358.0;
+      // Savings period with income growth
+      for (int j = 0; j < person.spardauer; j++) {
+        final bruttoJ = incomeDev.bruttoForYear(person.brutto, j);
+        totalEP += min(bruttoJ, 90600.0) / 45358.0;
+      }
+      effectiveRente = totalEP * 39.32;
+    } else {
+      effectiveRente = person.gesetzlicheRente;
+    }
+
+    // Retirement tax based on combined retirement income
+    final avJahresAuszahlung = depot / auszahlungsDauer;
+    final rentenEinkommen = avJahresAuszahlung
+        + effectiveRente * 12
+        + person.sonstigeEinkuenfte;
+    final gstRente = getGrenzsteuersatz(rentenEinkommen);
     final kirchensteuerFaktor = 1 + costs.kirchensteuer;
-    final netto = monatlich * (1 - steuersatzRente * kirchensteuerFaktor);
+    final netto = monatlich * (1 - gstRente * kirchensteuerFaktor);
 
     return AVResult(
       endkapital: depot,
@@ -134,7 +162,8 @@ class CalculatorService {
       steuererstattungGesamt: steuererstattungGesamt,
       monatlicheAuszahlung: monatlich,
       nettoMonatlich: netto,
-      grenzsteuersatz: gst,
+      grenzsteuersatz: getGrenzsteuersatz(person.brutto),
+      grenzsteuersatzRente: gstRente,
       wertzuwachs: depot - eigenBeitraege - zulagenGesamt,
       jahresWerte: jahresWerte,
     );
@@ -178,7 +207,7 @@ class CalculatorService {
     final steuer = steuerpflichtigerGewinn * costs.abgeltungssteuersatz;
     final nachSteuer = depot - steuer;
 
-    const auszahlungsDauer = 20;
+    final auszahlungsDauer = person.auszahlungsDauer;
     final monatlich = nachSteuer / (auszahlungsDauer * 12);
 
     return ETFResult(
@@ -199,10 +228,11 @@ class CalculatorService {
     required PersonalScenario person,
     required MacroScenario macro,
     required CostSettings costs,
+    IncomeDevSettings incomeDev = const IncomeDevSettings(),
   }) {
     return CombinedResult(
       macro: macro,
-      av: simulateAV(person: person, macro: macro, costs: costs),
+      av: simulateAV(person: person, macro: macro, costs: costs, incomeDev: incomeDev),
       etf: simulateETF(person: person, macro: macro, costs: costs),
     );
   }
@@ -212,7 +242,8 @@ class CalculatorService {
     required PersonalScenario person,
     required List<MacroScenario> macros,
     required CostSettings costs,
+    IncomeDevSettings incomeDev = const IncomeDevSettings(),
   }) {
-    return macros.map((m) => simulateCombined(person: person, macro: m, costs: costs)).toList();
+    return macros.map((m) => simulateCombined(person: person, macro: m, costs: costs, incomeDev: incomeDev)).toList();
   }
 }

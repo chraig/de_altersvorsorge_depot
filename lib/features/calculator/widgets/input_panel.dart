@@ -141,21 +141,30 @@ class InputPanel extends StatelessWidget {
             children: [
               AppSlider(label: s.monthlySavings, value: p.sparrate,
                 min: 10, max: 5000, step: 10, display: Fmt.eur(p.sparrate),
-                onChanged: cubit.setSparrate, hint: s.hintSubsidized),
+                onChanged: cubit.setSparrate, hint: s.hintMonthlySavings),
               AppSlider(label: s.grossAnnualSalary, value: p.brutto,
                 min: 12000, max: 1000000, step: 1000, display: Fmt.eur(p.brutto),
-                onChanged: cubit.setBrutto),
+                onChanged: cubit.setBrutto, hint: s.hintGrossSalary),
               AppSlider(label: s.numberOfChildren, value: p.kinder.toDouble(),
                 min: 0, max: 5, step: 1, display: '${p.kinder}',
                 onChanged: (v) => cubit.setKinder(v.round()),
-                hint: s.hintChildSubsidy),
+                hint: s.hintChildren),
               AppSlider(label: s.startingAge, value: p.alterStart.toDouble(),
                 min: 18, max: 60, step: 1, display: '${p.alterStart}',
-                onChanged: (v) => cubit.setAlterStart(v.round())),
+                onChanged: (v) => cubit.setAlterStart(v.round()),
+                hint: s.hintStartingAge),
               AppSlider(label: s.retirementAge, value: p.rentenalter.toDouble(),
                 min: 60, max: 75, step: 1, display: '${p.rentenalter}',
                 onChanged: (v) => cubit.setRetirementAge(v.round()),
-                hint: s.derivedDuration(p.spardauer)),
+                hint: '${s.derivedDuration(p.spardauer)} \u2022 ${s.payoutDurationHint(p.auszahlungsDauer)}'),
+
+              AppSlider(label: s.statePensionMonthly, value: p.gesetzlicheRente,
+                min: 0, max: 5000, step: 50, display: Fmt.eur(p.gesetzlicheRente),
+                onChanged: cubit.setGesetzlicheRenteOverride,
+                hint: s.hintDerivedPension(Fmt.eur(p.geschaetzteRente))),
+              AppSlider(label: s.otherRetirementIncome, value: p.sonstigeEinkuenfte,
+                min: 0, max: 100000, step: 500, display: Fmt.eur(p.sonstigeEinkuenfte),
+                onChanged: cubit.setSonstigeEinkuenfte, hint: s.hintOtherIncome),
 
               GestureDetector(
                 onTap: cubit.toggleAdvanced,
@@ -175,20 +184,27 @@ class InputPanel extends StatelessWidget {
                 const Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.lg), child: Divider()),
                 AppSlider(label: s.returnPa, value: state.effectiveRendite,
                   min: 0.01, max: 0.14, step: 0.005, display: Fmt.pct(state.effectiveRendite),
-                  onChanged: cubit.setCustomRendite),
+                  onChanged: cubit.setCustomRendite, hint: s.hintReturn),
                 AppSlider(label: s.costAvPa, value: state.costs.kostenAV,
                   min: 0.001, max: 0.015, step: 0.001, display: Fmt.pct(state.costs.kostenAV),
-                  onChanged: cubit.setKostenAV, hint: s.hintCostCap),
+                  onChanged: cubit.setKostenAV, hint: s.hintCostAv),
                 AppSlider(label: s.costEtfPa, value: state.costs.kostenETF,
                   min: 0.001, max: 0.01, step: 0.001, display: Fmt.pct(state.costs.kostenETF),
-                  onChanged: cubit.setKostenETF, hint: s.hintTypicalCost),
+                  onChanged: cubit.setKostenETF, hint: s.hintCostEtf),
                 AppSlider(label: s.inflationPa, value: state.effectiveInflation,
                   min: 0.005, max: 0.06, step: 0.005, display: Fmt.pct(state.effectiveInflation),
-                  onChanged: cubit.setCustomInflation),
+                  onChanged: cubit.setCustomInflation, hint: s.hintInflation),
                 const SizedBox(height: AppSpacing.md),
                 _KirchensteuerToggle(
                   value: state.costs.kirchensteuer,
                   onChanged: cubit.setKirchensteuer,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _IncomeDevToggle(
+                  enabled: state.incomeDev.enabled,
+                  growthRate: state.incomeDev.growthRate,
+                  onToggle: cubit.toggleIncomeDev,
+                  onGrowthChanged: cubit.setIncomeGrowthRate,
                 ),
               ],
             ],
@@ -233,19 +249,19 @@ class AppSlider extends StatelessWidget {
               Text(display, style: AppTheme.monoAccent.copyWith(fontSize: 13)),
             ],
           ),
+          if (hint != null) Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Text(hint!, style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
+            ),
+          ),
           SizedBox(
             height: 28,
             child: Slider(
               value: value.clamp(min, max), min: min, max: max,
               divisions: ((max - min) / step).round(),
               onChanged: onChanged,
-            ),
-          ),
-          if (hint != null) Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 2),
-              child: Text(hint!, style: const TextStyle(fontSize: 9, color: AppColors.muted)),
             ),
           ),
         ],
@@ -404,6 +420,63 @@ class _KirchensteuerToggle extends StatelessWidget {
           fontSize: 11, fontWeight: FontWeight.w600,
           color: selected ? Colors.white : AppColors.label)),
       ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INCOME DEVELOPMENT TOGGLE
+// ═══════════════════════════════════════════════════════════════════
+
+class _IncomeDevToggle extends StatelessWidget {
+  final bool enabled;
+  final double growthRate;
+  final VoidCallback onToggle;
+  final ValueChanged<double> onGrowthChanged;
+
+  const _IncomeDevToggle({
+    required this.enabled,
+    required this.growthRate,
+    required this.onToggle,
+    required this.onGrowthChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.read<LocaleCubit>().state.strings;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            SizedBox(
+              height: 24, width: 36,
+              child: Switch(
+                value: enabled,
+                onChanged: (_) => onToggle(),
+                activeThumbColor: AppColors.accent,
+                activeTrackColor: AppColors.accentLight,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(child: Text(s.incomeDevToggle.toUpperCase(),
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
+                color: AppColors.label, letterSpacing: 0.3))),
+          ],
+        ),
+        Text(s.hintIncomeDev,
+          style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
+        if (enabled) ...[
+          const SizedBox(height: AppSpacing.md),
+          AppSlider(
+            label: s.incomeDevGrowthRate,
+            value: growthRate,
+            min: 0.0, max: 0.08, step: 0.005,
+            display: Fmt.pct(growthRate),
+            onChanged: onGrowthChanged,
+          ),
+        ],
+      ],
     );
   }
 }

@@ -31,6 +31,8 @@ class CalculatorCubit extends Cubit<CalculatorState> {
         kinder: s.kinder,
         alterStart: s.alterStart,
         spardauer: s.spardauer,
+        clearRenteOverride: true,
+        sonstigeEinkuenfte: s.sonstigeEinkuenfte,
       ),
       selectedPersonalScenarioId: s.id,
     ));
@@ -87,8 +89,28 @@ class CalculatorCubit extends Cubit<CalculatorState> {
     emit(state.copyWith(customInflation: v, useCustomRendite: true));
   }
 
+  void setGesetzlicheRenteOverride(double v) {
+    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(gesetzlicheRenteOverride: v), clearSelectedPersonal: true));
+  }
+
+  void clearGesetzlicheRenteOverride() {
+    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(clearRenteOverride: true), clearSelectedPersonal: true));
+  }
+
+  void setSonstigeEinkuenfte(double v) {
+    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(sonstigeEinkuenfte: v), clearSelectedPersonal: true));
+  }
+
   void setKirchensteuer(double v) {
     emit(state.copyWith(costs: state.costs.copyWith(kirchensteuer: v)));
+  }
+
+  void toggleIncomeDev() {
+    emit(state.copyWith(incomeDev: state.incomeDev.copyWith(enabled: !state.incomeDev.enabled)));
+  }
+
+  void setIncomeGrowthRate(double v) {
+    emit(state.copyWith(incomeDev: state.incomeDev.copyWith(growthRate: v)));
   }
 
   void toggleAdvanced() {

@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:avdepot_rechner/core/l10n/app_strings.dart';
@@ -8,15 +9,23 @@ const _uuid = Uuid();
 // PERSONAL SCENARIO
 // ═══════════════════════════════════════════════════════════════════
 
+/// Pension estimation constants (2024 values).
+const _rentenwert = 39.32; // EUR per Entgeltpunkt per month (West, July 2024)
+const _durchschnittsentgelt = 45358.0; // EUR average gross income (2024)
+const _bbg = 90600.0; // Beitragsbemessungsgrenze (2024, West) — no pension points above this
+const _arbeitsbeginn = 25; // assumed start of working life (conservative: university graduates)
+
 class PersonalScenario {
   final String id;
   String name;
   String icon;
-  double sparrate;    // monthly
-  double brutto;      // yearly gross
+  double sparrate;           // monthly savings
+  double brutto;             // yearly gross salary
   int kinder;
   int alterStart;
   int spardauer;
+  double? gesetzlicheRenteOverride; // manual override, null = auto-derive
+  double sonstigeEinkuenfte;  // other yearly retirement income
   bool isCustom;
 
   PersonalScenario({
@@ -28,21 +37,42 @@ class PersonalScenario {
     required this.kinder,
     required this.alterStart,
     required this.spardauer,
+    this.gesetzlicheRenteOverride,
+    this.sonstigeEinkuenfte = 0,
     this.isCustom = false,
   }) : id = id ?? _uuid.v4();
 
   PersonalScenario copyWith({
     String? name, String? icon, double? sparrate, double? brutto,
-    int? kinder, int? alterStart, int? spardauer, bool? isCustom,
+    int? kinder, int? alterStart, int? spardauer,
+    double? gesetzlicheRenteOverride, bool clearRenteOverride = false,
+    double? sonstigeEinkuenfte, bool? isCustom,
   }) => PersonalScenario(
     id: id, name: name ?? this.name, icon: icon ?? this.icon,
     sparrate: sparrate ?? this.sparrate, brutto: brutto ?? this.brutto,
     kinder: kinder ?? this.kinder, alterStart: alterStart ?? this.alterStart,
-    spardauer: spardauer ?? this.spardauer, isCustom: isCustom ?? this.isCustom,
+    spardauer: spardauer ?? this.spardauer,
+    gesetzlicheRenteOverride: clearRenteOverride ? null : (gesetzlicheRenteOverride ?? this.gesetzlicheRenteOverride),
+    sonstigeEinkuenfte: sonstigeEinkuenfte ?? this.sonstigeEinkuenfte,
+    isCustom: isCustom ?? this.isCustom,
   );
 
   int get rentenalter => alterStart + spardauer;
   double get jahresbeitrag => sparrate * 12;
+  int get auszahlungsDauer => (85 - rentenalter).clamp(5, 30);
+
+  /// Estimated monthly state pension derived from gross income.
+  /// Formula: min(Brutto, BBG) / Durchschnittsentgelt × Beitragsjahre × Rentenwert
+  /// BBG caps pensionable income; arbeitsbeginn assumed at 25 (conservative).
+  double get geschaetzteRente {
+    final beitragsjahre = (rentenalter - _arbeitsbeginn).clamp(0, 45);
+    final cappedBrutto = brutto < _bbg ? brutto : _bbg;
+    final entgeltpunkteProJahr = cappedBrutto / _durchschnittsentgelt;
+    return entgeltpunkteProJahr * beitragsjahre * _rentenwert;
+  }
+
+  /// Effective monthly state pension: override if set, otherwise derived.
+  double get gesetzlicheRente => gesetzlicheRenteOverride ?? geschaetzteRente;
 
   static List<PersonalScenario> defaults(AppStrings s) => [
     PersonalScenario(name: s.presetCareerStarter, icon: '\uD83C\uDF93', sparrate: 50, brutto: 32000, kinder: 0, alterStart: 23, spardauer: 44),
@@ -112,6 +142,29 @@ class MacroScenario {
       description: s.macroLostDecadeDesc,
       rendite: 0.03, inflation: 0.02, color: const Color(0xFF6B7280)),
   ];
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INCOME DEVELOPMENT
+// ═══════════════════════════════════════════════════════════════════
+
+class IncomeDevSettings {
+  final bool enabled;
+  final double growthRate; // annual growth, e.g. 0.02 = 2%
+
+  const IncomeDevSettings({this.enabled = false, this.growthRate = 0.02});
+
+  IncomeDevSettings copyWith({bool? enabled, double? growthRate}) =>
+    IncomeDevSettings(
+      enabled: enabled ?? this.enabled,
+      growthRate: growthRate ?? this.growthRate,
+    );
+
+  /// Compute gross income for year j given a starting brutto.
+  double bruttoForYear(double brutto, int j) {
+    if (!enabled) return brutto;
+    return brutto * pow(1 + growthRate, j);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -205,6 +258,7 @@ class AVResult {
   final double monatlicheAuszahlung;
   final double nettoMonatlich;
   final double grenzsteuersatz;
+  final double grenzsteuersatzRente;
   final double wertzuwachs;
   final List<YearlyDataPoint> jahresWerte;
 
@@ -217,6 +271,7 @@ class AVResult {
     required this.monatlicheAuszahlung,
     required this.nettoMonatlich,
     required this.grenzsteuersatz,
+    required this.grenzsteuersatzRente,
     required this.wertzuwachs,
     required this.jahresWerte,
   });

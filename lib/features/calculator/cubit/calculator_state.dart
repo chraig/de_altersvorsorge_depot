@@ -9,6 +9,7 @@ class CalculatorState {
   final PersonalScenario currentPerson;
   final MacroScenario currentMacro;
   final CostSettings costs;
+  final IncomeDevSettings incomeDev;
   final String? selectedPersonalScenarioId;
   final bool showAdvanced;
   final bool useCustomRendite;
@@ -20,6 +21,7 @@ class CalculatorState {
     required this.currentPerson,
     required this.currentMacro,
     required this.costs,
+    this.incomeDev = const IncomeDevSettings(),
     this.selectedPersonalScenarioId,
     this.showAdvanced = false,
     this.useCustomRendite = false,
@@ -52,7 +54,7 @@ class CalculatorState {
       CalculatorService.calcSubsidyBreakdown(currentPerson);
 
   AVResult avResult(AppStrings s) => CalculatorService.simulateAV(
-      person: currentPerson, macro: effectiveMacro(s), costs: costs);
+      person: currentPerson, macro: effectiveMacro(s), costs: costs, incomeDev: incomeDev);
 
   ETFResult etfResult(AppStrings s) => CalculatorService.simulateETF(
       person: currentPerson, macro: effectiveMacro(s), costs: costs);
@@ -62,7 +64,7 @@ class CalculatorState {
 
   List<CombinedResult> get allMacroResults {
     final results = CalculatorService.simulateAllMacros(
-        person: currentPerson, macros: macroScenarios, costs: costs);
+        person: currentPerson, macros: macroScenarios, costs: costs, incomeDev: incomeDev);
     results.sort((a, b) =>
       b.macro.realRendite.compareTo(a.macro.realRendite));
     return results;
@@ -76,6 +78,7 @@ class CalculatorState {
     PersonalScenario? currentPerson,
     MacroScenario? currentMacro,
     CostSettings? costs,
+    IncomeDevSettings? incomeDev,
     String? selectedPersonalScenarioId,
     bool clearSelectedPersonal = false,
     bool? showAdvanced,
@@ -89,6 +92,7 @@ class CalculatorState {
       currentPerson: currentPerson ?? this.currentPerson,
       currentMacro: currentMacro ?? this.currentMacro,
       costs: costs ?? this.costs,
+      incomeDev: incomeDev ?? this.incomeDev,
       selectedPersonalScenarioId: clearSelectedPersonal ? null : (selectedPersonalScenarioId ?? this.selectedPersonalScenarioId),
       showAdvanced: showAdvanced ?? this.showAdvanced,
       useCustomRendite: useCustomRendite ?? this.useCustomRendite,

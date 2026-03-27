@@ -29,12 +29,38 @@ abstract class AppStrings {
   String get costAvPa;
   String get costEtfPa;
   String get inflationPa;
+  String get statePensionMonthly;
+  String get hintStatePension;
+  String get otherRetirementIncome;
+  String get hintOtherIncome;
+  String get retirementTaxRate;
+  String get hintMarginalTaxRate;
+  String get hintRetirementTaxRate;
+  String payoutDurationHint(int years);
+  String get hintBaseGrant;
+  String get hintChildGrant;
+  String get hintEntryBonus;
+  String get hintLowIncomeBonus;
+  String get hintSubsidyRate;
+  String get hintTaxRefund;
+  String get hintMonthlySavings;
+  String get hintGrossSalary;
+  String get hintChildren;
+  String get hintStartingAge;
+  String hintDerivedPension(String amount);
+  String get hintReturn;
+  String get hintCostAv;
+  String get hintCostEtf;
+  String get hintInflation;
   String get hintSubsidized;
   String get hintChildSubsidy;
   String retirementAgeHint(int age);
   String get hintCostCap;
   String get hintTypicalCost;
   String yearsLabel(int n);
+  String get incomeDevToggle;
+  String get incomeDevGrowthRate;
+  String get hintIncomeDev;
   String get kirchensteuerLabel;
   String get kirchensteuerNone;
   String get kirchensteuerBayBw;
@@ -267,7 +293,7 @@ class StringsEn extends AppStrings {
 
   // Input
   String get monthlySavings => 'Monthly Savings Rate';
-  String get grossAnnualSalary => 'Gross Annual Salary';
+  String get grossAnnualSalary => 'Gross Annual Income';
   String get numberOfChildren => 'Number of Children';
   String get startingAge => 'Starting Age';
   String get savingsDuration => 'Savings Duration';
@@ -278,12 +304,38 @@ class StringsEn extends AppStrings {
   String get costAvPa => 'AV-Depot Cost p.a.';
   String get costEtfPa => 'ETF Portfolio Cost p.a.';
   String get inflationPa => 'Inflation p.a.';
+  String get statePensionMonthly => 'Est. State Pension (monthly)';
+  String get hintStatePension => 'Default \u20AC1,200/mo (German avg.). Check your annual Renteninformation letter for your estimate. Used to calculate retirement tax rate.';
+  String get otherRetirementIncome => 'Other Retirement Income (yearly)';
+  String get hintOtherIncome => 'e.g. rental income, private pension';
+  String get retirementTaxRate => 'Retirement Tax Rate';
+  String get hintMarginalTaxRate => 'Your current tax bracket based on gross income. Used for G\u00FCnstigerpr\u00FCfung during savings.';
+  String get hintRetirementTaxRate => 'Tax rate on AV-Depot payouts in retirement. Based on combined income: state pension + AV payout + other income.';
+  String payoutDurationHint(int years) => 'Payout duration: $years years (until age 85)';
+  String get hintBaseGrant => '50% on first \u20AC360/yr + 25% on \u20AC361\u20131,800/yr. Max \u20AC540/yr. Paid into the depot.';
+  String get hintChildGrant => 'Up to \u20AC300 per child per year (1:1 match). Full grant from \u20AC25/mo contribution.';
+  String get hintEntryBonus => '\u20AC200/yr for first 3 years if under 25 at contract start.';
+  String get hintLowIncomeBonus => '\u20AC175/yr extra if gross income \u2264 \u20AC26,250. Paid into the depot.';
+  String get hintSubsidyRate => 'Total subsidies as percentage of your own contribution. Higher = more government leverage.';
+  String get hintTaxRefund => 'Paid to your bank account, not into the depot. Does not affect the comparison.';
+  String get hintMonthlySavings => 'Your monthly contribution to the depot. Subsidized up to \u20AC150/mo, above that unsubsidized.';
+  String get hintGrossSalary => 'Your yearly gross income before taxes. Determines your tax rate and subsidy eligibility.';
+  String get hintChildren => 'Number of children eligible for Kindergeld. Each child adds up to \u20AC300/yr subsidy.';
+  String get hintStartingAge => 'Age when you start saving. Younger start = longer compounding.';
+  String hintDerivedPension(String amount) => 'Est. state pension: $amount/mo (derived from your income and contribution years). Override in Advanced Settings.';
+  String get hintReturn => 'Expected annual return before costs. Depends on the selected macro scenario or manual input.';
+  String get hintCostAv => 'Annual costs of the AV-Depot provider. Legal cap: 1.0% for Standardprodukt.';
+  String get hintCostEtf => 'Annual costs of your ETF (TER). Typical World-ETF: 0.1\u20130.2%.';
+  String get hintInflation => 'Expected annual inflation rate. Reduces purchasing power of future payouts.';
   String get hintSubsidized => 'Subsidized up to \u20AC150/month. Above unsubsidized.';
   String get hintChildSubsidy => 'Up to \u20AC300/child/year subsidy';
   String retirementAgeHint(int age) => 'Retirement at age $age';
   String get hintCostCap => 'Cost cap: 1.0%';
   String get hintTypicalCost => 'Typical: 0.1\u20130.2%';
   String yearsLabel(int n) => '$n years';
+  String get incomeDevToggle => 'Model Income Growth';
+  String get incomeDevGrowthRate => 'Annual Income Growth';
+  String get hintIncomeDev => 'When enabled, gross income grows annually at this rate. Affects subsidies, tax rate, and pension estimate year by year.';
   String get kirchensteuerLabel => 'Church Tax';
   String get kirchensteuerNone => 'None';
   String get kirchensteuerBayBw => '8% (Bavaria/BaW\u00FC)';
@@ -295,7 +347,7 @@ class StringsEn extends AppStrings {
   String get childGrant => 'Child Grant';
   String get entryBonus => 'Entry Bonus';
   String get lowIncomeBonus => 'Low-Income Bonus';
-  String get lowIncomeBonusApplies => 'Low-income bonus applies: \u20AC175/yr (gross salary \u2264 \u20AC26,250)';
+  String get lowIncomeBonusApplies => 'Low-income bonus applies: \u20AC175/yr (gross income \u2264 \u20AC26,250)';
   String get subsidyRate => 'Subsidy Rate';
   String get totalSubsidyYear => 'Total Subsidy/Year';
   String get taxRefundYear => 'Tax Refund/Year';
@@ -430,12 +482,13 @@ class StringsEn extends AppStrings {
     '\u25B8 5 personal scenario presets + custom input';
   String get simplificationsTitle => 'Simplifications';
   String get simplificationsDetail =>
-    '\u25B8 Constant annual returns (no sequence-of-returns risk)\n'
-    '\u25B8 Simplified Vorabpauschale as 0.2% annual drag (actual depends on Basiszins)\n'
-    '\u25B8 No partial-year contributions\n'
-    '\u25B8 Retirement tax rate simplified as 70% of working rate\n'
-    '\u25B8 G\u00FCnstigerpr\u00FCfung tax refund not reinvested into a separate ETF\n'
-    '\u25B8 Fund-level withholding tax (~0.3% p.a.) not separately modeled';
+    'Both: Constant annual returns (no sequence-of-returns risk)\n'
+    'Both: No partial-year contributions\n'
+    'Both: Fund-level withholding tax (~0.3% p.a.) not separately modeled\n'
+    'ETF: Vorabpauschale simplified as 0.2% annual drag (actual depends on Basiszins)\n'
+    'AV: Retirement tax rate based on estimated combined income \u2013 actual depends on total taxable income\n'
+    'AV: G\u00FCnstigerpr\u00FCfung tax refund paid to bank account, not reinvested\n'
+    'AV: State pension estimated from gross income (Entgeltpunkte formula, 2024 Rentenwert) \u2013 adjustable';
   String get plannedFeaturesTitle => 'Not Yet Included';
   String get plannedFeaturesDetail =>
     '\u25B8 Riester comparison (old vs. new subsidy system)\n'
@@ -509,7 +562,7 @@ class StringsEn extends AppStrings {
   String get fieldInflationPct => 'Inflation (% p.a.)';
   String get fieldColor => 'Color:';
   String get fieldSavingsRate => 'Savings Rate (\u20AC/month)';
-  String get fieldGrossSalary => 'Gross Annual Salary (\u20AC)';
+  String get fieldGrossSalary => 'Gross Annual Income (\u20AC)';
   String get fieldChildren => 'Number of Children';
   String get fieldStartAge => 'Starting Age';
   String get fieldDuration => 'Duration (years)';
@@ -578,7 +631,7 @@ class StringsDe extends AppStrings {
   String get addScenario => '+ Szenario';
 
   String get monthlySavings => 'Monatliche Sparrate';
-  String get grossAnnualSalary => 'Bruttojahresgehalt';
+  String get grossAnnualSalary => 'Bruttojahreseinkommen';
   String get numberOfChildren => 'Anzahl Kinder';
   String get startingAge => 'Alter bei Start';
   String get savingsDuration => 'Spardauer';
@@ -589,12 +642,38 @@ class StringsDe extends AppStrings {
   String get costAvPa => 'Kosten AV-Depot p.a.';
   String get costEtfPa => 'Kosten ETF-Depot p.a.';
   String get inflationPa => 'Inflation p.a.';
+  String get statePensionMonthly => 'Gesch. gesetzl. Rente (monatlich)';
+  String get hintStatePension => 'Standard: 1.200 \u20AC/Mt (dt. Durchschnitt). Ihren pers\u00F6nlichen Wert finden Sie in Ihrer j\u00E4hrlichen Renteninformation. Wird zur Berechnung des Steuersatzes im Ruhestand verwendet.';
+  String get otherRetirementIncome => 'Sonstige Eink\u00FCnfte im Ruhestand (j\u00E4hrlich)';
+  String get hintOtherIncome => 'z.B. Mieteinnahmen, Betriebsrente';
+  String get retirementTaxRate => 'Steuersatz im Ruhestand';
+  String get hintMarginalTaxRate => 'Ihr aktueller Steuersatz basierend auf dem Bruttoeinkommen. Wird f\u00FCr die G\u00FCnstigerpr\u00FCfung w\u00E4hrend der Sparphase verwendet.';
+  String get hintRetirementTaxRate => 'Steuersatz auf AV-Depot-Auszahlungen im Ruhestand. Basiert auf Gesamteinkommen: gesetzl. Rente + AV-Auszahlung + Sonstige.';
+  String payoutDurationHint(int years) => 'Auszahlungsdauer: $years Jahre (bis Alter 85)';
+  String get hintBaseGrant => '50 % auf erste 360 \u20AC/J + 25 % auf 361\u20131.800 \u20AC/J. Max 540 \u20AC/J. Flie\u00DFt ins Depot.';
+  String get hintChildGrant => 'Bis 300 \u20AC pro Kind/Jahr (1:1 Zuschuss). Volle Zulage ab 25 \u20AC/Mt Eigenbeitrag.';
+  String get hintEntryBonus => '200 \u20AC/J f\u00FCr die ersten 3 Jahre, wenn unter 25 bei Vertragsabschluss.';
+  String get hintLowIncomeBonus => '175 \u20AC/J extra bei Bruttoeinkommen \u2264 26.250 \u20AC. Flie\u00DFt ins Depot.';
+  String get hintSubsidyRate => 'Gesamtzulagen als Prozentsatz Ihres Eigenbeitrags. H\u00F6her = mehr staatliche Hebelwirkung.';
+  String get hintTaxRefund => 'Wird auf Ihr Bankkonto ausgezahlt, nicht ins Depot. Beeinflusst den Vergleich nicht.';
+  String get hintMonthlySavings => 'Ihr monatlicher Beitrag ins Depot. Gef\u00F6rdert bis 150 \u20AC/Mt, dar\u00FCber ungef\u00F6rdert.';
+  String get hintGrossSalary => 'Ihr j\u00E4hrliches Bruttoeinkommen vor Steuern. Bestimmt Ihren Steuersatz und die F\u00F6rderberechtigung.';
+  String get hintChildren => 'Anzahl kindergeldberechtigter Kinder. Jedes Kind bringt bis zu 300 \u20AC/Jahr Zulage.';
+  String get hintStartingAge => 'Alter beim Start des Sparens. Fr\u00FCherer Start = l\u00E4ngerer Zinseszins.';
+  String hintDerivedPension(String amount) => 'Gesch. gesetzl. Rente: $amount/Mt (abgeleitet aus Einkommen und Beitragsjahren). \u00C4nderbar unter Erweiterte Einstellungen.';
+  String get hintReturn => 'Erwartete j\u00E4hrliche Rendite vor Kosten. Abh\u00E4ngig vom gew\u00E4hlten Makro-Szenario oder manueller Eingabe.';
+  String get hintCostAv => 'J\u00E4hrliche Kosten des AV-Depot-Anbieters. Kostendeckel: 1,0 % f\u00FCr Standardprodukt.';
+  String get hintCostEtf => 'J\u00E4hrliche Kosten Ihres ETF (TER). Typischer Welt-ETF: 0,1\u20130,2 %.';
+  String get hintInflation => 'Erwartete j\u00E4hrliche Inflationsrate. Mindert die Kaufkraft zuk\u00FCnftiger Auszahlungen.';
   String get hintSubsidized => 'Gef\u00F6rdert bis 150 \u20AC/Monat. Dar\u00FCber ungef\u00F6rdert.';
   String get hintChildSubsidy => 'Bis 300 \u20AC/Kind/Jahr Zulage';
   String retirementAgeHint(int age) => 'Renteneintritt mit $age Jahren';
   String get hintCostCap => 'Kostendeckel: 1,0 %';
   String get hintTypicalCost => 'Typisch: 0,1\u20130,2 %';
   String yearsLabel(int n) => '$n Jahre';
+  String get incomeDevToggle => 'Einkommensentwicklung modellieren';
+  String get incomeDevGrowthRate => 'J\u00E4hrliches Einkommenswachstum';
+  String get hintIncomeDev => 'Wenn aktiviert, w\u00E4chst das Bruttoeinkommen j\u00E4hrlich um diesen Satz. Beeinflusst Zulagen, Steuersatz und Rentensch\u00E4tzung pro Jahr.';
   String get kirchensteuerLabel => 'Kirchensteuer';
   String get kirchensteuerNone => 'Keine';
   String get kirchensteuerBayBw => '8 % (Bayern/BaW\u00FC)';
@@ -732,12 +811,13 @@ class StringsDe extends AppStrings {
     '\u25B8 5 pers\u00F6nliche Szenarien + freie Eingabe';
   String get simplificationsTitle => 'Vereinfachungen';
   String get simplificationsDetail =>
-    '\u25B8 Konstante j\u00E4hrliche Rendite (kein Reihenfolge-Risiko)\n'
-    '\u25B8 Vereinfachte Vorabpauschale als 0,2 % j\u00E4hrlicher Abzug (tats\u00E4chlich abh\u00E4ngig vom Basiszins)\n'
-    '\u25B8 Keine unterj\u00E4hrigen Beitr\u00E4ge\n'
-    '\u25B8 Steuersatz im Ruhestand vereinfacht als 70 % des Arbeitssatzes\n'
-    '\u25B8 G\u00FCnstigerpr\u00FCfung-Erstattung wird nicht in separates ETF-Depot reinvestiert\n'
-    '\u25B8 Quellensteuer auf Fondsebene (~0,3 % p.a.) nicht separat modelliert';
+    'Beide: Konstante j\u00E4hrliche Rendite (kein Reihenfolge-Risiko)\n'
+    'Beide: Keine unterj\u00E4hrigen Beitr\u00E4ge\n'
+    'Beide: Quellensteuer auf Fondsebene (~0,3 % p.a.) nicht separat modelliert\n'
+    'ETF: Vorabpauschale vereinfacht als 0,2 % j\u00E4hrlicher Abzug (tats\u00E4chlich abh\u00E4ngig vom Basiszins)\n'
+    'AV: Steuersatz im Ruhestand basiert auf gesch\u00E4tztem Gesamteinkommen \u2013 tats\u00E4chlicher Satz h\u00E4ngt vom zu versteuernden Einkommen ab\n'
+    'AV: G\u00FCnstigerpr\u00FCfung-Erstattung wird auf Bankkonto ausgezahlt, nicht reinvestiert\n'
+    'AV: Gesetzl. Rente aus Bruttoeinkommen gesch\u00E4tzt (Entgeltpunkte-Formel, Rentenwert 2024) \u2013 anpassbar';
   String get plannedFeaturesTitle => 'Noch nicht enthalten';
   String get plannedFeaturesDetail =>
     '\u25B8 Riester-Vergleich (altes vs. neues F\u00F6rdersystem)\n'
@@ -809,7 +889,7 @@ class StringsDe extends AppStrings {
   String get fieldInflationPct => 'Inflation (% p.a.)';
   String get fieldColor => 'Farbe:';
   String get fieldSavingsRate => 'Sparrate (\u20AC/Monat)';
-  String get fieldGrossSalary => 'Bruttojahresgehalt (\u20AC)';
+  String get fieldGrossSalary => 'Bruttojahreseinkommen (\u20AC)';
   String get fieldChildren => 'Anzahl Kinder';
   String get fieldStartAge => 'Alter bei Start';
   String get fieldDuration => 'Spardauer (Jahre)';

@@ -154,7 +154,10 @@ into a separate ETF depot.
 - Up to 30% Einmalentnahme at start of payout phase (§89 Abs. 9 EStG-E)
 - Optional: Leibrente via Versicherungsunternehmen (provider switch permitted)
 
-**Calculator simplification**: Retirement tax rate = Grenzsteuersatz × 0.7
+**Calculator implementation**: Retirement tax rate is calculated on the combined
+annual retirement income (AV-Depot payout + estimated state pension × 12 +
+other retirement income), using the same marginal tax bracket function.
+This replaces the earlier simplification of `Grenzsteuersatz × 0.7`.
 
 ### 3.3 ETF-Depot (Private, Unfördert)
 
@@ -180,6 +183,111 @@ Where:
 **Key difference**: In the ETF depot, only the GAIN is taxed (and with 30% exemption).
 In the AV-Depot, the ENTIRE payout is taxed (but at a potentially lower rate).
 This creates a crossover point depending on returns, duration, and tax rates.
+
+---
+
+## 3.4 Kirchensteuer (Church Tax)
+
+Kirchensteuer applies to both AV-Depot (on income tax) and ETF-Depot (on Abgeltungssteuer).
+Configurable in the calculator as None / 8% (Bayern/BaWü) / 9% (other states).
+
+**ETF side — reduced KapESt formula:**
+
+```
+KapESt = 25% / (1 + KiSt_rate)
+Soli = KapESt × 5.5%
+KiSt = KapESt × KiSt_rate
+Abgeltungssteuersatz = KapESt + Soli + KiSt
+
+Results:
+  None:  26.375%
+  8%:    ~27.82%
+  9%:    ~27.99%
+```
+
+**AV side — income tax multiplier:**
+
+```
+Steuersatz_Rente = Grenzsteuersatz × 0.7 × (1 + KiSt_rate)
+```
+
+---
+
+## 3.5 Simulation Formulas (as implemented in code)
+
+### Combined Yearly Subsidy
+
+```
+Zulage(j) = Grundzulage(Jahresbeitrag)
+           + Kinderzulage(Jahresbeitrag, Kinder)
+           + Berufseinsteigerbonus(Alter, j)
+           + Geringverdienerbonus(Brutto, Jahresbeitrag)
+```
+
+### German Marginal Tax Rate (piecewise approximation)
+
+```
+Grenzsteuersatz(Brutto) =
+  0%      if Brutto ≤ 11,784   (Grundfreibetrag)
+  14%     if Brutto ≤ 17,005   (Eingangssteuersatz)
+  23.97% + (Brutto - 17,005) / (66,760 - 17,005) × (42% - 23.97%)
+          if Brutto ≤ 66,760   (Progressive zone, linear interpolation)
+  42%     if Brutto ≤ 277,825  (Spitzensteuersatz)
+  45%     if Brutto > 277,825  (Reichensteuersatz)
+```
+
+### AV-Depot Year-by-Year Accumulation
+
+```
+For j = 0 to Spardauer - 1:
+  Alter = AlterStart + j
+  Zulage = Zulage(j)                          // see above
+  Günstigerprüfung:
+    Steuerersparnis = (Jahresbeitrag + Zulage) × Grenzsteuersatz
+    Zusätzlich = max(0, Steuerersparnis - Zulage)  // → Girokonto, NOT depot
+  Zufluss = Jahresbeitrag + Zulage
+  Depot = (Depot + Zufluss) × (1 + Rendite - KostenAV)
+```
+
+### AV-Depot Payout
+
+```
+Auszahlungsdauer = (85 - Rentenalter), clamped to 5–30 years
+Monatlich_Brutto = Depot / (Auszahlungsdauer × 12)
+
+// Retirement tax based on combined retirement income:
+AV_Jahresauszahlung = Depot / Auszahlungsdauer
+Renteneinkommen = AV_Jahresauszahlung + GesetzlicheRente × 12 + SonstigeEinkünfte
+Steuersatz_Rente = Grenzsteuersatz(Renteneinkommen) × (1 + Kirchensteuer)
+Monatlich_Netto = Monatlich_Brutto × (1 - Steuersatz_Rente)
+```
+
+### ETF-Depot Year-by-Year Accumulation
+
+```
+For j = 0 to Spardauer - 1:
+  Depot = (Depot + Jahresbeitrag) × (1 + Rendite - KostenETF - 0.002)
+  // 0.002 = simplified Vorabpauschale drag
+```
+
+### ETF-Depot Payout
+
+```
+Gewinn = Depot - Eigenbeiträge
+Teilfreistellung = 30%
+Steuerpflichtiger_Gewinn = Gewinn × (1 - Teilfreistellung)
+Steuer = Steuerpflichtiger_Gewinn × Abgeltungssteuersatz
+  // Abgeltungssteuersatz depends on Kirchensteuer setting (see 3.4)
+Netto = Depot - Steuer
+Monatlich = Netto / (Auszahlungsdauer × 12)
+```
+
+### Inflation Adjustment
+
+```
+Endkapital_Real = Depot / (1 + Inflation)^Spardauer
+Depot_Real(j) = Depot(j) / (1 + Inflation)^(j+1)
+```
 
 ---
 

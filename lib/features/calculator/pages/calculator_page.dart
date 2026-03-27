@@ -304,15 +304,15 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
   // ─── FOERDERUNG BOX ─────────────────────────────────────────────
 
   Widget _buildSubsidyTable(AppStrings s, SubsidyBreakdown sub, MacroScenario macro) {
-    final rows = <(String, String)>[
-      (s.baseGrant, Fmt.eur(sub.grundzulage)),
-      (s.childGrant, Fmt.eur(sub.kinderzulage)),
-      if (sub.bonus > 0) (s.entryBonus, Fmt.eur(sub.bonus)),
-      if (sub.geringverdienerbonus > 0) (s.lowIncomeBonus, Fmt.eur(sub.geringverdienerbonus)),
-      (s.totalSubsidyYear, Fmt.eur(sub.total)),
-      (s.subsidyRate, Fmt.pct(sub.foerderquote)),
-      if (sub.steuererstattung > 0) ('${s.taxRefundYear} (${s.viaTaxOptimization})', Fmt.eur(sub.steuererstattung)),
-      (s.marginalTaxRate, Fmt.pct(sub.grenzsteuersatz)),
+    final rows = <(String, String, String?)>[
+      (s.baseGrant, Fmt.eur(sub.grundzulage), s.hintBaseGrant),
+      (s.childGrant, Fmt.eur(sub.kinderzulage), s.hintChildGrant),
+      if (sub.bonus > 0) (s.entryBonus, Fmt.eur(sub.bonus), s.hintEntryBonus),
+      if (sub.geringverdienerbonus > 0) (s.lowIncomeBonus, Fmt.eur(sub.geringverdienerbonus), s.hintLowIncomeBonus),
+      (s.totalSubsidyYear, Fmt.eur(sub.total), null),
+      (s.subsidyRate, Fmt.pct(sub.foerderquote), s.hintSubsidyRate),
+      if (sub.steuererstattung > 0) ('${s.taxRefundYear} (${s.viaTaxOptimization})', Fmt.eur(sub.steuererstattung), s.hintTaxRefund),
+      (s.marginalTaxRate, Fmt.pct(sub.grenzsteuersatz), s.hintMarginalTaxRate),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -354,11 +354,20 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
                 decoration: const BoxDecoration(
                   border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(r.$1, style: const TextStyle(fontSize: 13, color: AppColors.label)),
-                    Text(r.$2, style: AppTheme.mono.copyWith(fontSize: 14, fontWeight: FontWeight.w700)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(child: Text(r.$1, style: const TextStyle(fontSize: 13, color: AppColors.label))),
+                        Text(r.$2, style: AppTheme.mono.copyWith(fontSize: 14, fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                    if (r.$3 != null) Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(r.$3!, style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
+                    ),
                   ],
                 ),
               )),
@@ -556,6 +565,17 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
                 TextSpan(text: Fmt.pct(av.grenzsteuersatz),
                   style: AppTheme.mono.copyWith(fontSize: 13, color: AppColors.accent)),
               ])),
+              Text(s.hintMarginalTaxRate,
+                style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.4)),
+              const SizedBox(height: 8),
+              RichText(text: TextSpan(children: [
+                TextSpan(text: '${s.retirementTaxRate}: ',
+                  style: const TextStyle(fontSize: 11, color: AppColors.label)),
+                TextSpan(text: Fmt.pct(av.grenzsteuersatzRente),
+                  style: AppTheme.mono.copyWith(fontSize: 13, color: AppColors.accent)),
+              ])),
+              Text(s.hintRetirementTaxRate,
+                style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.4)),
             ],
           ),
         ),
