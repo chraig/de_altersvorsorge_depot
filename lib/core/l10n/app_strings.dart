@@ -100,6 +100,7 @@ abstract class AppStrings {
   String get calcBasisTitle;
   String get calcBasisAV;
   String get calcBasisETF;
+  String get calcBasisGeneral;
 
   // ─── COMPARISON ───────────────────────────────────────────────────
   String avYieldsMore(String amount);
@@ -387,6 +388,7 @@ class StringsEn extends AppStrings {
   String get calcBasisTitle => 'Calculation Basis';
   String get calcBasisAV => 'AV-Depot Rules';
   String get calcBasisETF => 'ETF Rules';
+  String get calcBasisGeneral => 'Common';
 
   String avYieldsMore(String amount) => 'AV-Depot yields $amount more.';
   String etfYieldsMore(String amount) => 'ETF Portfolio yields $amount more.';
@@ -732,6 +734,7 @@ class StringsDe extends AppStrings {
   String get calcBasisTitle => 'Berechnungsgrundlage';
   String get calcBasisAV => 'AV-Depot Regeln';
   String get calcBasisETF => 'ETF-Depot Regeln';
+  String get calcBasisGeneral => 'Allgemein';
 
   String avYieldsMore(String amount) => 'AV-Depot bringt $amount mehr.';
   String etfYieldsMore(String amount) => 'ETF-Depot bringt $amount mehr.';

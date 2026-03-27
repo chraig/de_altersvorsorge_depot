@@ -515,6 +515,7 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
   // ─── CALCULATION BASIS ───────────────────────────────────────────
 
   Widget _buildCalcBasis(AppStrings s, CalculatorState state, AVResult av, ETFResult etf, SubsidyBreakdown sub) {
+    final compact = context.isCompact;
     final p = state.currentPerson;
     final costs = state.costs;
     final dev = state.incomeDev;
@@ -548,6 +549,98 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
       child: Text(text, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent)),
     );
 
+    // ── Column builders ─────────────────────────────────────────
+
+    final avColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        heading(s.calcBasisAV),
+        check(true, '${s.baseGrant}: ${Fmt.eur(sub.grundzulage)}/yr',
+          '50% on first €360 = ${Fmt.eur(sub.grundzulage > 180 ? 180 : sub.grundzulage)}\n'
+          '25% on €361–1,800 = ${Fmt.eur(sub.grundzulage > 180 ? sub.grundzulage - 180 : 0)}'),
+        check(sub.kinderzulage > 0,
+          sub.kinderzulage > 0
+            ? '${s.childGrant}: ${Fmt.eur(sub.kinderzulage)}/yr (${p.kinder} children)'
+            : '${s.childGrant}: no children',
+          sub.kinderzulage > 0 ? '€300/child/yr, 1:1 match from €25/mo' : null),
+        check(sub.bonus > 0,
+          sub.bonus > 0
+            ? '${s.entryBonus}: ${Fmt.eur(sub.bonus)} (one-time)'
+            : '${s.entryBonus}: not eligible (age ${p.alterStart}, must be <25)'),
+        check(sub.geringverdienerbonus > 0,
+          sub.geringverdienerbonus > 0
+            ? '${s.lowIncomeBonus}: ${Fmt.eur(sub.geringverdienerbonus)}/yr'
+            : '${s.lowIncomeBonus}: not eligible (${Fmt.eur(p.brutto)} > €26,250)'),
+        check(sub.steuererstattung > 0,
+          sub.steuererstattung > 0
+            ? '${s.viaTaxOptimization}: ${Fmt.eur(sub.steuererstattung)}/yr'
+            : '${s.viaTaxOptimization}: Zulagen already optimal',
+          sub.steuererstattung > 0 ? '→ bank account, NOT depot' : null),
+        const Divider(height: AppSpacing.xxxl),
+        check(true, 'Gefördert: ${Fmt.eur(jbGef)}/yr',
+          'Payout: 100% taxed at ${Fmt.pct(av.grenzsteuersatzRente)}'),
+        check(jbUngef > 0,
+          jbUngef > 0
+            ? 'Ungefördert: ${Fmt.eur(jbUngef)}/yr'
+            : 'Ungefördert: none (≤ €1,800/yr)',
+          jbUngef > 0 ? 'Payout: 50% of gains taxed (Halbeinkünfte)' : null),
+        check(true, 'AV cost: ${Fmt.pct(costs.kostenAV)} p.a.'),
+        check(true, 'Tax-free growth (no Vorabpauschale)'),
+      ],
+    );
+
+    final etfColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        heading(s.calcBasisETF),
+        check(true, 'Vorabpauschale: ${Fmt.pct(CalcConstants.vorabpauschaleDrag)} p.a.',
+          'Basiszins ~2.3–3.2% (2024–2026)'),
+        check(true, 'Teilfreistellung: 30%',
+          '30% of gains tax-exempt (equity ≥51%)'),
+        check(true, 'Abgeltungssteuer: ${Fmt.pct(costs.abgeltungssteuersatz)}',
+          'Only gains taxed at sale'),
+        check(true, 'Contributions returned tax-free'),
+        check(true, 'ETF cost: ${Fmt.pct(costs.kostenETF)} p.a.'),
+        check(true, 'No lock-up — withdraw any time'),
+      ],
+    );
+
+    final commonColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        heading(s.calcBasisGeneral),
+        check(true, '${Fmt.eur(p.sparrate)}/mo (${Fmt.eur(jbCapped)}/yr)',
+          '${s.subsidyRate}: ${Fmt.pct(sub.foerderquote)}'),
+        check(true, 'Retirement: age ${p.rentenalter}, ${p.auszahlungsDauer}yr payout'),
+        check(true, 'Tax (working): ${Fmt.pct(av.grenzsteuersatz)}',
+          'Affects Günstigerprüfung'),
+        check(true, 'Tax (retirement): ${Fmt.pct(av.grenzsteuersatzRente)}',
+          'On AV payout + pension + other'),
+        check(costs.kirchensteuer > 0,
+          costs.kirchensteuer > 0
+            ? '${s.kirchensteuerLabel}: ${(costs.kirchensteuer * 100).toStringAsFixed(0)}%'
+            : '${s.kirchensteuerLabel}: none'),
+        const Divider(height: AppSpacing.xxxl),
+        check(dev.enabled,
+          dev.enabled
+            ? 'Income: ${dev.curve == GrowthCurve.linear
+                ? '${s.curveLinear} ${Fmt.pct(dev.growthRate)}/yr'
+                : dev.curve == GrowthCurve.stepwise
+                  ? s.curveStepwise
+                  : s.curveLogarithmic}'
+            : 'Income: static',
+          dev.enabled ? 'Does NOT change subsidies' : null),
+        check(dev.hasPartTime,
+          dev.hasPartTime
+            ? 'Part-time: yr ${dev.partTimeStartYear}–${dev.partTimeStartYear! + dev.partTimeDuration}'
+            : 'Part-time: off'),
+        check(dev.hasChildTiming,
+          dev.hasChildTiming
+            ? 'Children: yr ${dev.childArrivalYears.join(", ")}'
+            : 'Children: fixed (${p.kinder})'),
+      ],
+    );
+
     return Container(
       padding: AppPadding.panel,
       decoration: BoxDecoration(
@@ -559,91 +652,26 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(s.calcBasisTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-
-          // ── Subsidies ────────────────────────────────────────
-          heading(s.calcBasisAV),
-          check(true, '${s.baseGrant}: ${Fmt.eur(sub.grundzulage)}/yr',
-            '50%/25% on contributions up to €1,800/yr'),
-          check(sub.kinderzulage > 0,
-            sub.kinderzulage > 0
-              ? '${s.childGrant}: ${Fmt.eur(sub.kinderzulage)}/yr (${p.kinder} children)'
-              : '${s.childGrant}: no children',
-            sub.kinderzulage > 0 ? '€300/child/yr, 1:1 match' : null),
-          check(sub.bonus > 0,
-            sub.bonus > 0
-              ? '${s.entryBonus}: ${Fmt.eur(sub.bonus)} (one-time)'
-              : '${s.entryBonus}: not eligible (age ${p.alterStart}, must be under 25)'),
-          check(sub.geringverdienerbonus > 0,
-            sub.geringverdienerbonus > 0
-              ? '${s.lowIncomeBonus}: ${Fmt.eur(sub.geringverdienerbonus)}/yr'
-              : '${s.lowIncomeBonus}: not eligible (${Fmt.eur(p.brutto)} > €26,250)',
-            sub.geringverdienerbonus > 0 ? 'Gross income ≤ €26,250' : null),
-          check(sub.steuererstattung > 0,
-            sub.steuererstattung > 0
-              ? '${s.viaTaxOptimization}: ${Fmt.eur(sub.steuererstattung)}/yr'
-              : '${s.viaTaxOptimization}: Zulagen already optimal',
-            sub.steuererstattung > 0 ? 'Refund goes to bank account, NOT into depot' : null),
-
-          const Divider(height: AppSpacing.xxxl),
-
-          // ── Contribution split ───────────────────────────────
-          check(true, 'Contribution: ${Fmt.eur(p.sparrate)}/mo (${Fmt.eur(jbCapped)}/yr)',
-            '${s.subsidyRate}: ${Fmt.pct(sub.foerderquote)}'),
-          check(true, 'Subsidized (gefördert): ${Fmt.eur(jbGef)}/yr',
-            '100% of payout taxed at income rate (nachgelagerte Besteuerung)'),
-          check(jbUngef > 0,
-            jbUngef > 0
-              ? 'Unsubsidized (ungefördert): ${Fmt.eur(jbUngef)}/yr'
-              : 'Unsubsidized: none (contribution ≤ €1,800/yr)',
-            jbUngef > 0 ? '50% of gains taxed at payout (Halbeinkünfteverfahren)' : null),
-
-          const Divider(height: AppSpacing.xxxl),
-
-          // ── Tax rates ────────────────────────────────────────
-          check(true, '${s.marginalTaxRate}: ${Fmt.pct(av.grenzsteuersatz)}',
-            'Based on gross income. Affects Günstigerprüfung during savings.'),
-          check(true, '${s.retirementTaxRate}: ${Fmt.pct(av.grenzsteuersatzRente)}',
-            'Based on combined: AV payout + pension (${Fmt.eur(p.gesetzlicheRente)}/mo) + other income'),
-          check(costs.kirchensteuer > 0,
-            costs.kirchensteuer > 0
-              ? '${s.kirchensteuerLabel}: ${(costs.kirchensteuer * 100).toStringAsFixed(0)}%'
-              : '${s.kirchensteuerLabel}: none'),
-
-          const Divider(height: AppSpacing.xxxl),
-
-          // ── Income development ───────────────────────────────
-          check(dev.enabled,
-            dev.enabled
-              ? '${s.incomeDevToggle}: ${dev.curve == GrowthCurve.linear
-                  ? '${s.curveLinear} ${Fmt.pct(dev.growthRate)}/yr'
-                  : dev.curve == GrowthCurve.stepwise
-                    ? '${s.curveStepwise} +${Fmt.pct(dev.promotionIncrease)} every ${dev.promotionInterval} yr'
-                    : '${s.curveLogarithmic} → ${Fmt.eur(dev.salaryCap)}'}'
-              : '${s.incomeDevToggle}: disabled (static income)',
-            dev.enabled ? 'Affects tax rate, Geringverdienerbonus eligibility, pension EP. Does NOT change subsidies (contribution is fixed).' : null),
-          check(dev.hasPartTime,
-            dev.hasPartTime
-              ? '${s.partTimeToggle}: Year ${dev.partTimeStartYear}–${dev.partTimeStartYear! + dev.partTimeDuration} at ${Fmt.pct(dev.partTimePercent)}'
-              : '${s.partTimeToggle}: not active'),
-          check(dev.hasChildTiming,
-            dev.hasChildTiming
-              ? '${s.childTimingLabel}: ${dev.childArrivalYears.map((y) => 'Year $y').join(', ')}'
-              : '${s.childTimingLabel}: no dynamic children'),
-
-          // ── ETF rules ────────────────────────────────────────
-          heading(s.calcBasisETF),
-          check(true, 'Vorabpauschale: ${Fmt.pct(CalcConstants.vorabpauschaleDrag)} annual drag',
-            'Simplified. Actual depends on Basiszins (2.3–3.2% in 2024–2026).'),
-          check(true, 'Teilfreistellung: ${Fmt.pct(CalcConstants.teilfreistellung)}',
-            '30% of gains are tax-exempt for equity funds (≥51% equity).'),
-          check(true, 'Abgeltungssteuer: ${Fmt.pct(costs.abgeltungssteuersatz)}',
-            'Only gains taxed — contributions returned tax-free.'),
-
-          // ── Payout ───────────────────────────────────────────
-          const Divider(height: AppSpacing.xxxl),
-          check(true, 'Payout duration: ${p.auszahlungsDauer} years (age ${p.rentenalter}–85)',
-            'AV-Depot Auszahlplan until age 85 (§89 Abs. 8 EStG-E).'),
-          check(true, 'AV cost: ${Fmt.pct(costs.kostenAV)} p.a. | ETF cost: ${Fmt.pct(costs.kostenETF)} p.a.'),
+          const SizedBox(height: AppSpacing.sm),
+          if (compact) ...[
+            avColumn,
+            const Divider(height: AppSpacing.xxxl),
+            etfColumn,
+            const Divider(height: AppSpacing.xxxl),
+            commonColumn,
+          ] else
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: avColumn),
+                  const VerticalDivider(width: AppSpacing.xxxl),
+                  Expanded(child: etfColumn),
+                  const VerticalDivider(width: AppSpacing.xxxl),
+                  Expanded(child: commonColumn),
+                ],
+              ),
+            ),
         ],
       ),
     );
