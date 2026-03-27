@@ -22,6 +22,9 @@ abstract class AppStrings {
   String get retirementAge;
   String derivedDuration(int years);
   String get advancedSettings;
+  String get tabPersonal;
+  String get tabCostsTax;
+  String get tabIncomeScenarios;
   String get returnPa;
   String get costAvPa;
   String get costEtfPa;
@@ -93,6 +96,12 @@ abstract class AppStrings {
   // ─── TABS ─────────────────────────────────────────────────────────
   String get tabComparison;
   String get tabAvDetail;
+
+  // ─── CALCULATION BASIS ─────────────────────────────────────────────
+  String get calcBasisTitle;
+  String get calcBasisAV;
+  String get calcBasisETF;
+  String get calcBasisGeneral;
 
   // ─── COMPARISON ───────────────────────────────────────────────────
   String avYieldsMore(String amount);
@@ -301,6 +310,9 @@ class StringsEn extends AppStrings {
   String get retirementAge => 'Retirement Age';
   String derivedDuration(int years) => 'Duration: $years years (derived)';
   String get advancedSettings => 'Advanced Settings';
+  String get tabPersonal => 'Personal';
+  String get tabCostsTax => 'Costs & Tax';
+  String get tabIncomeScenarios => 'Income';
   String get returnPa => 'Return p.a.';
   String get costAvPa => 'AV-Depot Cost p.a.';
   String get costEtfPa => 'ETF Portfolio Cost p.a.';
@@ -374,6 +386,12 @@ class StringsEn extends AppStrings {
   String get tabAvDetail => 'AV-Depot Detail';
 
   // Comparison
+  // Calculation Basis
+  String get calcBasisTitle => 'Calculation Basis';
+  String get calcBasisAV => 'AV-Depot Rules';
+  String get calcBasisETF => 'ETF Rules';
+  String get calcBasisGeneral => 'General Parameters';
+
   String avYieldsMore(String amount) => 'AV-Depot yields $amount more.';
   String etfYieldsMore(String amount) => 'ETF Portfolio yields $amount more.';
   String get etfWinsExplanation =>
@@ -643,6 +661,9 @@ class StringsDe extends AppStrings {
   String get retirementAge => 'Rentenalter';
   String derivedDuration(int years) => 'Dauer: $years Jahre (abgeleitet)';
   String get advancedSettings => 'Erweiterte Einstellungen';
+  String get tabPersonal => 'Persönlich';
+  String get tabCostsTax => 'Kosten & Steuer';
+  String get tabIncomeScenarios => 'Einkommen';
   String get returnPa => 'Rendite p.a.';
   String get costAvPa => 'Kosten AV-Depot p.a.';
   String get costEtfPa => 'Kosten ETF-Depot p.a.';
@@ -712,6 +733,11 @@ class StringsDe extends AppStrings {
 
   String get tabComparison => 'Vergleich';
   String get tabAvDetail => 'AV-Depot Detail';
+
+  String get calcBasisTitle => 'Berechnungsgrundlage';
+  String get calcBasisAV => 'AV-Depot Regeln';
+  String get calcBasisETF => 'ETF-Depot Regeln';
+  String get calcBasisGeneral => 'Allgemeine Parameter';
 
   String avYieldsMore(String amount) => 'AV-Depot bringt $amount mehr.';
   String etfYieldsMore(String amount) => 'ETF-Depot bringt $amount mehr.';

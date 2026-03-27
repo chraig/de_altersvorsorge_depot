@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:avdepot_rechner/config/theme.dart';
+import 'package:avdepot_rechner/core/l10n/app_strings.dart';
 import 'package:avdepot_rechner/core/responsive/screen_layout.dart';
 import 'package:avdepot_rechner/core/state/locale_cubit.dart';
 import 'package:avdepot_rechner/shared/utils/fmt.dart';
@@ -116,11 +117,31 @@ class _AddChip extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// INPUT PANEL
+// INPUT PANEL (3-tab layout)
 // ═══════════════════════════════════════════════════════════════════
 
-class InputPanel extends StatelessWidget {
+class InputPanel extends StatefulWidget {
   const InputPanel({super.key});
+
+  @override
+  State<InputPanel> createState() => _InputPanelState();
+}
+
+class _InputPanelState extends State<InputPanel> with TickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +152,6 @@ class InputPanel extends StatelessWidget {
         final p = state.currentPerson;
 
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: AppColors.card,
             borderRadius: BorderRadius.circular(AppRadius.panel),
@@ -139,77 +159,121 @@ class InputPanel extends StatelessWidget {
           ),
           child: Column(
             children: [
-              AppSlider(label: s.monthlySavings, value: p.sparrate,
-                min: 10, max: 5000, step: 10, display: Fmt.eur(p.sparrate),
-                onChanged: cubit.setSparrate, hint: s.hintMonthlySavings),
-              AppSlider(label: s.grossAnnualSalary, value: p.brutto,
-                min: 12000, max: 1000000, step: 1000, display: Fmt.eur(p.brutto),
-                onChanged: cubit.setBrutto, hint: s.hintGrossSalary),
-              AppSlider(label: s.numberOfChildren, value: p.kinder.toDouble(),
-                min: 0, max: 5, step: 1, display: '${p.kinder}',
-                onChanged: (v) => cubit.setKinder(v.round()),
-                hint: s.hintChildren),
-              AppSlider(label: s.startingAge, value: p.alterStart.toDouble(),
-                min: 18, max: 60, step: 1, display: '${p.alterStart}',
-                onChanged: (v) => cubit.setAlterStart(v.round()),
-                hint: s.hintStartingAge),
-              AppSlider(label: s.retirementAge, value: p.rentenalter.toDouble(),
-                min: 60, max: 75, step: 1, display: '${p.rentenalter}',
-                onChanged: (v) => cubit.setRetirementAge(v.round()),
-                hint: '${s.derivedDuration(p.spardauer)} \u2022 ${s.payoutDurationHint(p.auszahlungsDauer)}'),
-
-              AppSlider(label: s.statePensionMonthly, value: p.gesetzlicheRente,
-                min: 0, max: 5000, step: 50, display: Fmt.eur(p.gesetzlicheRente),
-                onChanged: cubit.setGesetzlicheRenteOverride,
-                hint: s.hintDerivedPension(Fmt.eur(p.geschaetzteRente))),
-              AppSlider(label: s.otherRetirementIncome, value: p.sonstigeEinkuenfte,
-                min: 0, max: 100000, step: 500, display: Fmt.eur(p.sonstigeEinkuenfte),
-                onChanged: cubit.setSonstigeEinkuenfte, hint: s.hintOtherIncome),
-
-              GestureDetector(
-                onTap: cubit.toggleAdvanced,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.sm),
-                  child: Row(children: [
-                    Icon(state.showAdvanced ? Icons.expand_less : Icons.expand_more,
-                      size: 16, color: AppColors.accent),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(s.advancedSettings,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.accent)),
-                  ]),
+              // ─── TAB BAR ────────────────────────────────────────
+              Container(
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: AppColors.border)),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(AppRadius.panel),
+                    topRight: Radius.circular(AppRadius.panel)),
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: AppColors.muted,
+                  labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                  indicator: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: _tabController.index == 0
+                        ? const BorderRadius.only(topLeft: Radius.circular(AppRadius.panel), bottomRight: Radius.circular(AppRadius.chip))
+                        : _tabController.index == 2
+                            ? const BorderRadius.only(topRight: Radius.circular(AppRadius.panel), bottomLeft: Radius.circular(AppRadius.chip))
+                            : BorderRadius.circular(AppRadius.chip),
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerHeight: 0,
+                  tabs: [
+                    Tab(text: s.tabPersonal),
+                    Tab(text: s.tabCostsTax),
+                    Tab(text: s.tabIncomeScenarios),
+                  ],
                 ),
               ),
 
-              if (state.showAdvanced) ...[
-                const Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.lg), child: Divider()),
-                AppSlider(label: s.returnPa, value: state.effectiveRendite,
-                  min: 0.01, max: 0.14, step: 0.005, display: Fmt.pct(state.effectiveRendite),
-                  onChanged: cubit.setCustomRendite, hint: s.hintReturn),
-                AppSlider(label: s.costAvPa, value: state.costs.kostenAV,
-                  min: 0.001, max: 0.015, step: 0.001, display: Fmt.pct(state.costs.kostenAV),
-                  onChanged: cubit.setKostenAV, hint: s.hintCostAv),
-                AppSlider(label: s.costEtfPa, value: state.costs.kostenETF,
-                  min: 0.001, max: 0.01, step: 0.001, display: Fmt.pct(state.costs.kostenETF),
-                  onChanged: cubit.setKostenETF, hint: s.hintCostEtf),
-                AppSlider(label: s.inflationPa, value: state.effectiveInflation,
-                  min: 0.005, max: 0.06, step: 0.005, display: Fmt.pct(state.effectiveInflation),
-                  onChanged: cubit.setCustomInflation, hint: s.hintInflation),
-                const Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.lg), child: Divider()),
-                _KirchensteuerToggle(
-                  value: state.costs.kirchensteuer,
-                  onChanged: cubit.setKirchensteuer,
-                ),
-                const Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.lg), child: Divider()),
-                _IncomeScenarioPanel(
-                  settings: state.incomeDev,
-                  spardauer: state.currentPerson.spardauer,
-                  cubit: cubit,
-                ),
-              ],
+              // ─── TAB CONTENT ────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                child: _buildTabContent(s, state, cubit, p),
+              ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildTabContent(AppStrings s, CalculatorState state, CalculatorCubit cubit, PersonalScenario p) {
+    switch (_tabController.index) {
+      case 0: return _buildPersonalTab(s, cubit, p);
+      case 1: return _buildCostsTaxTab(s, state, cubit);
+      case 2: return _buildIncomeTab(s, state, cubit, p);
+      default: return const SizedBox.shrink();
+    }
+  }
+
+  // ─── TAB 1: PERSONAL ──────────────────────────────────────────
+
+  Widget _buildPersonalTab(AppStrings s, CalculatorCubit cubit, PersonalScenario p) {
+    return Column(children: [
+      AppSlider(label: s.monthlySavings, value: p.sparrate,
+        min: 10, max: 570, step: 5, display: Fmt.eur(p.sparrate),
+        onChanged: cubit.setSparrate, hint: s.hintMonthlySavings),
+      AppSlider(label: s.grossAnnualSalary, value: p.brutto,
+        min: 12000, max: 250000, step: 1000, display: Fmt.eur(p.brutto),
+        onChanged: cubit.setBrutto, hint: s.hintGrossSalary),
+      AppSlider(label: s.numberOfChildren, value: p.kinder.toDouble(),
+        min: 0, max: 5, step: 1, display: '${p.kinder}',
+        onChanged: (v) => cubit.setKinder(v.round()),
+        hint: s.hintChildren),
+      AppSlider(label: s.startingAge, value: p.alterStart.toDouble(),
+        min: 18, max: 60, step: 1, display: '${p.alterStart}',
+        onChanged: (v) => cubit.setAlterStart(v.round()),
+        hint: s.hintStartingAge),
+      AppSlider(label: s.retirementAge, value: p.rentenalter.toDouble(),
+        min: 60, max: 75, step: 1, display: '${p.rentenalter}',
+        onChanged: (v) => cubit.setRetirementAge(v.round()),
+        hint: '${s.derivedDuration(p.spardauer)} • ${s.payoutDurationHint(p.auszahlungsDauer)}'),
+      AppSlider(label: s.statePensionMonthly, value: p.gesetzlicheRente,
+        min: 0, max: 3500, step: 50, display: Fmt.eur(p.gesetzlicheRente),
+        onChanged: cubit.setGesetzlicheRenteOverride,
+        hint: s.hintDerivedPension(Fmt.eur(p.geschaetzteRente))),
+      AppSlider(label: s.otherRetirementIncome, value: p.sonstigeEinkuenfte,
+        min: 0, max: 50000, step: 500, display: Fmt.eur(p.sonstigeEinkuenfte),
+        onChanged: cubit.setSonstigeEinkuenfte, hint: s.hintOtherIncome),
+    ]);
+  }
+
+  // ─── TAB 2: COSTS & TAX ──────────────────────────────────────
+
+  Widget _buildCostsTaxTab(AppStrings s, CalculatorState state, CalculatorCubit cubit) {
+    return Column(children: [
+      AppSlider(label: s.returnPa, value: state.effectiveRendite,
+        min: 0.01, max: 0.14, step: 0.005, display: Fmt.pct(state.effectiveRendite),
+        onChanged: cubit.setCustomRendite, hint: s.hintReturn),
+      AppSlider(label: s.costAvPa, value: state.costs.kostenAV,
+        min: 0.001, max: 0.015, step: 0.001, display: Fmt.pct(state.costs.kostenAV),
+        onChanged: cubit.setKostenAV, hint: s.hintCostAv),
+      AppSlider(label: s.costEtfPa, value: state.costs.kostenETF,
+        min: 0.001, max: 0.01, step: 0.001, display: Fmt.pct(state.costs.kostenETF),
+        onChanged: cubit.setKostenETF, hint: s.hintCostEtf),
+      AppSlider(label: s.inflationPa, value: state.effectiveInflation,
+        min: 0.005, max: 0.06, step: 0.005, display: Fmt.pct(state.effectiveInflation),
+        onChanged: cubit.setCustomInflation, hint: s.hintInflation),
+      const SizedBox(height: AppSpacing.lg),
+      _KirchensteuerToggle(
+        value: state.costs.kirchensteuer,
+        onChanged: cubit.setKirchensteuer,
+      ),
+    ]);
+  }
+
+  // ─── TAB 3: INCOME SCENARIOS ──────────────────────────────────
+
+  Widget _buildIncomeTab(AppStrings s, CalculatorState state, CalculatorCubit cubit, PersonalScenario p) {
+    return _IncomeScenarioPanel(
+      settings: state.incomeDev,
+      spardauer: p.spardauer,
+      cubit: cubit,
     );
   }
 }

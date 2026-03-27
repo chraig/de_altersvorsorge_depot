@@ -139,8 +139,8 @@ Located in: `lib/models/scenario.dart` → `PersonalScenario.defaults()`
 
 | Slider | Min | Max | Step | Unit |
 |---|---|---|---|---|
-| Sparrate | 10 | 5,000 | 10 | €/Monat |
-| Bruttojahresgehalt | 12,000 | 1,000,000 | 1,000 | €/Jahr |
+| Sparrate | 10 | 570 | 5 | €/Monat (max €6,840/yr per contract) |
+| Bruttojahreseinkommen | 12,000 | 250,000 | 1,000 | €/Jahr (covers 99%+ of population) |
 | Kinder | 0 | 5 | 1 | — |
 | Alter bei Start | 18 | 60 | 1 | Jahre |
 | Rentenalter | 60 | 75 | 1 | Jahre |
