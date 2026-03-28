@@ -125,21 +125,44 @@ void main() {
     });
   });
 
-  group('Halbeinkünfteverfahren for ungefördert', () {
-    test('50% of gains taxed, not full payout', () {
-      // With large ungefördert portion and high returns, the Halbeinkünfte-
-      // verfahren should result in lower tax than full nachgelagerte Besteuerung
-      final p = makePerson(sparrate: 570, brutto: 80000, spardauer: 30, gesetzlicheRenteOverride: 0);
+  group('Ungefördert tax mode selection', () {
+    test('all 3 modes produce different net payouts', () {
+      final p = makePerson(sparrate: 500, brutto: 80000, spardauer: 30, gesetzlicheRenteOverride: 1500);
       final m = makeMacro(rendite: 0.07);
-      final costs = CostSettings();
-      final av = engine.simulateAV(person: p, macro: m, costs: costs);
 
-      // Net should be meaningfully higher than if we taxed everything at full rate
-      // (we can't easily compute the exact "wrong" result here, but net > 0 is basic)
-      expect(av.nettoMonatlich, greaterThan(0));
-      // Gross to net ratio: should be above 60% (with Halbeinkünfte, tax is moderate)
-      final ratio = av.nettoMonatlich / av.monatlicheAuszahlung;
-      expect(ratio, greaterThan(0.5));
+      final avNach = engine.simulateAV(person: p, macro: m,
+        costs: CostSettings(ungefoerdertTax: UngefoerdertTaxMode.nachgelagert));
+      final avErtrag = engine.simulateAV(person: p, macro: m,
+        costs: CostSettings(ungefoerdertTax: UngefoerdertTaxMode.ertragsanteil));
+      final avHalb = engine.simulateAV(person: p, macro: m,
+        costs: CostSettings(ungefoerdertTax: UngefoerdertTaxMode.halbeinkunfte));
+
+      // All should produce positive results
+      expect(avNach.nettoMonatlich, greaterThan(0));
+      expect(avErtrag.nettoMonatlich, greaterThan(0));
+      expect(avHalb.nettoMonatlich, greaterThan(0));
+
+      // Ertragsanteil and Halbeinkünfte should give higher net than nachgelagert
+      // (nachgelagert taxes 100% of payout, others tax less)
+      expect(avErtrag.nettoMonatlich, greaterThan(avNach.nettoMonatlich));
+      expect(avHalb.nettoMonatlich, greaterThan(avNach.nettoMonatlich));
+
+      // All three should have the same gross capital (tax mode doesn't affect accumulation)
+      expect(avErtrag.endkapital, avNach.endkapital);
+      expect(avHalb.endkapital, avNach.endkapital);
+    });
+
+    test('at €150/mo no ungefördert — all modes give same result', () {
+      final p = makePerson(sparrate: 150, brutto: 50000, spardauer: 30, gesetzlicheRenteOverride: 1500);
+      final m = makeMacro(rendite: 0.07);
+
+      final avNach = engine.simulateAV(person: p, macro: m,
+        costs: CostSettings(ungefoerdertTax: UngefoerdertTaxMode.nachgelagert));
+      final avErtrag = engine.simulateAV(person: p, macro: m,
+        costs: CostSettings(ungefoerdertTax: UngefoerdertTaxMode.ertragsanteil));
+
+      // No ungefördert portion → mode doesn't matter
+      expect(avErtrag.nettoMonatlich, closeTo(avNach.nettoMonatlich, 0.01));
     });
   });
 }
