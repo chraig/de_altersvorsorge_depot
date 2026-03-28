@@ -591,7 +591,7 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
           jbUngef > 0
             ? 'Ungefördert: ${Fmt.eur(jbUngef)}/yr'
             : 'Ungefördert: none (≤ €1,800/yr)',
-          detail: jbUngef > 0 ? 'Payout: 50% of gains taxed (Halbeinkünfte)' : null,
+          detail: jbUngef > 0 ? 'Payout tax: pending BMF guidance. Conservative: full nachgelagerte Besteuerung.' : null,
           tip: s.tipUngefoerdert),
         check(true, 'AV cost: ${Fmt.pct(costs.kostenAV)} p.a.'),
         check(true, 'Tax-free growth (no Vorabpauschale)', tip: s.tipVorabpauschale),

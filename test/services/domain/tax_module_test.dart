@@ -39,6 +39,55 @@ void main() {
     });
   });
 
+  group('Progressive Einkommensteuer (§32a)', () {
+    test('zero income → zero tax', () {
+      expect(tax.calcEinkommensteuer(0), 0);
+    });
+
+    test('below Grundfreibetrag → zero tax', () {
+      expect(tax.calcEinkommensteuer(11784), 0);
+    });
+
+    test('zone 2: €15,000 → positive tax', () {
+      final steuer = tax.calcEinkommensteuer(15000);
+      expect(steuer, greaterThan(0));
+      expect(steuer, lessThan(15000 * 0.14)); // less than marginal × full
+    });
+
+    test('zone 3: €45,000', () {
+      final steuer = tax.calcEinkommensteuer(45000);
+      // Known approximate value: ~€8,900 for 2024
+      expect(steuer, greaterThan(7000));
+      expect(steuer, lessThan(12000));
+    });
+
+    test('zone 4: €85,000', () {
+      final steuer = tax.calcEinkommensteuer(85000);
+      // 0.42 × 85000 - 10602.13 = 25097.87
+      expect(steuer, closeTo(25097.87, 1));
+    });
+
+    test('zone 5: €300,000', () {
+      final steuer = tax.calcEinkommensteuer(300000);
+      // 0.45 × 300000 - 18936.88 = 116063.12
+      expect(steuer, closeTo(116063.12, 1));
+    });
+
+    test('average rate < marginal rate', () {
+      for (final brutto in [30000.0, 50000.0, 80000.0, 150000.0]) {
+        final avg = tax.getDurchschnittssteuersatz(brutto);
+        final marginal = tax.getGrenzsteuersatz(brutto);
+        expect(avg, lessThan(marginal),
+          reason: 'At €${brutto.toInt()}: avg $avg should be < marginal $marginal');
+      }
+    });
+
+    test('average rate is 0 at Grundfreibetrag', () {
+      expect(tax.getDurchschnittssteuersatz(11784), 0);
+      expect(tax.getDurchschnittssteuersatz(0), 0);
+    });
+  });
+
   group('Günstigerprüfung', () {
     test('high income benefits from Sonderausgabenabzug', () {
       // €1800 contribution + €540 subsidy, 42% rate

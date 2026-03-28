@@ -151,6 +151,8 @@ Constants are centralized in `CalcConstants` — update this class when legislat
 
 **Tax module** (replaceable for different tax brackets):
 - `getGrenzsteuersatz()` — German marginal tax rate (2024 brackets, piecewise linear)
+- `calcEinkommensteuer()` — exact progressive §32a tax amount (polynomial formula)
+- `getDurchschnittssteuersatz()` — average tax rate (tax / income, used for payout)
 - `calcGuenstigerpruefung()` — automatic tax optimization check
 
 **Simulation module**:
@@ -194,3 +196,9 @@ All methods are pure — no side effects, no state. Each module can be replaced 
 6. Use German (de) locale as default for initial app state
 7. Never mention AI involvement in commit messages, code comments, or documentation
 8. **Evaluate new functionality for modularization** — if a new feature has distinct logic (e.g., a different tax system, subsidy regime, or estimation method), implement it as a separate module with an abstract interface, not inline in existing code
+9. **Only implement verified facts** — calculations must be based on confirmed legislation, official BMF guidance, or established tax law. Never assume or interpret where official guidance is pending. If a rule is uncertain:
+   - Apply the conservative/default treatment (e.g., standard taxation)
+   - Document the uncertainty clearly for the user
+   - Plan the alternative as a modular override for future plug-in when clarified
+   - Cite the source for every implemented rule (§ reference, BMF FAQ, Drucksache)
+10. **Verify before implementing** — before adding any tax, subsidy, or financial calculation, research the actual source. Blog posts and secondary sources are not sufficient. Cross-check against official legislation (EStG, InvStG), BMF publications, or Bundestag documents.

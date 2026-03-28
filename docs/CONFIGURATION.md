@@ -144,8 +144,9 @@ Located in: `lib/models/scenario.dart` → `PersonalScenario.defaults()`
 | Kinder | 0 | 5 | 1 | — |
 | Alter bei Start | 18 | 60 | 1 | Jahre |
 | Rentenalter | 60 | 75 | 1 | Jahre |
-| Gesetzliche Rente | 0 | 5,000 | 50 | €/Monat |
-| Sonstige Einkünfte | 0 | 100,000 | 500 | €/Jahr |
+| Gesetzliche Rente | 0 | 3,500 | 50 | €/Monat |
+| Sonstige Einkünfte | 0 | 50,000 | 500 | €/Jahr |
+| Beginn Erwerbstätigkeit | 14 | 35 | 1 | Jahre (affects pension EP) |
 | Rendite p.a. | 1.0% | 14.0% | 0.5% | — |
 | Kosten AV | 0.1% | 1.5% | 0.1% | — |
 | Kosten ETF | 0.1% | 1.0% | 0.1% | — |
@@ -219,7 +220,10 @@ Located in: `lib/config/theme.dart`
 
 - Kirchensteuer toggle (None / 8% Bayern-BaWü / 9% other states)
 - Geringverdienerbonus (€175/yr for gross ≤ €26,250)
-- Income development toggle (linear growth, 0–8% p.a.)
+- Income development toggle (3 growth curves, part-time, child timing)
+- Ungefördert tax treatment selector (nachgelagert / Ertragsanteil / Halbeinkünfte)
+- Progressive §32a tax calculation (exact polynomial formulas, not marginal rate)
+- Adjustable Arbeitsbeginn (14–35, affects pension EP calculation)
 
 ### Planned for Future Versions
 

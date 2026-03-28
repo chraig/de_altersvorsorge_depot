@@ -30,6 +30,8 @@ abstract class AppStrings {
   String get inflationPa;
   String get statePensionMonthly;
   String get otherRetirementIncome;
+  String get workStartAge;
+  String get hintWorkStartAge;
   String get hintOtherIncome;
   String get retirementTaxRate;
   String get hintMarginalTaxRate;
@@ -79,6 +81,11 @@ abstract class AppStrings {
   String get kirchensteuerNone;
   String get kirchensteuerBayBw;
   String get kirchensteuerOther;
+  String get ungefoerdertTaxLabel;
+  String get ungefoerdertTaxNachgelagert;
+  String get ungefoerdertTaxErtragsanteil;
+  String get ungefoerdertTaxHalbeinkunfte;
+  String get hintUngefoerdertTax;
 
   // ─── SUBSIDY BOX ─────────────────────────────────────────────────
   String annualSubsidiesTitle(String icon, String name);
@@ -333,6 +340,8 @@ class StringsEn extends AppStrings {
   String get statePensionMonthly => 'Est. State Pension (monthly)';
   String get otherRetirementIncome => 'Other Retirement Income (yearly)';
   String get hintOtherIncome => 'Yearly amount (e.g. rental income, private pension). Used to estimate retirement tax rate.';
+  String get workStartAge => 'Work Start Age';
+  String get hintWorkStartAge => 'Age when you started paying into the state pension system (Rentenversicherung). Affects pension point accumulation. E.g. 16 for apprenticeship, 25 for university graduates.';
   String get retirementTaxRate => 'Retirement Tax Rate';
   String get hintMarginalTaxRate => 'Your current tax bracket based on gross income. Used for Günstigerprüfung during savings.';
   String get hintRetirementTaxRate => 'Tax rate on AV-Depot payouts in retirement. Based on combined income: state pension + AV payout + other income.';
@@ -381,6 +390,11 @@ class StringsEn extends AppStrings {
   String get kirchensteuerNone => 'None';
   String get kirchensteuerBayBw => '8% (Bavaria/BaWü)';
   String get kirchensteuerOther => '9% (other states)';
+  String get ungefoerdertTaxLabel => 'Unsubsidized payout tax';
+  String get ungefoerdertTaxNachgelagert => 'Full (conservative)';
+  String get ungefoerdertTaxErtragsanteil => 'Ertragsanteil (17%)';
+  String get ungefoerdertTaxHalbeinkunfte => 'Halbeinkünfte (50% gains)';
+  String get hintUngefoerdertTax => 'Tax on unsubsidized contributions (above €1,800/yr) at payout. Official BMF guidance pending. Default is conservative (full taxation).';
 
   // Subsidy
   String annualSubsidiesTitle(String icon, String name) => 'Annual Subsidies – $icon $name';
@@ -412,7 +426,7 @@ class StringsEn extends AppStrings {
   String get tipGeringverdienerbonus => 'Extra €175/yr if your gross income is €26,250 or less and you contribute at least €120/yr. Stacks on top of the Grundzulage.';
   String get tipGuenstigerpruefung => 'The tax office automatically checks: is the tax deduction on your contributions worth more than the subsidies? If yes, you get the difference as a tax refund — but to your bank account, NOT into the depot.';
   String get tipGefoerdert => 'Subsidized contributions (up to €1,800/yr): grow tax-free, but the ENTIRE payout in retirement is taxed at your income tax rate (nachgelagerte Besteuerung).';
-  String get tipUngefoerdert => 'Unsubsidized contributions (above €1,800/yr): no subsidies, but preferential payout tax — only 50% of gains taxed at your income tax rate (Halbeinkünfteverfahren). Requires 12+ years contract.';
+  String get tipUngefoerdert => 'Unsubsidized contributions (above €1,800/yr): no subsidies, but still tax-free growth during savings. Payout taxation is pending official BMF guidance (law takes effect Jan 2027). Currently calculated conservatively as full nachgelagerte Besteuerung. Actual treatment may be more favorable (e.g., Ertragsanteilbesteuerung or Halbeinkünfteverfahren).';
   String get tipGrenzsteuersatz => 'Your marginal tax rate based on gross income. This is the rate on your last euro earned — not the average rate on all income. Used for Günstigerprüfung during savings.';
   String get tipGrenzsteuersatzRente => 'Your marginal tax rate in retirement, based on combined income: AV-Depot payout + state pension + other income. Usually lower than during working life.';
   String get tipVorabpauschale => 'Annual tax on unrealized ETF gains, calculated from the Basiszins (ECB reference rate). Simplified here as a fixed drag on returns. Does NOT apply inside the AV-Depot.';
@@ -502,7 +516,7 @@ class StringsEn extends AppStrings {
   String get proGuenstigerpruefung => 'Tax optimization check yields additional refund';
   String get proLongDuration => 'Long savings duration – subsidies compound over decades';
   String get proTaxFreeGrowth => 'Tax-free growth during accumulation (no Vorabpauschale, no capital gains tax)';
-  String get conLowSubsidyLeverage => 'Contributions above €150/mo receive no subsidy. Subsidized portion fully taxed at income rate; unsubsidized portion taxed more favorably.';
+  String get conLowSubsidyLeverage => 'Contributions above €150/mo receive no subsidy. Entire payout currently taxed at income rate (conservative). Unsubsidized portion may receive more favorable treatment once BMF guidance is published.';
   String get conHighRetirementTax => 'High marginal tax rate – deferred taxation at high rate reduces advantage';
   String get proEtfOnlyGainsTaxed => 'Only gains are taxed – your contributions are returned tax-free';
   String get proEtfTeilfreistellung => '30% partial exemption (Teilfreistellung) reduces taxable gains';
@@ -539,11 +553,13 @@ class StringsEn extends AppStrings {
     '▸ 5 personal scenario presets + custom input';
   String get simplificationsTitle => 'Simplifications';
   String get simplificationsDetail =>
+    'Both: Single equity ETF assumed for comparability (AV-Depot may hold multiple instruments)\n'
     'Both: Constant annual returns (no sequence-of-returns risk)\n'
     'Both: No partial-year contributions\n'
     'Both: Fund-level withholding tax (~0.3% p.a.) not separately modeled\n'
     'ETF: Vorabpauschale simplified as 0.3% annual drag (actual depends on Basiszins)\n'
-    'AV: Retirement tax uses marginal rate on combined income (slightly overstates tax vs. actual average rate)\n'
+    'AV: Retirement tax uses progressive §32a average rate on combined income. Brutto used as proxy for zvE.\n'
+    'AV: Ungeförderte payout tax treatment pending BMF guidance — conservatively uses full nachgelagerte Besteuerung. May be more favorable (Ertragsanteil/Halbeinkünfte) once clarified.\n'
     'AV: Günstigerprüfung tax refund paid to bank account, not reinvested\n'
     'AV: State pension estimated from gross income (Entgeltpunkte formula, 2024 Rentenwert) – adjustable';
   String get plannedFeaturesTitle => 'Not Yet Included';
@@ -698,6 +714,8 @@ class StringsDe extends AppStrings {
   String get statePensionMonthly => 'Gesch. gesetzl. Rente (monatlich)';
   String get otherRetirementIncome => 'Sonstige Einkünfte im Ruhestand (jährlich)';
   String get hintOtherIncome => 'Jahresbetrag (z.B. Mieteinnahmen, Betriebsrente). Wird zur Berechnung des Steuersatzes im Ruhestand verwendet.';
+  String get workStartAge => 'Beginn Erwerbstätigkeit';
+  String get hintWorkStartAge => 'Alter bei Beginn der Einzahlung in die gesetzliche Rentenversicherung. Beeinflusst die Rentenpunkte-Ansammlung. Z.B. 16 bei Ausbildung, 25 bei Hochschulabschluss.';
   String get retirementTaxRate => 'Steuersatz im Ruhestand';
   String get hintMarginalTaxRate => 'Ihr aktueller Steuersatz basierend auf dem Bruttoeinkommen. Wird für die Günstigerprüfung während der Sparphase verwendet.';
   String get hintRetirementTaxRate => 'Steuersatz auf AV-Depot-Auszahlungen im Ruhestand. Basiert auf Gesamteinkommen: gesetzl. Rente + AV-Auszahlung + Sonstige.';
@@ -746,6 +764,11 @@ class StringsDe extends AppStrings {
   String get kirchensteuerNone => 'Keine';
   String get kirchensteuerBayBw => '8 % (Bayern/BaWü)';
   String get kirchensteuerOther => '9 % (übrige Bundesländer)';
+  String get ungefoerdertTaxLabel => 'Besteuerung ungefördert';
+  String get ungefoerdertTaxNachgelagert => 'Voll (konservativ)';
+  String get ungefoerdertTaxErtragsanteil => 'Ertragsanteil (17 %)';
+  String get ungefoerdertTaxHalbeinkunfte => 'Halbeinkünfte (50 % Gewinn)';
+  String get hintUngefoerdertTax => 'Besteuerung ungeförderter Beiträge (über 1.800 €/J) bei Auszahlung. Offizielle BMF-Klärung ausstehend. Standard ist konservativ (volle Besteuerung).';
 
   String annualSubsidiesTitle(String icon, String name) => 'Jährliche Förderung – $icon $name';
   String get baseGrant => 'Grundzulage';
@@ -772,7 +795,7 @@ class StringsDe extends AppStrings {
   String get tipGeringverdienerbonus => 'Zusätzlich 175 €/J bei Bruttoeinkommen ≤ 26.250 € und Mindestbeitrag 120 €/J. Wird auf die Grundzulage aufgeschlagen.';
   String get tipGuenstigerpruefung => 'Das Finanzamt prüft automatisch: Bringt der Sonderausgabenabzug auf Ihre Beiträge mehr als die Zulagen? Wenn ja, erhalten Sie die Differenz als Steuererstattung — aber auf Ihr Bankkonto, NICHT ins Depot.';
   String get tipGefoerdert => 'Geförderte Beiträge (bis 1.800 €/J): Wachsen steuerfrei, aber die GESAMTE Auszahlung im Ruhestand wird mit Einkommensteuer besteuert (nachgelagerte Besteuerung).';
-  String get tipUngefoerdert => 'Ungeförderte Beiträge (über 1.800 €/J): Keine Zulagen, aber begünstigte Besteuerung bei Auszahlung — nur 50 % der Gewinne werden besteuert (Halbeinkünfteverfahren). Voraussetzung: 12+ Jahre Vertragslaufzeit.';
+  String get tipUngefoerdert => 'Ungeförderte Beiträge (über 1.800 €/J): Keine Zulagen, aber steuerfreies Wachstum in der Ansparphase. Besteuerung bei Auszahlung wartet auf offizielle BMF-Klärung (Gesetz tritt Jan 2027 in Kraft). Derzeit konservativ als volle nachgelagerte Besteuerung berechnet. Tatsächliche Behandlung könnte günstiger sein (z.B. Ertragsanteil oder Halbeinkünfteverfahren).';
   String get tipGrenzsteuersatz => 'Ihr Grenzsteuersatz basierend auf dem Bruttoeinkommen. Das ist der Steuersatz auf den letzten verdienten Euro — nicht der Durchschnitt. Wird für die Günstigerprüfung während des Sparens verwendet.';
   String get tipGrenzsteuersatzRente => 'Ihr Grenzsteuersatz im Ruhestand, basierend auf dem Gesamteinkommen: AV-Depot-Auszahlung + gesetzliche Rente + sonstige Einkünfte. Meist niedriger als im Erwerbsleben.';
   String get tipVorabpauschale => 'Jährliche Steuer auf unrealisierte ETF-Gewinne, berechnet aus dem Basiszins (EZB-Referenzzins). Hier vereinfacht als fester Abzug. Gilt NICHT im AV-Depot.';
@@ -858,7 +881,7 @@ class StringsDe extends AppStrings {
   String get proGuenstigerpruefung => 'Günstigerprüfung bringt zusätzliche Steuererstattung';
   String get proLongDuration => 'Lange Spardauer – Zulagen verzinsen sich über Jahrzehnte';
   String get proTaxFreeGrowth => 'Steuerfreies Wachstum in der Ansparphase (keine Vorabpauschale, keine Abgeltungssteuer)';
-  String get conLowSubsidyLeverage => 'Beiträge über 150 €/Mt erhalten keine Zulage. Geförderter Teil wird voll mit Einkommensteuer besteuert; ungeförderter Teil begünstigt (Ertragsanteil).';
+  String get conLowSubsidyLeverage => 'Beiträge über 150 €/Mt erhalten keine Zulage. Gesamte Auszahlung derzeit konservativ mit Einkommensteuer besteuert. Ungeförderter Teil könnte günstiger behandelt werden, sobald BMF-Leitfaden veröffentlicht.';
   String get conHighRetirementTax => 'Hoher Grenzsteuersatz – nachgelagerte Besteuerung zu hohem Satz mindert den Vorteil';
   String get proEtfOnlyGainsTaxed => 'Nur Gewinne werden besteuert – Ihre Einzahlungen erhalten Sie steuerfrei zurück';
   String get proEtfTeilfreistellung => '30 % Teilfreistellung reduziert die steuerpflichtigen Gewinne';
@@ -893,11 +916,13 @@ class StringsDe extends AppStrings {
     '▸ 5 persönliche Szenarien + freie Eingabe';
   String get simplificationsTitle => 'Vereinfachungen';
   String get simplificationsDetail =>
+    'Beide: Ein Aktien-ETF angenommen für Vergleichbarkeit (AV-Depot kann mehrere Instrumente halten)\n'
     'Beide: Konstante jährliche Rendite (kein Reihenfolge-Risiko)\n'
     'Beide: Keine unterjährigen Beiträge\n'
     'Beide: Quellensteuer auf Fondsebene (~0,3 % p.a.) nicht separat modelliert\n'
     'ETF: Vorabpauschale vereinfacht als 0,3 % jährlicher Abzug (tatsächlich abhängig vom Basiszins)\n'
-    'AV: Grenzsteuersatz auf Gesamteinkommen im Ruhestand (überschätzt Steuer leicht ggü. tatsächlichem Durchschnittssteuersatz)\n'
+    'AV: Besteuerung im Ruhestand nutzt progressiven §32a-Durchschnittssteuersatz auf Gesamteinkommen. Brutto als Näherung für zvE.\n'
+    'AV: Besteuerung ungeförderter Auszahlungen wartet auf BMF-Klärung — konservativ als volle nachgelagerte Besteuerung. Könnte günstiger sein (Ertragsanteil/Halbeinkünfte) nach Klärung.\n'
     'AV: Günstigerprüfung-Erstattung wird auf Bankkonto ausgezahlt, nicht reinvestiert\n'
     'AV: Gesetzl. Rente aus Bruttoeinkommen geschätzt (Entgeltpunkte-Formel, Rentenwert 2024) – anpassbar';
   String get plannedFeaturesTitle => 'Noch nicht enthalten';

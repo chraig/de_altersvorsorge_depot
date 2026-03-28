@@ -89,6 +89,14 @@ class CalculatorCubit extends Cubit<CalculatorState> {
     emit(state.copyWith(customInflation: v, useCustomRendite: true));
   }
 
+  void setUngefoerdertTaxMode(UngefoerdertTaxMode v) {
+    emit(state.copyWith(costs: state.costs.copyWith(ungefoerdertTax: v)));
+  }
+
+  void setArbeitsbeginn(int v) {
+    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(arbeitsbeginn: v), clearSelectedPersonal: true));
+  }
+
   void setGesetzlicheRenteOverride(double v) {
     emit(state.copyWith(currentPerson: state.currentPerson.copyWith(gesetzlicheRenteOverride: v), clearSelectedPersonal: true));
   }

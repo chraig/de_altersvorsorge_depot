@@ -80,8 +80,8 @@ void main() {
       // Combined income = AV annual payout + 1500×12 + 5000
       final avAnnual = av.endkapital / p.auszahlungsDauer;
       final rentenEinkommen = avAnnual + 1500 * 12 + 5000;
-      final expectedGstRente = engine.tax.getGrenzsteuersatz(rentenEinkommen);
-      expect(av.grenzsteuersatzRente, closeTo(expectedGstRente, 0.001));
+      final expectedAvgRate = engine.tax.getDurchschnittssteuersatz(rentenEinkommen);
+      expect(av.grenzsteuersatzRente, closeTo(expectedAvgRate, 0.001));
     });
 
     test('Kirchensteuer increases payout tax', () {

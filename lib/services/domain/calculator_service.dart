@@ -77,10 +77,12 @@ class CalcConstants {
   // ─── PAYOUT PHASE ─────────────────────────────────────────────
   /// Auszahlplan must run until this age (§89 Abs. 8 EStG-E)
   static const int payoutEndAge = 85;
-  /// Halbeinkünfteverfahren: only 50% of gains are taxed at personal income rate.
-  /// Applies to ungeförderte AV-Depot Auszahlplan if contract ran 12+ years
-  /// and contributions were made for 5+ years (§20 Abs. 1 Nr. 6 EStG).
-  static const double halbeinkunfteAnteil = 0.50;
+  /// Ertragsanteil for Auszahlplan at payout start age 67 (BMF table, §22 EStG).
+  /// NOT currently used in calculations — pending official BMF guidance on whether
+  /// this applies to ungeförderte AV-Depot contributions.
+  /// Age 65: 18%, age 67: 17%, age 68: 16%.
+  /// Kept here for future modular override when tax treatment is clarified.
+  static const double ertragsanteil67 = 0.17;
 
   // ─── PENSION ESTIMATION (Deutsche Rentenversicherung) ──────────
   /// EUR per Entgeltpunkt per month (West Germany, July 2024).
@@ -210,26 +212,46 @@ class SimulationEngine {
     final auszahlungsDauer = person.auszahlungsDauer;
 
     // Gefördert: full nachgelagerte Besteuerung (100% of payout taxed as income)
+    // Uses progressive §32a tax (exact formula), not marginal rate.
     final effectiveRente = pension.estimateMonthlyPension(person, incomeDev);
     final monatlichGefoerdert = depotGefoerdert / (auszahlungsDauer * 12);
     final jahresGefoerdert = depotGefoerdert / auszahlungsDauer;
     final rentenEinkommen = jahresGefoerdert + effectiveRente * 12 + person.sonstigeEinkuenfte;
-    final gstRente = tax.getGrenzsteuersatz(rentenEinkommen);
     final kirchensteuerFaktor = 1 + costs.kirchensteuer;
-    final nettoGefoerdert = monatlichGefoerdert * (1 - gstRente * kirchensteuerFaktor);
+    // Progressive tax: actual tax on combined retirement income
+    final steuerRente = tax.calcEinkommensteuer(rentenEinkommen);
+    final avgSteuersatzRente = rentenEinkommen > 0 ? steuerRente / rentenEinkommen : 0.0;
+    final nettoGefoerdert = monatlichGefoerdert * (1 - avgSteuersatzRente * kirchensteuerFaktor);
 
-    // Ungefördert: Halbeinkünfteverfahren — 50% of gains taxed at personal rate.
-    // Requires: contract 12+ years, 5+ years contributions (§20 Abs. 1 Nr. 6 EStG).
-    // We assume these conditions are met for typical long-term savings.
+    // Ungefördert: tax treatment at payout is PENDING official BMF guidance.
+    // The Altersvorsorgereformgesetz was passed March 2026, takes effect Jan 2027.
+    // No BMF-Schreiben on payout taxation of ungeförderte AV-Depot contributions yet.
+    //
+    // Possible future treatments (to be implemented as modular override when clarified):
+    //   - Ertragsanteilbesteuerung (17% of payout taxed, §22 Nr. 1 Satz 3a EStG)
+    //   - Halbeinkünfteverfahren (50% of gains taxed, §20 Abs. 1 Nr. 6 EStG)
+    //   - Abgeltungssteuer with Teilfreistellung (like ETF)
+    //
+    // Tax treatment depends on user selection (pending official BMF guidance).
     double nettoUngefoerdert = 0;
     if (depotUngefoerdert > 0) {
       final monatlichUngef = depotUngefoerdert / (auszahlungsDauer * 12);
-      final eigenAnteilUngef = jbUngefoerdert * person.spardauer; // total unsubsidized contributions
-      final gewinnAnteil = depotUngefoerdert > eigenAnteilUngef
-          ? (depotUngefoerdert - eigenAnteilUngef) / depotUngefoerdert
-          : 0.0;
-      final taxableUngef = monatlichUngef * gewinnAnteil * CalcConstants.halbeinkunfteAnteil;
-      nettoUngefoerdert = monatlichUngef - taxableUngef * gstRente * kirchensteuerFaktor;
+      switch (costs.ungefoerdertTax) {
+        case UngefoerdertTaxMode.nachgelagert:
+          // Conservative: same as gefördert (100% taxed at average rate)
+          nettoUngefoerdert = monatlichUngef * (1 - avgSteuersatzRente * kirchensteuerFaktor);
+        case UngefoerdertTaxMode.ertragsanteil:
+          // Only Ertragsanteil (17% at age 67) taxed at income rate
+          final taxable = monatlichUngef * CalcConstants.ertragsanteil67;
+          nettoUngefoerdert = monatlichUngef - taxable * avgSteuersatzRente * kirchensteuerFaktor;
+        case UngefoerdertTaxMode.halbeinkunfte:
+          // 50% of gains taxed at income rate
+          final eigenUngef = jbUngefoerdert * person.spardauer;
+          final gewinnAnteil = depotUngefoerdert > eigenUngef
+              ? (depotUngefoerdert - eigenUngef) / depotUngefoerdert : 0.0;
+          final taxable = monatlichUngef * gewinnAnteil * 0.5;
+          nettoUngefoerdert = monatlichUngef - taxable * avgSteuersatzRente * kirchensteuerFaktor;
+      }
     }
 
     final monatlich = monatlichGefoerdert + (depotUngefoerdert > 0 ? depotUngefoerdert / (auszahlungsDauer * 12) : 0);
@@ -244,7 +266,7 @@ class SimulationEngine {
       monatlicheAuszahlung: monatlich,
       nettoMonatlich: netto,
       grenzsteuersatz: tax.getGrenzsteuersatz(person.brutto),
-      grenzsteuersatzRente: gstRente,
+      grenzsteuersatzRente: avgSteuersatzRente,
       wertzuwachs: depot - eigenBeitraege - zulagenGesamt,
       jahresWerte: jahresWerte,
     );

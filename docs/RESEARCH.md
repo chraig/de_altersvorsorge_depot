@@ -213,7 +213,8 @@ Results:
 **AV side — retirement payout taxation:**
 
 ```
-Steuersatz_Rente = Grenzsteuersatz(Renteneinkommen) × (1 + KiSt_rate)
+AvgSteuersatz = calcEinkommensteuer(Renteneinkommen) / Renteneinkommen
+Steuersatz_Rente = AvgSteuersatz × (1 + KiSt_rate)
 
 Where Renteneinkommen = AV_Jahresauszahlung + GesetzlicheRente × 12 + SonstigeEinkünfte
 ```
@@ -318,15 +319,24 @@ Else:
 // ── Gefördert: nachgelagerte Besteuerung (100% of payout taxed as income) ──
 Monatlich_Gefördert = Depot_Gefördert / (Auszahlungsdauer × 12)
 Renteneinkommen = (Depot_Gefördert / Auszahlungsdauer) + EffectiveRente × 12 + Sonstige
-Steuersatz_Rente = Grenzsteuersatz(Renteneinkommen) × (1 + Kirchensteuer)
+AvgSteuersatz = calcEinkommensteuer(Renteneinkommen) / Renteneinkommen  // progressive §32a
+Steuersatz_Rente = AvgSteuersatz × (1 + Kirchensteuer)
 Netto_Gefördert = Monatlich_Gefördert × (1 - Steuersatz_Rente)
 
-// ── Ungefördert: Halbeinkünfteverfahren (50% of gains taxed, §20 Abs. 1 Nr. 6) ──
-// Conditions: contract 12+ years, contributions 5+ years (assumed met for long savings)
+// ── Ungefördert: tax treatment PENDING official BMF guidance ──
+// The Altersvorsorgereformgesetz was passed March 2026, takes effect Jan 2027.
+// No BMF-Schreiben on payout taxation of ungeförderte AV-Depot contributions yet.
+//
+// CURRENT DEFAULT: nachgelagerte Besteuerung (same as gefördert) — conservative.
+// This likely overstates the tax burden.
+//
+// POSSIBLE FUTURE TREATMENTS (modular override planned):
+//   a) Ertragsanteilbesteuerung: 17% of payout taxed at income rate (age 67)
+//   b) Halbeinkünfteverfahren: 50% of gains taxed (contract 12+ years, age 62+)
+//   c) Abgeltungssteuer with Teilfreistellung (like ETF)
+//
 Monatlich_Ungefördert = Depot_Ungefördert / (Auszahlungsdauer × 12)
-Gewinn_Anteil = (Depot_Ungefördert - Σ JB_Ungefördert) / Depot_Ungefördert
-Steuerpflichtig = Monatlich_Ungefördert × Gewinn_Anteil × 50%
-Netto_Ungefördert = Monatlich_Ungefördert - Steuerpflichtig × Steuersatz_Rente × (1 + KiSt)
+Netto_Ungefördert = Monatlich_Ungefördert × (1 - Steuersatz_Rente × (1 + KiSt))
 
 Monatlich_Netto = Netto_Gefördert + Netto_Ungefördert
 
@@ -377,12 +387,11 @@ rounding errors without improving accuracy.
 - Core: All subsidy, tax, and accumulation calculations use yearly amounts.
 - Output boundary: `monatlicheAuszahlung = depot / (auszahlungsDauer × 12)` converts back.
 
-**Marginal vs. average tax rate for retirement payout**: The calculator uses the
-Grenzsteuersatz (marginal rate) on combined retirement income. In reality, the
-Durchschnittssteuersatz (average rate) would be more precise — the actual tax on
-€30,000 retirement income is not 30,000 × marginalRate, but the sum of tax across
-all brackets. Using the marginal rate **overstates** the tax on AV-Depot payouts,
-making the comparison slightly conservative (favoring ETF). This is a documented
+**Progressive §32a tax for retirement payout**: The calculator uses the exact §32a
+polynomial formula (`calcEinkommensteuer`) on combined retirement income, then derives
+the average rate (`Durchschnittssteuersatz = tax / income`). This is the correct
+approach — it computes the actual tax across all brackets, not the marginal rate on
+the last euro. The remaining simplification is using Brutto as proxy for zvE. This is a
 simplification.
 
 ---

@@ -22,6 +22,7 @@ class PersonalScenario {
   int spardauer;             // [years] savings duration (derived: retirementAge - startAge)
   double? gesetzlicheRenteOverride; // [EUR/month] manual override, null = auto-derive
   double sonstigeEinkuenfte;  // [EUR/year] other retirement income (rental, private pension etc.)
+  int arbeitsbeginn;          // [years] age when started paying into Rentenversicherung
   bool isCustom;
 
   PersonalScenario({
@@ -35,6 +36,7 @@ class PersonalScenario {
     required this.spardauer,
     this.gesetzlicheRenteOverride,
     this.sonstigeEinkuenfte = 0,
+    this.arbeitsbeginn = 25,
     this.isCustom = false,
   }) : id = id ?? _uuid.v4();
 
@@ -42,7 +44,7 @@ class PersonalScenario {
     String? name, String? icon, double? sparrate, double? brutto,
     int? kinder, int? alterStart, int? spardauer,
     double? gesetzlicheRenteOverride, bool clearRenteOverride = false,
-    double? sonstigeEinkuenfte, bool? isCustom,
+    double? sonstigeEinkuenfte, int? arbeitsbeginn, bool? isCustom,
   }) => PersonalScenario(
     id: id, name: name ?? this.name, icon: icon ?? this.icon,
     sparrate: sparrate ?? this.sparrate, brutto: brutto ?? this.brutto,
@@ -50,6 +52,7 @@ class PersonalScenario {
     spardauer: spardauer ?? this.spardauer,
     gesetzlicheRenteOverride: clearRenteOverride ? null : (gesetzlicheRenteOverride ?? this.gesetzlicheRenteOverride),
     sonstigeEinkuenfte: sonstigeEinkuenfte ?? this.sonstigeEinkuenfte,
+    arbeitsbeginn: arbeitsbeginn ?? this.arbeitsbeginn,
     isCustom: isCustom ?? this.isCustom,
   );
 
@@ -59,9 +62,9 @@ class PersonalScenario {
 
   /// Estimated monthly state pension derived from gross income.
   /// Formula: min(Brutto, BBG) / Durchschnittsentgelt × Beitragsjahre × Rentenwert
-  /// BBG caps pensionable income; arbeitsbeginn assumed at 25 (conservative).
+  /// BBG caps pensionable income.
   double get geschaetzteRente {
-    final beitragsjahre = (rentenalter - CalcConstants.arbeitsbeginn).clamp(0, 45);
+    final beitragsjahre = (rentenalter - arbeitsbeginn).clamp(0, 45);
     final cappedBrutto = brutto < CalcConstants.bbg ? brutto : CalcConstants.bbg;
     final entgeltpunkteProJahr = cappedBrutto / CalcConstants.durchschnittsentgelt;
     return entgeltpunkteProJahr * beitragsjahre * CalcConstants.rentenwert;
@@ -141,6 +144,24 @@ class MacroScenario {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// UNGEFÖRDERT TAX TREATMENT
+// ═══════════════════════════════════════════════════════════════════
+
+/// Tax treatment options for ungeförderte AV-Depot contributions at payout.
+/// Official BMF guidance pending (law takes effect Jan 2027).
+enum UngefoerdertTaxMode {
+  /// Conservative default: same as gefördert (100% nachgelagerte Besteuerung).
+  /// Likely overstates tax. Used until official guidance is published.
+  nachgelagert,
+  /// Ertragsanteilbesteuerung: only 17% of payout taxed at income rate (age 67).
+  /// May apply to Auszahlplan payouts per §22 Nr. 1 Satz 3a EStG.
+  ertragsanteil,
+  /// Halbeinkünfteverfahren: 50% of gains taxed at income rate.
+  /// May apply per §20 Abs. 1 Nr. 6 EStG (contract 12+ years, age 62+).
+  halbeinkunfte,
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // COST SETTINGS
 // ═══════════════════════════════════════════════════════════════════
 
@@ -148,8 +169,14 @@ class CostSettings {
   double kostenAV;
   double kostenETF;
   double kirchensteuer; // 0.0 = none, 0.08 = Bayern/BaWü, 0.09 = other states
+  UngefoerdertTaxMode ungefoerdertTax; // default: nachgelagert (conservative)
 
-  CostSettings({this.kostenAV = 0.005, this.kostenETF = 0.002, this.kirchensteuer = 0.0});
+  CostSettings({
+    this.kostenAV = 0.005,
+    this.kostenETF = 0.002,
+    this.kirchensteuer = 0.0,
+    this.ungefoerdertTax = UngefoerdertTaxMode.nachgelagert,
+  });
 
   /// Abgeltungssteuer + Soli + optional Kirchensteuer.
   /// Formula per §32d Abs. 1 Satz 3 EStG: KapESt is reduced because
@@ -163,11 +190,12 @@ class CostSettings {
     return kapEst + soli + kiSt;
   }
 
-  CostSettings copyWith({double? kostenAV, double? kostenETF, double? kirchensteuer}) =>
+  CostSettings copyWith({double? kostenAV, double? kostenETF, double? kirchensteuer, UngefoerdertTaxMode? ungefoerdertTax}) =>
     CostSettings(
       kostenAV: kostenAV ?? this.kostenAV,
       kostenETF: kostenETF ?? this.kostenETF,
       kirchensteuer: kirchensteuer ?? this.kirchensteuer,
+      ungefoerdertTax: ungefoerdertTax ?? this.ungefoerdertTax,
     );
 }
 

@@ -32,7 +32,7 @@ class EntgeltpunkteEstimator implements PensionModule {
     if (incomeDev.enabled) {
       double totalEP = 0;
       // Pre-savings years (from arbeitsbeginn to savings start)
-      final preSavingsYears = (person.alterStart - CalcConstants.arbeitsbeginn).clamp(0, 45);
+      final preSavingsYears = (person.alterStart - person.arbeitsbeginn).clamp(0, 45);
       totalEP += preSavingsYears * _epForBrutto(person.brutto);
       // Savings period with growing income
       for (int j = 0; j < person.spardauer; j++) {

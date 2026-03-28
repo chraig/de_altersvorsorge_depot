@@ -145,7 +145,7 @@ Maximum Grundzulage: €540/yr
 One-time €200 bonus (age < 25 at contract start, first year only)
 
 // Payout taxation
-Retirement tax rate: grenzsteuersatz × 0.7 (simplified)
+Retirement tax rate: progressive §32a on combined retirement income
 Payout period: 20 years (age 65–85)
 ```
 
@@ -295,7 +295,8 @@ For each year j = 0 ... spardauer-1:
 
 Payout phase (20 years, age 65–85):
   monthly_brutto = depot / 240
-  monthly_netto = monthly_brutto × (1 - grenzsteuersatz × 0.7)
+  monthly_netto = monthly_brutto × (1 - durchschnittssteuersatz × (1 + kirchensteuer))
+  // durchschnittssteuersatz = calcEinkommensteuer(combined_income) / combined_income
 ```
 
 ### ETF-Depot Simulation (per year)
@@ -323,7 +324,7 @@ Payout phase:
 | Kirchensteuer | Optional toggle (0%/8%/9%) | Affects both AV payout tax and Abgeltungssteuer |
 | Soli | Included in base rate | May change |
 | Vorabpauschale | Fixed 0.3% drag | Depends on Basiszins (2.3-3.2% in 2024-2026) |
-| Retirement tax rate | Marginal rate on combined retirement income | Average rate would be lower; marginal overstates tax |
+| Retirement tax rate | Progressive §32a average rate on combined income | Brutto used as proxy for zvE; actual zvE lower |
 | Günstigerprüfung refund | Not reinvested | Could be reinvested manually |
 | Quellensteuer on fund level | Not modeled | ~0.3% p.a. already in fund returns |
 | Wohnwirtschaftliche Verwendung | Not modeled | Tax-free withdrawal for property |
@@ -513,7 +514,7 @@ Recommended: Serve over **HTTPS** (enabled by default on most hosting providers)
 1. **Constant returns**: Real markets are volatile; sequence-of-returns risk is not modeled
 2. **Simplified Vorabpauschale**: Uses fixed 0.3% drag (based on Basiszins ~2.3-3.2%) instead of actual yearly Basiszins calculation
 3. **No partial-year contributions**: Assumes full-year contributions from year 1
-4. **Retirement tax rate**: Uses marginal rate on combined retirement income (state pension + AV payout + other); average rate would be lower, so AV payout tax is slightly overstated
+4. **Retirement tax rate**: Uses progressive §32a average rate on combined retirement income (state pension + AV payout + other). Uses Brutto as proxy for zvE (actual zvE is lower after Werbungskosten etc.)
 5. **Günstigerprüfung refund not reinvested**: In practice, you could invest the tax refund in a separate ETF
 6. **No Wohnriester/wohnwirtschaftliche Verwendung**: Tax-free withdrawal for property not modeled
 7. **No Riester comparison**: Only compares AV-Depot vs. free ETF; old Riester not included

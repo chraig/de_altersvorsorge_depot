@@ -240,6 +240,10 @@ class _InputPanelState extends State<InputPanel> with TickerProviderStateMixin {
       AppSlider(label: s.otherRetirementIncome, value: p.sonstigeEinkuenfte,
         min: 0, max: 50000, step: 500, display: Fmt.eur(p.sonstigeEinkuenfte),
         onChanged: cubit.setSonstigeEinkuenfte, hint: s.hintOtherIncome),
+      AppSlider(label: s.workStartAge, value: p.arbeitsbeginn.toDouble(),
+        min: 14, max: 35, step: 1, display: '${p.arbeitsbeginn}',
+        onChanged: (v) => cubit.setArbeitsbeginn(v.round()),
+        hint: s.hintWorkStartAge),
     ]);
   }
 
@@ -263,6 +267,11 @@ class _InputPanelState extends State<InputPanel> with TickerProviderStateMixin {
       _KirchensteuerToggle(
         value: state.costs.kirchensteuer,
         onChanged: cubit.setKirchensteuer,
+      ),
+      const Divider(height: AppSpacing.xxxl),
+      _UngefoerdertTaxToggle(
+        value: state.costs.ungefoerdertTax,
+        onChanged: cubit.setUngefoerdertTaxMode,
       ),
     ]);
   }
@@ -472,6 +481,56 @@ class _KirchensteuerToggle extends StatelessWidget {
     final selected = value == chipValue;
     return GestureDetector(
       onTap: () => onChanged(chipValue),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.accent : AppColors.card,
+          borderRadius: BorderRadius.circular(AppRadius.chip),
+          border: Border.all(color: selected ? AppColors.accent : AppColors.border),
+        ),
+        child: Text(label, style: TextStyle(
+          fontSize: 11, fontWeight: FontWeight.w600,
+          color: selected ? Colors.white : AppColors.label)),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// UNGEFÖRDERT TAX TOGGLE
+// ═══════════════════════════════════════════════════════════════════
+
+class _UngefoerdertTaxToggle extends StatelessWidget {
+  final UngefoerdertTaxMode value;
+  final ValueChanged<UngefoerdertTaxMode> onChanged;
+
+  const _UngefoerdertTaxToggle({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.read<LocaleCubit>().state.strings;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(s.ungefoerdertTaxLabel.toUpperCase(),
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
+            color: AppColors.label, letterSpacing: 0.3)),
+        Text(s.hintUngefoerdertTax,
+          style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
+        const SizedBox(height: AppSpacing.md),
+        Wrap(spacing: AppSpacing.md, runSpacing: AppSpacing.sm, children: [
+          _taxChip(s.ungefoerdertTaxNachgelagert, UngefoerdertTaxMode.nachgelagert),
+          _taxChip(s.ungefoerdertTaxErtragsanteil, UngefoerdertTaxMode.ertragsanteil),
+          _taxChip(s.ungefoerdertTaxHalbeinkunfte, UngefoerdertTaxMode.halbeinkunfte),
+        ]),
+      ],
+    );
+  }
+
+  Widget _taxChip(String label, UngefoerdertTaxMode mode) {
+    final selected = value == mode;
+    return GestureDetector(
+      onTap: () => onChanged(mode),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(

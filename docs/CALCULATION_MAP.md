@@ -10,7 +10,7 @@ flowchart TD
     B --> C[CalculatorState<br/>computed getters]
     C --> D[SimulationEngine]
     D --> E[SubsidyModule<br/>calcZulage]
-    D --> F[TaxModule<br/>getGrenzsteuersatz<br/>calcGuenstigerpruefung]
+    D --> F[TaxModule<br/>getGrenzsteuersatz<br/>calcEinkommensteuer<br/>getDurchschnittssteuersatz<br/>calcGuenstigerpruefung]
     D --> G[IncomeDevSettings<br/>bruttoForYear<br/>kinderAtYear]
     D --> H[PensionModule<br/>estimateMonthlyPension]
     E --> I[simulateAV]
@@ -62,9 +62,9 @@ flowchart TD
     subgraph PAY["Payout Phase"]
         direction TB
         PENS["Pension Estimation<br/>Priority: override, income-dev EP, static<br/>EP = Sum min bruttoJ, BBG / Durchschnittsentgelt x Rentenwert"]
-        RTAX["Retirement Tax<br/>combinedIncome = avAnnualPayout + pension x 12 + sonstige<br/>gstRente = getGrenzsteuersatz combinedIncome"]
+        RTAX["Retirement Tax - progressive 32a<br/>combinedIncome = avAnnualPayout + pension x 12 + sonstige<br/>avgRate = calcEinkommensteuer combinedIncome / combinedIncome"]
         GEF["Gefoerdert: 100% taxed<br/>netto = brutto x 1 - gst x kirchenFaktor"]
-        UNGEF["Ungefoerdert: 50% of gains taxed<br/>Halbeinkuenfteverfahren"]
+        UNGEF["Ungefoerdert: tax pending BMF guidance<br/>Default: nachgelagerte Besteuerung"]
         PENS --> RTAX --> GEF
         RTAX --> UNGEF
     end
