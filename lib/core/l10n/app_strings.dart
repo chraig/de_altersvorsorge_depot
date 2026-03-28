@@ -390,11 +390,11 @@ class StringsEn extends AppStrings {
   String get kirchensteuerNone => 'None';
   String get kirchensteuerBayBw => '8% (Bavaria/BaWü)';
   String get kirchensteuerOther => '9% (other states)';
-  String get ungefoerdertTaxLabel => 'Unsubsidized payout tax';
+  String get ungefoerdertTaxLabel => 'AV-Depot: unsubsidized payout tax';
   String get ungefoerdertTaxNachgelagert => 'Full (conservative)';
   String get ungefoerdertTaxErtragsanteil => 'Ertragsanteil (17%)';
   String get ungefoerdertTaxHalbeinkunfte => 'Halbeinkünfte (50% gains)';
-  String get hintUngefoerdertTax => 'Tax on unsubsidized contributions (above €1,800/yr) at payout. Official BMF guidance pending. Default is conservative (full taxation).';
+  String get hintUngefoerdertTax => 'AV-Depot only: tax on unsubsidized contributions (above €1,800/yr) at payout. BMF guidance pending. Does not affect ETF comparison.';
 
   // Subsidy
   String annualSubsidiesTitle(String icon, String name) => 'Annual Subsidies – $icon $name';
@@ -764,11 +764,11 @@ class StringsDe extends AppStrings {
   String get kirchensteuerNone => 'Keine';
   String get kirchensteuerBayBw => '8 % (Bayern/BaWü)';
   String get kirchensteuerOther => '9 % (übrige Bundesländer)';
-  String get ungefoerdertTaxLabel => 'Besteuerung ungefördert';
+  String get ungefoerdertTaxLabel => 'AV-Depot: Besteuerung ungefördert';
   String get ungefoerdertTaxNachgelagert => 'Voll (konservativ)';
   String get ungefoerdertTaxErtragsanteil => 'Ertragsanteil (17 %)';
   String get ungefoerdertTaxHalbeinkunfte => 'Halbeinkünfte (50 % Gewinn)';
-  String get hintUngefoerdertTax => 'Besteuerung ungeförderter Beiträge (über 1.800 €/J) bei Auszahlung. Offizielle BMF-Klärung ausstehend. Standard ist konservativ (volle Besteuerung).';
+  String get hintUngefoerdertTax => 'Nur AV-Depot: Besteuerung ungeförderter Beiträge (über 1.800 €/J) bei Auszahlung. BMF-Klärung ausstehend. Beeinflusst nicht den ETF-Vergleich.';
 
   String annualSubsidiesTitle(String icon, String name) => 'Jährliche Förderung – $icon $name';
   String get baseGrant => 'Grundzulage';

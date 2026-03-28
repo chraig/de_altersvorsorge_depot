@@ -517,11 +517,13 @@ class _UngefoerdertTaxToggle extends StatelessWidget {
             color: AppColors.label, letterSpacing: 0.3)),
         Text(s.hintUngefoerdertTax,
           style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
-        const SizedBox(height: AppSpacing.md),
-        Wrap(spacing: AppSpacing.md, runSpacing: AppSpacing.sm, children: [
+        const SizedBox(height: AppSpacing.sm),
+        Row(children: [
           _taxChip(s.ungefoerdertTaxNachgelagert, UngefoerdertTaxMode.nachgelagert),
+          const SizedBox(width: AppSpacing.md),
           _taxChip(s.ungefoerdertTaxErtragsanteil, UngefoerdertTaxMode.ertragsanteil),
-          _taxChip(s.ungefoerdertTaxHalbeinkunfte, UngefoerdertTaxMode.halbeinkunfte),
+          const SizedBox(width: AppSpacing.md),
+          Flexible(child: _taxChip(s.ungefoerdertTaxHalbeinkunfte, UngefoerdertTaxMode.halbeinkunfte)),
         ]),
       ],
     );
