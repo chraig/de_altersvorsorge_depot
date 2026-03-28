@@ -524,7 +524,7 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
     final jbGef = jbCapped < CalcConstants.grundzulageMaxBeitrag ? jbCapped : CalcConstants.grundzulageMaxBeitrag;
     final jbUngef = jbCapped - jbGef;
 
-    Widget check(bool active, String label, [String? detail]) => Padding(
+    Widget check(bool active, String label, {String? detail, String? tip}) => Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -534,9 +534,12 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
           Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(fontSize: 10,
-                color: active ? AppColors.text : AppColors.muted,
-                fontWeight: active ? FontWeight.w600 : FontWeight.w400)),
+              Row(children: [
+                Flexible(child: Text(label, style: TextStyle(fontSize: 10,
+                  color: active ? AppColors.text : AppColors.muted,
+                  fontWeight: active ? FontWeight.w600 : FontWeight.w400))),
+                if (tip != null) ...[const SizedBox(width: AppSpacing.sm), InfoTip(tip)],
+              ]),
               if (detail != null) Text(detail, style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
             ],
           )),
@@ -556,36 +559,42 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
       children: [
         heading(s.calcBasisAV),
         check(true, '${s.baseGrant}: ${Fmt.eur(sub.grundzulage)}/yr',
-          '50% on first €360 = ${Fmt.eur(sub.grundzulage > 180 ? 180 : sub.grundzulage)}\n'
-          '25% on €361–1,800 = ${Fmt.eur(sub.grundzulage > 180 ? sub.grundzulage - 180 : 0)}'),
+          detail: '50% on first €360 = ${Fmt.eur(sub.grundzulage > 180 ? 180 : sub.grundzulage)}\n'
+            '25% on €361–1,800 = ${Fmt.eur(sub.grundzulage > 180 ? sub.grundzulage - 180 : 0)}',
+          tip: s.tipGrundzulage),
         check(sub.kinderzulage > 0,
           sub.kinderzulage > 0
             ? '${s.childGrant}: ${Fmt.eur(sub.kinderzulage)}/yr (${p.kinder} children)'
             : '${s.childGrant}: no children',
-          sub.kinderzulage > 0 ? '€300/child/yr, 1:1 match from €25/mo' : null),
+          tip: s.tipKinderzulage),
         check(sub.bonus > 0,
           sub.bonus > 0
             ? '${s.entryBonus}: ${Fmt.eur(sub.bonus)} (one-time)'
-            : '${s.entryBonus}: not eligible (age ${p.alterStart}, must be <25)'),
+            : '${s.entryBonus}: not eligible (age ${p.alterStart}, must be <25)',
+          tip: s.tipBerufseinsteigerbonus),
         check(sub.geringverdienerbonus > 0,
           sub.geringverdienerbonus > 0
             ? '${s.lowIncomeBonus}: ${Fmt.eur(sub.geringverdienerbonus)}/yr'
-            : '${s.lowIncomeBonus}: not eligible (${Fmt.eur(p.brutto)} > €26,250)'),
+            : '${s.lowIncomeBonus}: not eligible (${Fmt.eur(p.brutto)} > €26,250)',
+          tip: s.tipGeringverdienerbonus),
         check(sub.steuererstattung > 0,
           sub.steuererstattung > 0
             ? '${s.viaTaxOptimization}: ${Fmt.eur(sub.steuererstattung)}/yr'
             : '${s.viaTaxOptimization}: Zulagen already optimal',
-          sub.steuererstattung > 0 ? '→ bank account, NOT depot' : null),
+          detail: sub.steuererstattung > 0 ? '→ bank account, NOT depot' : null,
+          tip: s.tipGuenstigerpruefung),
         const Divider(height: AppSpacing.xxxl),
         check(true, 'Gefördert: ${Fmt.eur(jbGef)}/yr',
-          'Payout: 100% taxed at ${Fmt.pct(av.grenzsteuersatzRente)}'),
+          detail: 'Payout: 100% taxed at ${Fmt.pct(av.grenzsteuersatzRente)}',
+          tip: s.tipGefoerdert),
         check(jbUngef > 0,
           jbUngef > 0
             ? 'Ungefördert: ${Fmt.eur(jbUngef)}/yr'
             : 'Ungefördert: none (≤ €1,800/yr)',
-          jbUngef > 0 ? 'Payout: 50% of gains taxed (Halbeinkünfte)' : null),
+          detail: jbUngef > 0 ? 'Payout: 50% of gains taxed (Halbeinkünfte)' : null,
+          tip: s.tipUngefoerdert),
         check(true, 'AV cost: ${Fmt.pct(costs.kostenAV)} p.a.'),
-        check(true, 'Tax-free growth (no Vorabpauschale)'),
+        check(true, 'Tax-free growth (no Vorabpauschale)', tip: s.tipVorabpauschale),
       ],
     );
 
@@ -594,11 +603,11 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
       children: [
         heading(s.calcBasisETF),
         check(true, 'Vorabpauschale: ${Fmt.pct(CalcConstants.vorabpauschaleDrag)} p.a.',
-          'Basiszins ~2.3–3.2% (2024–2026)'),
+          detail: 'Basiszins ~2.3–3.2% (2024–2026)', tip: s.tipVorabpauschale),
         check(true, 'Teilfreistellung: 30%',
-          '30% of gains tax-exempt (equity ≥51%)'),
+          detail: '30% of gains tax-exempt (equity ≥51%)', tip: s.tipTeilfreistellung),
         check(true, 'Abgeltungssteuer: ${Fmt.pct(costs.abgeltungssteuersatz)}',
-          'Only gains taxed at sale'),
+          detail: 'Only gains taxed at sale', tip: s.tipAbgeltungssteuer),
         check(true, 'Contributions returned tax-free'),
         check(true, 'ETF cost: ${Fmt.pct(costs.kostenETF)} p.a.'),
         check(true, 'No lock-up — withdraw any time'),
@@ -610,16 +619,17 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
       children: [
         heading(s.calcBasisGeneral),
         check(true, '${Fmt.eur(p.sparrate)}/mo (${Fmt.eur(jbCapped)}/yr)',
-          '${s.subsidyRate}: ${Fmt.pct(sub.foerderquote)}'),
+          detail: '${s.subsidyRate}: ${Fmt.pct(sub.foerderquote)}'),
         check(true, 'Retirement: age ${p.rentenalter}, ${p.auszahlungsDauer}yr payout'),
         check(true, 'Tax (working): ${Fmt.pct(av.grenzsteuersatz)}',
-          'Affects Günstigerprüfung'),
+          detail: 'Affects Günstigerprüfung', tip: s.tipGrenzsteuersatz),
         check(true, 'Tax (retirement): ${Fmt.pct(av.grenzsteuersatzRente)}',
-          'On AV payout + pension + other'),
+          detail: 'On AV payout + pension + other', tip: s.tipGrenzsteuersatzRente),
         check(costs.kirchensteuer > 0,
           costs.kirchensteuer > 0
             ? '${s.kirchensteuerLabel}: ${(costs.kirchensteuer * 100).toStringAsFixed(0)}%'
-            : '${s.kirchensteuerLabel}: none'),
+            : '${s.kirchensteuerLabel}: none',
+          tip: s.tipKirchensteuer),
         const Divider(height: AppSpacing.xxxl),
         check(dev.enabled,
           dev.enabled
@@ -629,7 +639,7 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
                   ? s.curveStepwise
                   : s.curveLogarithmic}'
             : 'Income: static',
-          dev.enabled ? 'Does NOT change subsidies' : null),
+          detail: dev.enabled ? 'Does NOT change subsidies' : null),
         check(dev.hasPartTime,
           dev.hasPartTime
             ? 'Part-time: yr ${dev.partTimeStartYear}–${dev.partTimeStartYear! + dev.partTimeDuration}'
@@ -660,17 +670,22 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
             const Divider(height: AppSpacing.xxxl),
             commonColumn,
           ] else
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: avColumn),
-                  const VerticalDivider(width: AppSpacing.xxxl),
-                  Expanded(child: etfColumn),
-                  const VerticalDivider(width: AppSpacing.xxxl),
-                  Expanded(child: commonColumn),
-                ],
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.xl),
+                  child: avColumn,
+                )),
+                Expanded(child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  child: etfColumn,
+                )),
+                Expanded(child: Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.xl),
+                  child: commonColumn,
+                )),
+              ],
             ),
         ],
       ),

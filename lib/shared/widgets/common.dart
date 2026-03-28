@@ -164,6 +164,34 @@ class ComparisonBar extends StatelessWidget {
   }
 }
 
+/// Small info icon that shows a tooltip on hover (desktop) or long-press (mobile).
+class InfoTip extends StatelessWidget {
+  final String message;
+  final double size;
+
+  const InfoTip(this.message, {super.key, this.size = 14});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: message,
+      preferBelow: false,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+      textStyle: const TextStyle(fontSize: 11, color: AppColors.text, height: 1.4),
+      decoration: BoxDecoration(
+        color: AppColors.bg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [BoxShadow(color: AppColors.text.withValues(alpha: 0.08), blurRadius: 8, offset: const Offset(0, 2))],
+      ),
+      waitDuration: const Duration(milliseconds: 300),
+      showDuration: const Duration(seconds: 10),
+      child: Icon(Icons.info_outline, size: size, color: AppColors.muted),
+    );
+  }
+}
+
 class ResultBanner extends StatelessWidget {
   final bool positive;
   final String title;

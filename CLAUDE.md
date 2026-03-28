@@ -161,10 +161,13 @@ Constants are centralized in `CalcConstants` — update this class when legislat
 **Pension module**:
 - `_computeEffectiveRente()` — state pension estimation (override > income-dev EP > static)
 
-**Income development** (`lib/models/scenario.dart` → `IncomeDevSettings`):
+**Income development** (`lib/models/income_dev_settings.dart` → `IncomeDevSettings`):
 - Opt-in toggle, linear compound growth rate (0–8%)
 - When enabled: year-by-year varying brutto affects subsidies, tax, and pension EP
 - `bruttoForYear(brutto, j)` — computes income for savings year j
+- `kinderAtYear(baseKinder, j)` — dynamic child count from arrival years
+- 3 growth curves: linear, step-wise, logarithmic
+- Part-time phases and child arrival timing
 
 All methods are pure — no side effects, no state. Each module can be replaced independently.
 

@@ -102,6 +102,21 @@ abstract class AppStrings {
   String get calcBasisETF;
   String get calcBasisGeneral;
 
+  // ─── INFO TOOLTIPS ─────────────────────────────────────────────────
+  String get tipGrundzulage;
+  String get tipKinderzulage;
+  String get tipBerufseinsteigerbonus;
+  String get tipGeringverdienerbonus;
+  String get tipGuenstigerpruefung;
+  String get tipGefoerdert;
+  String get tipUngefoerdert;
+  String get tipGrenzsteuersatz;
+  String get tipGrenzsteuersatzRente;
+  String get tipVorabpauschale;
+  String get tipTeilfreistellung;
+  String get tipAbgeltungssteuer;
+  String get tipKirchensteuer;
+
   // ─── COMPARISON ───────────────────────────────────────────────────
   String avYieldsMore(String amount);
   String etfYieldsMore(String amount);
@@ -389,6 +404,21 @@ class StringsEn extends AppStrings {
   String get calcBasisAV => 'AV-Depot Rules';
   String get calcBasisETF => 'ETF Rules';
   String get calcBasisGeneral => 'Common';
+
+  // Info Tooltips
+  String get tipGrundzulage => 'Government matches your contributions: 50% on the first €360/yr and 25% on €361–1,800/yr. Maximum €540/yr. Goes directly into your depot.';
+  String get tipKinderzulage => 'The state matches €1 for each €1 you contribute, up to €300 per child per year. Full grant from just €25/month contribution.';
+  String get tipBerufseinsteigerbonus => 'One-time €200 bonus in your first contract year if you are under 25. No ongoing payments — just the first year.';
+  String get tipGeringverdienerbonus => 'Extra €175/yr if your gross income is €26,250 or less and you contribute at least €120/yr. Stacks on top of the Grundzulage.';
+  String get tipGuenstigerpruefung => 'The tax office automatically checks: is the tax deduction on your contributions worth more than the subsidies? If yes, you get the difference as a tax refund — but to your bank account, NOT into the depot.';
+  String get tipGefoerdert => 'Subsidized contributions (up to €1,800/yr): grow tax-free, but the ENTIRE payout in retirement is taxed at your income tax rate (nachgelagerte Besteuerung).';
+  String get tipUngefoerdert => 'Unsubsidized contributions (above €1,800/yr): no subsidies, but preferential payout tax — only 50% of gains taxed at your income tax rate (Halbeinkünfteverfahren). Requires 12+ years contract.';
+  String get tipGrenzsteuersatz => 'Your marginal tax rate based on gross income. This is the rate on your last euro earned — not the average rate on all income. Used for Günstigerprüfung during savings.';
+  String get tipGrenzsteuersatzRente => 'Your marginal tax rate in retirement, based on combined income: AV-Depot payout + state pension + other income. Usually lower than during working life.';
+  String get tipVorabpauschale => 'Annual tax on unrealized ETF gains, calculated from the Basiszins (ECB reference rate). Simplified here as a fixed drag on returns. Does NOT apply inside the AV-Depot.';
+  String get tipTeilfreistellung => '30% of your ETF gains are tax-exempt because the fund already paid withholding tax at fund level. Only 70% of gains are subject to Abgeltungssteuer.';
+  String get tipAbgeltungssteuer => 'Flat-rate capital gains tax of 25% plus 5.5% Solidaritätszuschlag. Only applied to gains (not contributions). Reduced rate when Kirchensteuer applies.';
+  String get tipKirchensteuer => 'Church tax of 8% (Bayern/BaWü) or 9% (other states), applied on top of income tax (AV) and Abgeltungssteuer (ETF). The Abgeltungssteuer base rate is reduced when church tax applies.';
 
   String avYieldsMore(String amount) => 'AV-Depot yields $amount more.';
   String etfYieldsMore(String amount) => 'ETF Portfolio yields $amount more.';
@@ -735,6 +765,20 @@ class StringsDe extends AppStrings {
   String get calcBasisAV => 'AV-Depot Regeln';
   String get calcBasisETF => 'ETF-Depot Regeln';
   String get calcBasisGeneral => 'Allgemein';
+
+  String get tipGrundzulage => 'Der Staat bezuschusst Ihre Beiträge: 50 % auf die ersten 360 €/J und 25 % auf 361–1.800 €/J. Maximum 540 €/J. Fließt direkt ins Depot.';
+  String get tipKinderzulage => 'Der Staat zahlt für jeden eingezahlten Euro bis zu 300 € pro Kind und Jahr dazu. Volle Zulage ab nur 25 €/Monat Eigenbeitrag.';
+  String get tipBerufseinsteigerbonus => 'Einmaliger Bonus von 200 € im ersten Vertragsjahr, wenn Sie unter 25 sind. Keine laufenden Zahlungen — nur im ersten Jahr.';
+  String get tipGeringverdienerbonus => 'Zusätzlich 175 €/J bei Bruttoeinkommen ≤ 26.250 € und Mindestbeitrag 120 €/J. Wird auf die Grundzulage aufgeschlagen.';
+  String get tipGuenstigerpruefung => 'Das Finanzamt prüft automatisch: Bringt der Sonderausgabenabzug auf Ihre Beiträge mehr als die Zulagen? Wenn ja, erhalten Sie die Differenz als Steuererstattung — aber auf Ihr Bankkonto, NICHT ins Depot.';
+  String get tipGefoerdert => 'Geförderte Beiträge (bis 1.800 €/J): Wachsen steuerfrei, aber die GESAMTE Auszahlung im Ruhestand wird mit Einkommensteuer besteuert (nachgelagerte Besteuerung).';
+  String get tipUngefoerdert => 'Ungeförderte Beiträge (über 1.800 €/J): Keine Zulagen, aber begünstigte Besteuerung bei Auszahlung — nur 50 % der Gewinne werden besteuert (Halbeinkünfteverfahren). Voraussetzung: 12+ Jahre Vertragslaufzeit.';
+  String get tipGrenzsteuersatz => 'Ihr Grenzsteuersatz basierend auf dem Bruttoeinkommen. Das ist der Steuersatz auf den letzten verdienten Euro — nicht der Durchschnitt. Wird für die Günstigerprüfung während des Sparens verwendet.';
+  String get tipGrenzsteuersatzRente => 'Ihr Grenzsteuersatz im Ruhestand, basierend auf dem Gesamteinkommen: AV-Depot-Auszahlung + gesetzliche Rente + sonstige Einkünfte. Meist niedriger als im Erwerbsleben.';
+  String get tipVorabpauschale => 'Jährliche Steuer auf unrealisierte ETF-Gewinne, berechnet aus dem Basiszins (EZB-Referenzzins). Hier vereinfacht als fester Abzug. Gilt NICHT im AV-Depot.';
+  String get tipTeilfreistellung => '30 % Ihrer ETF-Gewinne sind steuerfrei, da der Fonds bereits Quellensteuer auf Fondsebene zahlt. Nur 70 % der Gewinne unterliegen der Abgeltungssteuer.';
+  String get tipAbgeltungssteuer => 'Pauschale Kapitalertragssteuer von 25 % plus 5,5 % Solidaritätszuschlag. Wird nur auf Gewinne angewandt (nicht auf Einzahlungen). Reduzierter Satz bei Kirchensteuer.';
+  String get tipKirchensteuer => 'Kirchensteuer von 8 % (Bayern/BaWü) oder 9 % (übrige Bundesländer), auf Einkommensteuer (AV) und Abgeltungssteuer (ETF). Der Abgeltungssteuersatz wird bei Kirchensteuer reduziert.';
 
   String avYieldsMore(String amount) => 'AV-Depot bringt $amount mehr.';
   String etfYieldsMore(String amount) => 'ETF-Depot bringt $amount mehr.';

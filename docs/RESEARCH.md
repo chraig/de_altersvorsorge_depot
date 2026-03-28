@@ -170,7 +170,7 @@ This replaces the earlier simplification of `Grenzsteuersatz × 0.7`.
 
 **During accumulation**:
 - Vorabpauschale: annual tax on unrealized gains (Basiszins × 0.7 × ETF value × 0.7 Teilfreistellung × 26.3750%)
-- Simplified in calculator as 0.2% annual drag on returns
+- Simplified in calculator as 0.3% annual drag on returns (Basiszins ~2.3–3.2%)
 
 **At payout/sale**:
 ```
