@@ -309,82 +309,6 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
     );
   }
 
-  // ─── FOERDERUNG BOX ─────────────────────────────────────────────
-
-  Widget _buildSubsidyTable(AppStrings s, SubsidyBreakdown sub, MacroScenario macro) {
-    final rows = <(String, String, String?)>[
-      (s.baseGrant, Fmt.eur(sub.grundzulage), s.hintBaseGrant),
-      (s.childGrant, Fmt.eur(sub.kinderzulage), s.hintChildGrant),
-      if (sub.bonus > 0) (s.entryBonus, Fmt.eur(sub.bonus), s.hintEntryBonus),
-      if (sub.geringverdienerbonus > 0) (s.lowIncomeBonus, Fmt.eur(sub.geringverdienerbonus), s.hintLowIncomeBonus),
-      (s.totalSubsidyYear, Fmt.eur(sub.total), null),
-      (s.subsidyRate, Fmt.pct(sub.foerderquote), s.hintSubsidyRate),
-      if (sub.steuererstattung > 0) ('${s.taxRefundYear} (${s.viaTaxOptimization})', Fmt.eur(sub.steuererstattung), s.hintTaxRefund),
-      (s.marginalTaxRate, Fmt.pct(sub.grenzsteuersatz), s.hintMarginalTaxRate),
-    ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (sub.geringverdienerbonus > 0) Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.md),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.successBg,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
-            ),
-            child: Text(s.lowIncomeBonusApplies,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.successText)),
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: const BoxDecoration(
-                  color: AppColors.accentLight,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(AppRadius.card),
-                    topRight: Radius.circular(AppRadius.card)),
-                ),
-                child: Text(s.annualSubsidiesTitle(macro.icon, macro.name),
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.accent)),
-              ),
-              ...rows.map((r) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(child: Text(r.$1, style: const TextStyle(fontSize: 13, color: AppColors.label))),
-                        Text(r.$2, style: AppTheme.mono.copyWith(fontSize: 14, fontWeight: FontWeight.w700)),
-                      ],
-                    ),
-                    if (r.$3 != null) Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(r.$3!, style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
-                    ),
-                  ],
-                ),
-              )),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
   // ─── COMPARISON TAB ───────────────────────────────────────────
 
@@ -402,39 +326,16 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
           child: Text(s.etfWinsExplanation,
             style: const TextStyle(fontSize: 11, color: AppColors.label, height: 1.6)),
         ),
-        const ComparisonChart(),
-        const SizedBox(height: AppSpacing.lg),
-        Text(s.etfTaxNote,
-          style: const TextStyle(fontSize: 10, color: AppColors.muted, height: 1.5)),
-        const SizedBox(height: AppSpacing.xl),
-        ComparisonBar(label: s.finalCapitalGross,
-          avValue: av.endkapital, etfValue: etf.endkapital,
-          avText: Fmt.eur(av.endkapital), etfText: Fmt.eur(etf.endkapital),
-          avLabel: s.avDepotLabel, etfLabel: s.etfDepotLabel),
-        ComparisonBar(label: s.ownContributions,
-          avValue: av.eigenBeitraege, etfValue: etf.eigenBeitraege,
-          avText: Fmt.eur(av.eigenBeitraege), etfText: Fmt.eur(etf.eigenBeitraege),
-          avLabel: s.avDepotLabel, etfLabel: s.etfDepotLabel),
-        ComparisonBar(label: s.govSubsidiesAvOnly,
-          avValue: av.zulagenGesamt, etfValue: 0,
-          avText: Fmt.eur(av.zulagenGesamt), etfText: Fmt.eur(0),
-          avLabel: s.avDepotLabel, etfLabel: s.etfDepotLabel),
-        ComparisonBar(label: s.monthlyPayout20y,
-          avValue: av.nettoMonatlich, etfValue: etf.monatlicheAuszahlung,
-          avText: Fmt.eur(av.nettoMonatlich), etfText: Fmt.eur(etf.monatlicheAuszahlung),
-          avLabel: s.avDepotLabel, etfLabel: s.etfDepotLabel),
 
-        // ─── ANNUAL SUBSIDIES TABLE ───────────────────────
+        const ComparisonChart(),
+
+        // ─── CALCULATION BREAKDOWN ───────────────────────
         const SizedBox(height: AppSpacing.xl),
-        _buildSubsidyTable(s, sub, macro),
+        _CalculationBreakdown(state: state, av: av, etf: etf, sub: sub),
 
         // ─── PROS / CONS ────────────────────────────────────
         const SizedBox(height: AppSpacing.xl),
         _buildProsCons(s, state, av, etf, sub),
-
-        // ─── CALCULATION BASIS ──────────────────────────────
-        const SizedBox(height: AppSpacing.xl),
-        _buildCalcBasis(s, state, av, etf, sub),
       ],
     );
   }
@@ -512,185 +413,7 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
     );
   }
 
-  // ─── CALCULATION BASIS ───────────────────────────────────────────
 
-  Widget _buildCalcBasis(AppStrings s, CalculatorState state, AVResult av, ETFResult etf, SubsidyBreakdown sub) {
-    final compact = context.isCompact;
-    final p = state.currentPerson;
-    final costs = state.costs;
-    final dev = state.incomeDev;
-    final jb = p.jahresbeitrag;
-    final jbCapped = jb < CalcConstants.maxBeitragProVertrag ? jb : CalcConstants.maxBeitragProVertrag;
-    final jbGef = jbCapped < CalcConstants.grundzulageMaxBeitrag ? jbCapped : CalcConstants.grundzulageMaxBeitrag;
-    final jbUngef = jbCapped - jbGef;
-
-    Widget check(bool active, String label, {String? detail, String? tip}) => Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(active ? '✓ ' : '✗ ', style: TextStyle(fontSize: 11,
-            color: active ? AppColors.success : AppColors.muted, fontWeight: FontWeight.w700)),
-          Expanded(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Flexible(child: Text(label, style: TextStyle(fontSize: 10,
-                  color: active ? AppColors.text : AppColors.muted,
-                  fontWeight: active ? FontWeight.w600 : FontWeight.w400))),
-                if (tip != null) ...[const SizedBox(width: AppSpacing.sm), InfoTip(tip)],
-              ]),
-              if (detail != null) Text(detail, style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
-            ],
-          )),
-        ],
-      ),
-    );
-
-    Widget heading(String text) => Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm),
-      child: Text(text, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent)),
-    );
-
-    // ── Column builders ─────────────────────────────────────────
-
-    final avColumn = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        heading(s.calcBasisAV),
-        check(true, '${s.baseGrant}: ${Fmt.eur(sub.grundzulage)}/yr',
-          detail: '50% on first €360 = ${Fmt.eur(sub.grundzulage > 180 ? 180 : sub.grundzulage)}\n'
-            '25% on €361–1,800 = ${Fmt.eur(sub.grundzulage > 180 ? sub.grundzulage - 180 : 0)}',
-          tip: s.tipGrundzulage),
-        check(sub.kinderzulage > 0,
-          sub.kinderzulage > 0
-            ? '${s.childGrant}: ${Fmt.eur(sub.kinderzulage)}/yr (${p.kinder} children)'
-            : '${s.childGrant}: no children',
-          tip: s.tipKinderzulage),
-        check(sub.bonus > 0,
-          sub.bonus > 0
-            ? '${s.entryBonus}: ${Fmt.eur(sub.bonus)} (one-time)'
-            : '${s.entryBonus}: not eligible (age ${p.alterStart}, must be <25)',
-          tip: s.tipBerufseinsteigerbonus),
-        check(sub.geringverdienerbonus > 0,
-          sub.geringverdienerbonus > 0
-            ? '${s.lowIncomeBonus}: ${Fmt.eur(sub.geringverdienerbonus)}/yr'
-            : '${s.lowIncomeBonus}: not eligible (${Fmt.eur(p.brutto)} > €26,250)',
-          tip: s.tipGeringverdienerbonus),
-        check(sub.steuererstattung > 0,
-          sub.steuererstattung > 0
-            ? '${s.viaTaxOptimization}: ${Fmt.eur(sub.steuererstattung)}/yr'
-            : '${s.viaTaxOptimization}: Zulagen already optimal',
-          detail: sub.steuererstattung > 0 ? '→ bank account, NOT depot' : null,
-          tip: s.tipGuenstigerpruefung),
-        const Divider(height: AppSpacing.xxxl),
-        check(true, 'Gefördert: ${Fmt.eur(jbGef)}/yr',
-          detail: 'Payout: 100% taxed at ${Fmt.pct(av.grenzsteuersatzRente)}',
-          tip: s.tipGefoerdert),
-        check(jbUngef > 0,
-          jbUngef > 0
-            ? 'Ungefördert: ${Fmt.eur(jbUngef)}/yr'
-            : 'Ungefördert: none (≤ €1,800/yr)',
-          detail: jbUngef > 0 ? 'Payout tax: pending BMF guidance. Conservative: full nachgelagerte Besteuerung.' : null,
-          tip: s.tipUngefoerdert),
-        check(true, 'AV cost: ${Fmt.pct(costs.kostenAV)} p.a.'),
-        check(true, 'Tax-free growth (no Vorabpauschale)', tip: s.tipVorabpauschale),
-      ],
-    );
-
-    final etfColumn = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        heading(s.calcBasisETF),
-        check(true, 'Vorabpauschale: ${Fmt.pct(CalcConstants.vorabpauschaleDrag)} p.a.',
-          detail: 'Basiszins ~2.3–3.2% (2024–2026)', tip: s.tipVorabpauschale),
-        check(true, 'Teilfreistellung: 30%',
-          detail: '30% of gains tax-exempt (equity ≥51%)', tip: s.tipTeilfreistellung),
-        check(true, 'Abgeltungssteuer: ${Fmt.pct(costs.abgeltungssteuersatz)}',
-          detail: 'Only gains taxed at sale', tip: s.tipAbgeltungssteuer),
-        check(true, 'Contributions returned tax-free'),
-        check(true, 'ETF cost: ${Fmt.pct(costs.kostenETF)} p.a.'),
-        check(true, 'No lock-up — withdraw any time'),
-      ],
-    );
-
-    final commonColumn = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        heading(s.calcBasisGeneral),
-        check(true, '${Fmt.eur(p.sparrate)}/mo (${Fmt.eur(jbCapped)}/yr)',
-          detail: '${s.subsidyRate}: ${Fmt.pct(sub.foerderquote)}'),
-        check(true, 'Retirement: age ${p.rentenalter}, ${p.auszahlungsDauer}yr payout'),
-        check(true, 'Tax (working): ${Fmt.pct(av.grenzsteuersatz)}',
-          detail: 'Affects Günstigerprüfung', tip: s.tipGrenzsteuersatz),
-        check(true, 'Tax (retirement): ${Fmt.pct(av.grenzsteuersatzRente)}',
-          detail: 'On AV payout + pension + other', tip: s.tipGrenzsteuersatzRente),
-        check(costs.kirchensteuer > 0,
-          costs.kirchensteuer > 0
-            ? '${s.kirchensteuerLabel}: ${(costs.kirchensteuer * 100).toStringAsFixed(0)}%'
-            : '${s.kirchensteuerLabel}: none',
-          tip: s.tipKirchensteuer),
-        const Divider(height: AppSpacing.xxxl),
-        check(dev.enabled,
-          dev.enabled
-            ? 'Income: ${dev.curve == GrowthCurve.linear
-                ? '${s.curveLinear} ${Fmt.pct(dev.growthRate)}/yr'
-                : dev.curve == GrowthCurve.stepwise
-                  ? s.curveStepwise
-                  : s.curveLogarithmic}'
-            : 'Income: static',
-          detail: dev.enabled ? 'Does NOT change subsidies' : null),
-        check(dev.hasPartTime,
-          dev.hasPartTime
-            ? 'Part-time: yr ${dev.partTimeStartYear}–${dev.partTimeStartYear! + dev.partTimeDuration}'
-            : 'Part-time: off'),
-        check(dev.hasChildTiming,
-          dev.hasChildTiming
-            ? 'Children: yr ${dev.childArrivalYears.join(", ")}'
-            : 'Children: fixed (${p.kinder})'),
-      ],
-    );
-
-    return Container(
-      padding: AppPadding.panel,
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(AppRadius.panel),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(s.calcBasisTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-          const SizedBox(height: AppSpacing.sm),
-          if (compact) ...[
-            avColumn,
-            const Divider(height: AppSpacing.xxxl),
-            etfColumn,
-            const Divider(height: AppSpacing.xxxl),
-            commonColumn,
-          ] else
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: Padding(
-                  padding: const EdgeInsets.only(right: AppSpacing.xl),
-                  child: avColumn,
-                )),
-                Expanded(child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                  child: etfColumn,
-                )),
-                Expanded(child: Padding(
-                  padding: const EdgeInsets.only(left: AppSpacing.xl),
-                  child: commonColumn,
-                )),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
 
   // ─── DETAIL TAB ────────────────────────────────────────────────
 
@@ -817,6 +540,281 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
         ],
       ),
     );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CALCULATION BREAKDOWN — phase-based, AV vs ETF side by side
+// ═══════════════════════════════════════════════════════════════════
+
+class _CalculationBreakdown extends StatefulWidget {
+  final CalculatorState state;
+  final AVResult av;
+  final ETFResult etf;
+  final SubsidyBreakdown sub;
+
+  const _CalculationBreakdown({
+    required this.state, required this.av, required this.etf, required this.sub,
+  });
+
+  @override
+  State<_CalculationBreakdown> createState() => _CalculationBreakdownState();
+}
+
+class _CalculationBreakdownState extends State<_CalculationBreakdown> with TickerProviderStateMixin {
+  late TabController _tab;
+
+  @override
+  void initState() { super.initState(); _tab = TabController(length: 2, vsync: this); _tab.addListener(() => setState(() {})); }
+  @override
+  void dispose() { _tab.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<LocaleCubit>().state.strings;
+    final p = widget.state.currentPerson;
+    final av = widget.av;
+    final etf = widget.etf;
+    final sub = widget.sub;
+    final costs = widget.state.costs;
+    final jb = p.jahresbeitrag;
+    final jbCapped = jb < CalcConstants.maxBeitragProVertrag ? jb : CalcConstants.maxBeitragProVertrag;
+    final jbGef = jbCapped < CalcConstants.grundzulageMaxBeitrag ? jbCapped : CalcConstants.grundzulageMaxBeitrag;
+    final jbUngef = jbCapped - jbGef;
+    final compact = context.isCompact;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.panel),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(children: [
+        Container(
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.border)),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(AppRadius.panel),
+              topRight: Radius.circular(AppRadius.panel)),
+          ),
+          child: TabBar(
+            controller: _tab,
+            labelColor: Colors.white,
+            unselectedLabelColor: AppColors.muted,
+            labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+            indicator: BoxDecoration(
+              color: AppColors.accent,
+              borderRadius: _tab.index == 0
+                  ? const BorderRadius.only(topLeft: Radius.circular(AppRadius.panel), bottomRight: Radius.circular(AppRadius.chip))
+                  : const BorderRadius.only(topRight: Radius.circular(AppRadius.panel), bottomLeft: Radius.circular(AppRadius.chip)),
+            ),
+            indicatorSize: TabBarIndicatorSize.tab,
+            dividerHeight: 0,
+            tabs: const [Tab(text: 'Savings Phase'), Tab(text: 'Payout Phase')],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          child: _tab.index == 0
+              ? _savingsPhase(s, p, sub, jbGef, jbUngef, costs, etf, compact)
+              : _payoutPhase(s, p, av, etf, costs, jbGef, jbUngef, compact),
+        ),
+      ]),
+    );
+  }
+
+  // ─── HELPERS ────────────────────────────────────────────────────
+
+  /// Paired row: label on left, AV value center-right, ETF value far-right.
+  /// Ensures AV and ETF figures are always on the same line.
+  Widget _pair(String label, String avVal, String etfVal, {bool bold = false, String? tip}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 3),
+      child: Row(children: [
+        Expanded(flex: 5, child: Row(children: [
+          Flexible(child: Text(label, style: TextStyle(fontSize: 10,
+            color: AppColors.label, fontWeight: bold ? FontWeight.w700 : FontWeight.w400))),
+          if (tip != null) ...[const SizedBox(width: AppSpacing.xs), InfoTip(tip, size: 12)],
+        ])),
+        Expanded(flex: 3, child: Text(avVal, textAlign: TextAlign.right,
+          style: AppTheme.monoSmall.copyWith(fontSize: 10,
+            fontWeight: bold ? FontWeight.w800 : FontWeight.w600, color: AppColors.text))),
+        const SizedBox(width: AppSpacing.lg),
+        Expanded(flex: 3, child: Text(etfVal, textAlign: TextAlign.right,
+          style: AppTheme.monoSmall.copyWith(fontSize: 10,
+            fontWeight: bold ? FontWeight.w800 : FontWeight.w600, color: AppColors.text))),
+      ]),
+    );
+  }
+
+  /// Section header for the paired layout.
+  Widget _pairHeader() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(children: [
+        const Expanded(flex: 5, child: SizedBox()),
+        Expanded(flex: 3, child: Text('AV-DEPOT', textAlign: TextAlign.right,
+          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.accent, letterSpacing: 0.5))),
+        const SizedBox(width: AppSpacing.lg),
+        Expanded(flex: 3, child: Text('ETF-DEPOT', textAlign: TextAlign.right,
+          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.etf, letterSpacing: 0.5))),
+      ]),
+    );
+  }
+
+  /// Paired row with formula annotations below each value.
+  Widget _pairFormula(String label, String avVal, String etfVal, {String? avFormula, String? etfFormula, bool bold = false, String? tip}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Column(children: [
+        Row(children: [
+          Expanded(flex: 5, child: Row(children: [
+            Flexible(child: Text(label, style: TextStyle(fontSize: 10,
+              color: AppColors.label, fontWeight: bold ? FontWeight.w700 : FontWeight.w400))),
+            if (tip != null) ...[const SizedBox(width: AppSpacing.xs), InfoTip(tip, size: 12)],
+          ])),
+          Expanded(flex: 3, child: Text(avVal, textAlign: TextAlign.right,
+            style: AppTheme.monoSmall.copyWith(fontSize: 10,
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w600, color: AppColors.text))),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(flex: 3, child: Text(etfVal, textAlign: TextAlign.right,
+            style: AppTheme.monoSmall.copyWith(fontSize: 10,
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w600, color: AppColors.text))),
+        ]),
+        if (avFormula != null || etfFormula != null)
+          Row(children: [
+            const Expanded(flex: 5, child: SizedBox()),
+            Expanded(flex: 3, child: Text(avFormula ?? '', textAlign: TextAlign.right,
+              style: const TextStyle(fontSize: 8, color: AppColors.muted, fontStyle: FontStyle.italic))),
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(flex: 3, child: Text(etfFormula ?? '', textAlign: TextAlign.right,
+              style: const TextStyle(fontSize: 8, color: AppColors.muted, fontStyle: FontStyle.italic))),
+          ]),
+      ]),
+    );
+  }
+
+  Widget _h(String text, {Color? c}) => Padding(
+    padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm),
+    child: Text(text, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: c ?? AppColors.text)),
+  );
+
+  Widget _dv() => const Divider(height: AppSpacing.xl);
+
+  // ─── TAB 1: SAVINGS PHASE ──────────────────────────────────────
+
+  Widget _savingsPhase(AppStrings s, PersonalScenario p, SubsidyBreakdown sub, double jbGef, double jbUngef, CostSettings costs, ETFResult etf, bool compact) {
+    final jbTotal = jbGef + jbUngef;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _pairHeader(),
+
+      _h('Contributions'),
+      _pair('Annual contribution', Fmt.eur(jbTotal), Fmt.eur(p.jahresbeitrag), bold: true),
+      _pair('  Subsidized (gefördert)', Fmt.eur(jbGef), '—'),
+      if (jbUngef > 0) _pair('  Unsubsidized (ungefördert)', Fmt.eur(jbUngef), '—'),
+      _pair('Contract cap', '${Fmt.eur(CalcConstants.maxBeitragProVertrag)}/yr', 'Unlimited'),
+      _dv(),
+
+      _h('Government Subsidies (Year 1)'),
+      _pair('Grundzulage', Fmt.eur(sub.grundzulage), '0 €', tip: s.tipGrundzulage),
+      _pair('  50% on first €360', Fmt.eur(sub.grundzulage > 180 ? 180 : sub.grundzulage), ''),
+      if (sub.grundzulage > 180) _pair('  25% on €361–1,800', Fmt.eur(sub.grundzulage - 180), ''),
+      _pair('Kinderzulage', Fmt.eur(sub.kinderzulage), '0 €', tip: s.tipKinderzulage),
+      _pair('Berufseinsteigerbonus', Fmt.eur(sub.bonus), '0 €', tip: s.tipBerufseinsteigerbonus),
+      _pair('Geringverdienerbonus', Fmt.eur(sub.geringverdienerbonus), '0 €', tip: s.tipGeringverdienerbonus),
+      _pair('Total subsidy/yr', Fmt.eur(sub.total), '0 €', bold: true),
+      _pair('Subsidy rate', Fmt.pct(sub.foerderquote), '0.0 %'),
+      _dv(),
+
+      _h('Tax & Costs During Savings'),
+      _pair('Annual depot cost', Fmt.pct(costs.kostenAV), Fmt.pct(costs.kostenETF)),
+      _pair('Vorabpauschale', 'None', Fmt.pct(CalcConstants.vorabpauschaleDrag), tip: s.tipVorabpauschale),
+      _pair('Capital gains during savings', 'Tax-free', 'Taxed yearly'),
+      _pair('Tax refund (Günstigerprüfung)', Fmt.eur(sub.steuererstattung), '—', tip: s.tipGuenstigerpruefung),
+      _pair('  Note', '→ bank account', ''),
+      _dv(),
+
+      _h('Into Depot Per Year'),
+      _pair('Own contribution', Fmt.eur(jbTotal), Fmt.eur(p.jahresbeitrag)),
+      _pair('+ Subsidies', Fmt.eur(sub.total), '0 €'),
+      _pair('Total into depot', Fmt.eur(jbTotal + sub.total), Fmt.eur(p.jahresbeitrag), bold: true),
+      _dv(),
+
+      _h('Accumulated Over Savings Period'),
+      _pair('Total contributions', Fmt.eur(jbTotal * p.spardauer), Fmt.eur(p.jahresbeitrag * p.spardauer)),
+      _pair('Total subsidies', Fmt.eur(sub.total * p.spardauer), '0 €'),
+      _pair('Tax refund total (→ bank)', '~${Fmt.eur(sub.steuererstattung * p.spardauer)}', '—'),
+    ]);
+  }
+
+  // ─── TAB 2: PAYOUT PHASE ─────────────────────────────────────
+
+  Widget _payoutPhase(AppStrings s, PersonalScenario p, AVResult av, ETFResult etf, CostSettings costs, double jbGef, double jbUngef, bool compact) {
+    final auszDauer = p.auszahlungsDauer;
+    final etfMonthlyGross = etf.endkapital / (auszDauer * 12);
+
+    // ETF side: pension + other income is taxed via §32a regardless of depot type
+    // This is the SAME for both — but AV payout is part of that income, ETF payout is not
+    final pensionAndOther = p.gesetzlicheRente * 12 + p.sonstigeEinkuenfte;
+    final avCombinedIncome = av.monatlicheAuszahlung * 12 + pensionAndOther;
+    // Note: ETF investor pays the same income tax on pension+other as AV investor.
+    // The depot-specific tax is what differs and is shown below.
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _pairHeader(),
+
+      _h('Final Capital (total)'),
+      _pair('Gross capital', Fmt.eur(av.endkapital), Fmt.eur(etf.endkapital), bold: true),
+      _pair('thereof own contributions', Fmt.eur(av.eigenBeitraege), Fmt.eur(etf.eigenBeitraege)),
+      _pair('thereof subsidies', Fmt.eur(av.zulagenGesamt), '0 €'),
+      _pair('thereof capital gains', Fmt.eur(av.wertzuwachs), Fmt.eur(etf.gewinn)),
+      _pair('Purchasing power today', Fmt.eur(av.endkapitalReal), Fmt.eur(etf.endkapitalReal)),
+      _dv(),
+
+      _h('Payout (per year)'),
+      _pair('Payout period', '$auszDauer years (age ${p.rentenalter}–${CalcConstants.payoutEndAge})',
+        '$auszDauer years (same period)'),
+      _pair('Gross depot payout/yr', Fmt.eur(av.monatlicheAuszahlung * 12), Fmt.eur(etfMonthlyGross * 12)),
+      _pair('State pension/yr (same)', Fmt.eur(p.gesetzlicheRente * 12), Fmt.eur(p.gesetzlicheRente * 12)),
+      if (p.sonstigeEinkuenfte > 0) _pair('Other income/yr (same)', Fmt.eur(p.sonstigeEinkuenfte), Fmt.eur(p.sonstigeEinkuenfte)),
+      _pair('Total gross income/yr', Fmt.eur(avCombinedIncome),
+        Fmt.eur(etfMonthlyGross * 12 + pensionAndOther), bold: true),
+      _dv(),
+
+      _h('Taxation (per year)'),
+      _pairFormula('Tax method', 'Income tax (§32a)', 'Income tax + Abgeltungssteuer',
+        avFormula: 'All income taxed together progressively',
+        etfFormula: 'Pension via §32a, gains via flat AbgSt'),
+      _pairFormula('What is taxed from depot', 'Entire payout (100%)', 'Only 70% of gains',
+        avFormula: 'Contributions + subsidies + gains = income',
+        etfFormula: 'Gains × (1 − 30% Teilfreistellung)',
+        tip: s.tipTeilfreistellung),
+      _pairFormula('Effective tax rate on depot payout',
+        Fmt.pct(av.grenzsteuersatzRente), Fmt.pct(costs.abgeltungssteuersatz),
+        avFormula: '= [tax(pension+other+AV) − tax(pension+other)] ÷ AV payout',
+        etfFormula: '25% KapESt + 5.5% Soli${costs.kirchensteuer > 0 ? ' + KiSt' : ''}'),
+      if (costs.kirchensteuer > 0) _pair('Kirchensteuer', '${(costs.kirchensteuer * 100).toStringAsFixed(0)}%', 'Included in rate'),
+      _pairFormula('Tax on depot payout/yr',
+        Fmt.eur((av.monatlicheAuszahlung - av.nettoMonatlich) * 12),
+        Fmt.eur(etf.steuerAufGewinn / auszDauer),
+        avFormula: '= ${Fmt.eur(av.monatlicheAuszahlung * 12)}/yr × ${Fmt.pct(av.grenzsteuersatzRente)}',
+        etfFormula: '= ${Fmt.eur(etf.steuerAufGewinn)} total ÷ $auszDauer yr'),
+      if (jbUngef > 0) _pair('Ungefördert treatment', costs.ungefoerdertTax == UngefoerdertTaxMode.nachgelagert
+        ? 'Full (BMF pending)' : costs.ungefoerdertTax == UngefoerdertTaxMode.ertragsanteil
+          ? 'Ertragsanteil 17%' : 'Halbeinkünfte 50%', '—', tip: s.tipUngefoerdert),
+      _dv(),
+
+      _h('After Tax (total over $auszDauer years)'),
+      _pair('Total tax paid', Fmt.eur((av.monatlicheAuszahlung - av.nettoMonatlich) * auszDauer * 12), Fmt.eur(etf.steuerAufGewinn), bold: true),
+      _pair('Depot after all tax', Fmt.eur(av.nettoMonatlich * auszDauer * 12), Fmt.eur(etf.nachSteuer), bold: true),
+      _pair('Contributions returned tax-free', 'No', Fmt.eur(etf.eigenBeitraege)),
+      _dv(),
+
+      _h('Monthly Net from Depot'),
+      _pair('Gross per month', Fmt.eur(av.monatlicheAuszahlung), Fmt.eur(etfMonthlyGross)),
+      _pair('Tax per month', Fmt.eur(av.monatlicheAuszahlung - av.nettoMonatlich), Fmt.eur(etf.steuerAufGewinn / (auszDauer * 12))),
+      _pair('Net per month', Fmt.eur(av.nettoMonatlich), Fmt.eur(etf.monatlicheAuszahlung), bold: true),
+    ]);
   }
 }
 

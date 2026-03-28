@@ -211,17 +211,22 @@ class SimulationEngine {
     final depot = depotGefoerdert + depotUngefoerdert;
     final auszahlungsDauer = person.auszahlungsDauer;
 
-    // Gefördert: full nachgelagerte Besteuerung (100% of payout taxed as income)
-    // Uses progressive §32a tax (exact formula), not marginal rate.
+    // Gefördert: full nachgelagerte Besteuerung (100% of payout taxed as income).
+    // The AV payout sits ON TOP of pension + other income, so we compute the
+    // incremental tax: tax(base + avPayout) - tax(base). This gives the true
+    // marginal tax burden of the AV payout, not diluted by the Grundfreibetrag.
     final effectiveRente = pension.estimateMonthlyPension(person, incomeDev);
     final monatlichGefoerdert = depotGefoerdert / (auszahlungsDauer * 12);
     final jahresGefoerdert = depotGefoerdert / auszahlungsDauer;
-    final rentenEinkommen = jahresGefoerdert + effectiveRente * 12 + person.sonstigeEinkuenfte;
+    final baseIncome = effectiveRente * 12 + person.sonstigeEinkuenfte; // pension + other
+    final combinedIncome = jahresGefoerdert + baseIncome; // + AV payout
     final kirchensteuerFaktor = 1 + costs.kirchensteuer;
-    // Progressive tax: actual tax on combined retirement income
-    final steuerRente = tax.calcEinkommensteuer(rentenEinkommen);
-    final avgSteuersatzRente = rentenEinkommen > 0 ? steuerRente / rentenEinkommen : 0.0;
-    final nettoGefoerdert = monatlichGefoerdert * (1 - avgSteuersatzRente * kirchensteuerFaktor);
+    // Incremental tax: tax attributable to the AV payout alone
+    final taxOnBase = tax.calcEinkommensteuer(baseIncome);
+    final taxOnCombined = tax.calcEinkommensteuer(combinedIncome);
+    final taxOnAvPayout = taxOnCombined - taxOnBase;
+    final avPayoutTaxRate = jahresGefoerdert > 0 ? taxOnAvPayout / jahresGefoerdert : 0.0;
+    final nettoGefoerdert = monatlichGefoerdert * (1 - avPayoutTaxRate * kirchensteuerFaktor);
 
     // Ungefördert: tax treatment at payout is PENDING official BMF guidance.
     // The Altersvorsorgereformgesetz was passed March 2026, takes effect Jan 2027.
@@ -239,18 +244,18 @@ class SimulationEngine {
       switch (costs.ungefoerdertTax) {
         case UngefoerdertTaxMode.nachgelagert:
           // Conservative: same as gefördert (100% taxed at average rate)
-          nettoUngefoerdert = monatlichUngef * (1 - avgSteuersatzRente * kirchensteuerFaktor);
+          nettoUngefoerdert = monatlichUngef * (1 - avPayoutTaxRate * kirchensteuerFaktor);
         case UngefoerdertTaxMode.ertragsanteil:
           // Only Ertragsanteil (17% at age 67) taxed at income rate
           final taxable = monatlichUngef * CalcConstants.ertragsanteil67;
-          nettoUngefoerdert = monatlichUngef - taxable * avgSteuersatzRente * kirchensteuerFaktor;
+          nettoUngefoerdert = monatlichUngef - taxable * avPayoutTaxRate * kirchensteuerFaktor;
         case UngefoerdertTaxMode.halbeinkunfte:
           // 50% of gains taxed at income rate
           final eigenUngef = jbUngefoerdert * person.spardauer;
           final gewinnAnteil = depotUngefoerdert > eigenUngef
               ? (depotUngefoerdert - eigenUngef) / depotUngefoerdert : 0.0;
           final taxable = monatlichUngef * gewinnAnteil * 0.5;
-          nettoUngefoerdert = monatlichUngef - taxable * avgSteuersatzRente * kirchensteuerFaktor;
+          nettoUngefoerdert = monatlichUngef - taxable * avPayoutTaxRate * kirchensteuerFaktor;
       }
     }
 
@@ -266,7 +271,7 @@ class SimulationEngine {
       monatlicheAuszahlung: monatlich,
       nettoMonatlich: netto,
       grenzsteuersatz: tax.getGrenzsteuersatz(person.brutto),
-      grenzsteuersatzRente: avgSteuersatzRente,
+      grenzsteuersatzRente: avPayoutTaxRate,
       wertzuwachs: depot - eigenBeitraege - zulagenGesamt,
       jahresWerte: jahresWerte,
     );

@@ -77,11 +77,13 @@ void main() {
       final costs = CostSettings();
       final av = engine.simulateAV(person: p, macro: m, costs: costs);
 
-      // Combined income = AV annual payout + 1500×12 + 5000
+      // Incremental tax: tax(base + AV) - tax(base), divided by AV payout
       final avAnnual = av.endkapital / p.auszahlungsDauer;
-      final rentenEinkommen = avAnnual + 1500 * 12 + 5000;
-      final expectedAvgRate = engine.tax.getDurchschnittssteuersatz(rentenEinkommen);
-      expect(av.grenzsteuersatzRente, closeTo(expectedAvgRate, 0.001));
+      final baseIncome = 1500.0 * 12 + 5000;
+      final taxOnBase = engine.tax.calcEinkommensteuer(baseIncome);
+      final taxOnCombined = engine.tax.calcEinkommensteuer(baseIncome + avAnnual);
+      final expectedRate = avAnnual > 0 ? (taxOnCombined - taxOnBase) / avAnnual : 0.0;
+      expect(av.grenzsteuersatzRente, closeTo(expectedRate, 0.001));
     });
 
     test('Kirchensteuer increases payout tax', () {
