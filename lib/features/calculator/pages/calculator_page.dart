@@ -802,8 +802,8 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
       if (costs.kirchensteuer > 0) _pair(s.kirchensteuerLabel, '${(costs.kirchensteuer * 100).toStringAsFixed(0)}%', 'In rate'),
       _pairFormula(s.bdTaxOnPayoutYr,
         Fmt.eur(avTaxPerMonth * 12), Fmt.eur(etf.steuerAufGewinn / auszDauer),
-        avFormula: '= ${Fmt.eur(av.monatlicheAuszahlung * 12)} × ${Fmt.pct(av.grenzsteuersatzRente)}',
-        etfFormula: '= ${Fmt.eur(etf.steuerAufGewinn)} ÷ $auszDauer yr'),
+        avFormula: '= payout ${Fmt.eur(av.monatlicheAuszahlung * 12)} × rate ${Fmt.pct(av.grenzsteuersatzRente)}',
+        etfFormula: '= total tax ${Fmt.eur(etf.steuerAufGewinn)} ÷ $auszDauer yr'),
       if (jbUngef > 0) _pair(s.bdUngefTreatment, costs.ungefoerdertTax == UngefoerdertTaxMode.nachgelagert
         ? 'Full (BMF pending)' : costs.ungefoerdertTax == UngefoerdertTaxMode.ertragsanteil
           ? 'Ertragsanteil 17%' : 'Halbeinkünfte 50%', '—', tip: s.tipUngefoerdert),
@@ -813,7 +813,7 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
       _pairFormula(s.bdTotalTaxPaid,
         Fmt.eur(avTaxPerMonth * auszDauer * 12), Fmt.eur(etf.steuerAufGewinn), bold: true,
         avFormula: '= ${Fmt.eur(avTaxPerMonth * 12)}/yr × $auszDauer yr',
-        etfFormula: '= ${Fmt.eur(etf.gewinn * 0.70)} × ${Fmt.pct(costs.abgeltungssteuersatz)}'),
+        etfFormula: '= ${Fmt.eur(etf.gewinn)} × 70% × ${Fmt.pct(costs.abgeltungssteuersatz)}'),
       _pairFormula(s.bdDepotAfterTax,
         Fmt.eur(av.nettoMonatlich * auszDauer * 12), Fmt.eur(etf.nachSteuer), bold: true,
         avFormula: '= ${Fmt.eur(av.endkapital)} − ${Fmt.eur(avTaxPerMonth * auszDauer * 12)}',
@@ -824,7 +824,7 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
       _h(s.bdMonthlyNet),
       _pair(s.bdGrossPerMonth, Fmt.eur(av.monatlicheAuszahlung), Fmt.eur(etfMonthlyGross)),
       _pairFormula(s.bdTaxPerMonth, Fmt.eur(avTaxPerMonth), Fmt.eur(etfTaxPerMonth),
-        avFormula: '= ${Fmt.eur(avTaxPerMonth * 12)}/yr ÷ 12',
+        avFormula: '= ${Fmt.eur(av.monatlicheAuszahlung)}/mo × ${Fmt.pct(av.grenzsteuersatzRente)}',
         etfFormula: '= ${Fmt.eur(etf.steuerAufGewinn)} ÷ ${auszDauer * 12} mo'),
       _pair(s.bdNetPerMonth, Fmt.eur(av.nettoMonatlich), Fmt.eur(etf.monatlicheAuszahlung), bold: true),
     ]);

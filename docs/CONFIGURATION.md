@@ -50,7 +50,7 @@ Located in: `lib/services/domain/calculator_service.dart`
 | Kirchensteuer | 0% / 8% / 9% | Toggle in Advanced Settings | `CostSettings.kirchensteuer` |
 | Teilfreistellung Aktienfonds | 30% | §20 InvStG | `simulateETF()` |
 | Vorabpauschale drag | 0.3% p.a. | Simplified (Basiszins ~2.3-3.2%) | `simulateETF()` |
-| Retirement tax factor | 0.7× working rate | Simplification | `simulateAV()` |
+| Retirement tax | Incremental §32a on combined income | Progressive formula | `simulateAV()` |
 
 ### To update tax brackets:
 

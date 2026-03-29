@@ -37,12 +37,6 @@ abstract class AppStrings {
   String get hintMarginalTaxRate;
   String get hintRetirementTaxRate;
   String payoutDurationHint(int years);
-  String get hintBaseGrant;
-  String get hintChildGrant;
-  String get hintEntryBonus;
-  String get hintLowIncomeBonus;
-  String get hintSubsidyRate;
-  String get hintTaxRefund;
   String get hintMonthlySavings;
   String get hintGrossSalary;
   String get hintChildren;
@@ -88,15 +82,12 @@ abstract class AppStrings {
   String get hintUngefoerdertTax;
 
   // ─── SUBSIDY BOX ─────────────────────────────────────────────────
-  String annualSubsidiesTitle(String icon, String name);
   String get baseGrant;
   String get childGrant;
   String get entryBonus;
   String get lowIncomeBonus;
-  String get lowIncomeBonusApplies;
   String get subsidyRate;
   String get totalSubsidyYear;
-  String get taxRefundYear;
   String get viaTaxOptimization;
 
   // ─── TABS ─────────────────────────────────────────────────────────
@@ -104,15 +95,12 @@ abstract class AppStrings {
   String get tabAvDetail;
 
   // ─── CALCULATION BREAKDOWN ─────────────────────────────────────────
-  String get calcBasisTitle;
-  String get calcBasisAV;
   String get bdContributions;
   String get bdSubsidiesYear1;
   String get bdTaxCostsSavings;
   String get bdCapGainsSavings;
   String get bdCapGainsSavingsAV;
   String get bdCapGainsSavingsETF;
-  String get bdNoteLabel;
   String get bdNoteBankAccount;
   String get bdIntoDepotYear;
   String get bdAccumulated;
@@ -159,8 +147,6 @@ abstract class AppStrings {
   // breakdown tabs
   String get bdTabSavings;
   String get bdTabPayout;
-  String get calcBasisETF;
-  String get calcBasisGeneral;
 
   // ─── INFO TOOLTIPS ─────────────────────────────────────────────────
   String get tipGrundzulage;
@@ -170,22 +156,15 @@ abstract class AppStrings {
   String get tipGuenstigerpruefung;
   String get tipGefoerdert;
   String get tipUngefoerdert;
-  String get tipGrenzsteuersatz;
-  String get tipGrenzsteuersatzRente;
   String get tipVorabpauschale;
   String get tipTeilfreistellung;
-  String get tipAbgeltungssteuer;
-  String get tipKirchensteuer;
 
   // ─── COMPARISON ───────────────────────────────────────────────────
   String avYieldsMore(String amount);
   String etfYieldsMore(String amount);
   String get etfWinsExplanation;
   String comparisonSubtitle(String icon, String name);
-  String get finalCapitalGross;
   String get ownContributions;
-  String get govSubsidiesAvOnly;
-  String get monthlyPayout20y;
 
   // ─── DETAIL ───────────────────────────────────────────────────────
   String get finalCapital;
@@ -257,7 +236,6 @@ abstract class AppStrings {
   String get copyrightNotice;
 
   // ─── ETF TAX NOTE ──────────────────────────────────────────────
-  String get etfTaxNote;
 
   // ─── CHARTS ───────────────────────────────────────────────────────
   String get chartAllMacrosTitle;
@@ -314,7 +292,6 @@ abstract class AppStrings {
   String get customDesc;
   String get avDepotLabel;
   String get etfLabel;
-  String get etfDepotLabel;
   String get yearSuffix;
   String get perMonth;
 
@@ -399,12 +376,6 @@ class StringsEn extends AppStrings {
   String get hintMarginalTaxRate => 'Your current tax bracket based on gross income. Used for Günstigerprüfung during savings.';
   String get hintRetirementTaxRate => 'Tax rate on AV-Depot payouts in retirement. Based on combined income: state pension + AV payout + other income.';
   String payoutDurationHint(int years) => 'Payout duration: $years years (until age 85)';
-  String get hintBaseGrant => '50% on first €360/yr + 25% on €361–1,800/yr. Max €540/yr. Paid into the depot.';
-  String get hintChildGrant => 'Up to €300 per child per year (1:1 match). Full grant from €25/mo contribution.';
-  String get hintEntryBonus => 'One-time €200 bonus if under 25 at contract start (first year only).';
-  String get hintLowIncomeBonus => '€175/yr extra if gross income ≤ €26,250. Paid into the depot.';
-  String get hintSubsidyRate => 'Total subsidies as percentage of your own contribution. Higher = more government leverage.';
-  String get hintTaxRefund => 'Paid to your bank account, not into the depot. Does not affect the comparison.';
   String get hintMonthlySavings => 'Your monthly contribution. Subsidized up to €150/mo (€1,800/yr). Max €570/mo (€6,840/yr) per contract. Above €150, no subsidy but preferential tax on payout.';
   String get hintGrossSalary => 'Your yearly gross income before taxes. Determines your tax rate and subsidy eligibility.';
   String get hintChildren => 'Number of children eligible for Kindergeld. Each child adds up to €300/yr subsidy.';
@@ -450,15 +421,12 @@ class StringsEn extends AppStrings {
   String get hintUngefoerdertTax => 'AV-Depot only: tax on unsubsidized contributions (above €1,800/yr) at payout. BMF guidance pending. Does not affect ETF comparison.';
 
   // Subsidy
-  String annualSubsidiesTitle(String icon, String name) => 'Annual Subsidies – $icon $name';
   String get baseGrant => 'Base Grant';
   String get childGrant => 'Child Grant';
   String get entryBonus => 'Entry Bonus';
   String get lowIncomeBonus => 'Low-Income Bonus';
-  String get lowIncomeBonusApplies => 'Low-income bonus applies: €175/yr (gross income ≤ €26,250)';
   String get subsidyRate => 'Subsidy Rate';
   String get totalSubsidyYear => 'Total Subsidy/Year';
-  String get taxRefundYear => 'Tax Refund/Year';
   String get viaTaxOptimization => 'via tax optimization check';
 
   // Tabs
@@ -467,15 +435,12 @@ class StringsEn extends AppStrings {
 
   // Comparison
   // Calculation Basis
-  String get calcBasisTitle => 'Calculation Basis';
-  String get calcBasisAV => 'AV-Depot Rules';
   String get bdContributions => 'Contributions';
   String get bdSubsidiesYear1 => 'Government Subsidies (Year 1)';
   String get bdTaxCostsSavings => 'Tax & Costs During Savings';
   String get bdCapGainsSavings => 'Capital gains during savings';
   String get bdCapGainsSavingsAV => 'Tax-free';
   String get bdCapGainsSavingsETF => 'Taxed yearly';
-  String get bdNoteLabel => '  Note';
   String get bdNoteBankAccount => '→ bank account';
   String get bdIntoDepotYear => 'Into Depot Per Year';
   String get bdAccumulated => 'Accumulated Over Savings Period';
@@ -521,8 +486,6 @@ class StringsEn extends AppStrings {
   String get bdNetPerMonth => 'Net per month';
   String get bdTabSavings => 'Savings Phase';
   String get bdTabPayout => 'Payout Phase';
-  String get calcBasisETF => 'ETF Rules';
-  String get calcBasisGeneral => 'Common';
 
   // Info Tooltips
   String get tipGrundzulage => 'Government matches your contributions: 50% on the first €360/yr and 25% on €361–1,800/yr. Maximum €540/yr. Goes directly into your depot.';
@@ -532,12 +495,8 @@ class StringsEn extends AppStrings {
   String get tipGuenstigerpruefung => 'The tax office automatically checks: is the tax deduction on your contributions worth more than the subsidies? If yes, you get the difference as a tax refund — but to your bank account, NOT into the depot.';
   String get tipGefoerdert => 'Subsidized contributions (up to €1,800/yr): grow tax-free, but the ENTIRE payout in retirement is taxed at your income tax rate (nachgelagerte Besteuerung).';
   String get tipUngefoerdert => 'Unsubsidized contributions (above €1,800/yr): no subsidies, but still tax-free growth during savings. Payout taxation is pending official BMF guidance (law takes effect Jan 2027). Currently calculated conservatively as full nachgelagerte Besteuerung. Actual treatment may be more favorable (e.g., Ertragsanteilbesteuerung or Halbeinkünfteverfahren).';
-  String get tipGrenzsteuersatz => 'Your marginal tax rate based on gross income. This is the rate on your last euro earned — not the average rate on all income. Used for Günstigerprüfung during savings.';
-  String get tipGrenzsteuersatzRente => 'Your marginal tax rate in retirement, based on combined income: AV-Depot payout + state pension + other income. Usually lower than during working life.';
   String get tipVorabpauschale => 'Annual tax on unrealized ETF gains, calculated from the Basiszins (ECB reference rate). Simplified here as a fixed drag on returns. Does NOT apply inside the AV-Depot.';
   String get tipTeilfreistellung => '30% of your ETF gains are tax-exempt because the fund already paid withholding tax at fund level. Only 70% of gains are subject to Abgeltungssteuer.';
-  String get tipAbgeltungssteuer => 'Flat-rate capital gains tax of 25% plus 5.5% Solidaritätszuschlag. Only applied to gains (not contributions). Reduced rate when Kirchensteuer applies.';
-  String get tipKirchensteuer => 'Church tax of 8% (Bayern/BaWü) or 9% (other states), applied on top of income tax (AV) and Abgeltungssteuer (ETF). The Abgeltungssteuer base rate is reduced when church tax applies.';
 
   String avYieldsMore(String amount) => 'AV-Depot yields $amount more.';
   String etfYieldsMore(String amount) => 'ETF Portfolio yields $amount more.';
@@ -549,10 +508,7 @@ class StringsEn extends AppStrings {
     'low returns, this tax advantage outweighs the subsidy.';
   String comparisonSubtitle(String icon, String name) =>
     '$icon $name – AV: deferred taxation / ETF: capital gains tax with 30% partial exemption';
-  String get finalCapitalGross => 'Final Capital (gross)';
   String get ownContributions => 'Own Contributions';
-  String get govSubsidiesAvOnly => 'Gov. Subsidies (AV only)';
-  String get monthlyPayout20y => 'Monthly Payout (20 years)';
 
   // Detail
   String get finalCapital => 'Final Capital';
@@ -627,12 +583,6 @@ class StringsEn extends AppStrings {
   String get proEtfTeilfreistellung => '30% partial exemption (Teilfreistellung) reduces taxable gains';
   String get proEtfFlexibility => 'No lock-up period – withdraw any time without restrictions';
   String get proEtfLowReturnsAdvantage => 'With low returns, gains are small – less tax impact than deferred full-payout taxation';
-
-  // ETF Tax Note
-  String get etfTaxNote =>
-    'ETF taxation: Only gains are taxed – with 30% partial exemption (Teilfreistellung) '
-    'for equity funds. This means only 70% of gains are subject to flat-rate capital gains '
-    'tax (Abgeltungssteuer). Your contributions are returned tax-free.';
 
   // Footer
   String get resetAll => 'Reset All Values';
@@ -752,7 +702,6 @@ class StringsEn extends AppStrings {
   String get customDesc => 'Manually configured';
   String get avDepotLabel => 'AV-Depot';
   String get etfLabel => 'ETF';
-  String get etfDepotLabel => 'ETF Portfolio';
   String get yearSuffix => 'Y';
   String get perMonth => '/mo';
 
@@ -825,12 +774,6 @@ class StringsDe extends AppStrings {
   String get hintMarginalTaxRate => 'Ihr aktueller Steuersatz basierend auf dem Bruttoeinkommen. Wird für die Günstigerprüfung während der Sparphase verwendet.';
   String get hintRetirementTaxRate => 'Steuersatz auf AV-Depot-Auszahlungen im Ruhestand. Basiert auf Gesamteinkommen: gesetzl. Rente + AV-Auszahlung + Sonstige.';
   String payoutDurationHint(int years) => 'Auszahlungsdauer: $years Jahre (bis Alter 85)';
-  String get hintBaseGrant => '50 % auf erste 360 €/J + 25 % auf 361–1.800 €/J. Max 540 €/J. Fließt ins Depot.';
-  String get hintChildGrant => 'Bis 300 € pro Kind/Jahr (1:1 Zuschuss). Volle Zulage ab 25 €/Mt Eigenbeitrag.';
-  String get hintEntryBonus => 'Einmalig 200 € im ersten Vertragsjahr, wenn unter 25 bei Abschluss.';
-  String get hintLowIncomeBonus => '175 €/J extra bei Bruttoeinkommen ≤ 26.250 €. Fließt ins Depot.';
-  String get hintSubsidyRate => 'Gesamtzulagen als Prozentsatz Ihres Eigenbeitrags. Höher = mehr staatliche Hebelwirkung.';
-  String get hintTaxRefund => 'Wird auf Ihr Bankkonto ausgezahlt, nicht ins Depot. Beeinflusst den Vergleich nicht.';
   String get hintMonthlySavings => 'Ihr monatlicher Beitrag. Gefördert bis 150 €/Mt (1.800 €/J). Max 570 €/Mt (6.840 €/J) pro Vertrag. Über 150 € keine Zulage, aber begünstigte Besteuerung bei Auszahlung.';
   String get hintGrossSalary => 'Ihr jährliches Bruttoeinkommen vor Steuern. Bestimmt Ihren Steuersatz und die Förderberechtigung.';
   String get hintChildren => 'Anzahl kindergeldberechtigter Kinder. Jedes Kind bringt bis zu 300 €/Jahr Zulage.';
@@ -875,29 +818,23 @@ class StringsDe extends AppStrings {
   String get ungefoerdertTaxHalbeinkunfte => 'Halbeinkünfte (50 % Gewinn)';
   String get hintUngefoerdertTax => 'Nur AV-Depot: Besteuerung ungeförderter Beiträge (über 1.800 €/J) bei Auszahlung. BMF-Klärung ausstehend. Beeinflusst nicht den ETF-Vergleich.';
 
-  String annualSubsidiesTitle(String icon, String name) => 'Jährliche Förderung – $icon $name';
   String get baseGrant => 'Grundzulage';
   String get childGrant => 'Kinderzulage';
   String get entryBonus => 'Bonus';
   String get lowIncomeBonus => 'Geringverdienerbonus';
-  String get lowIncomeBonusApplies => 'Geringverdienerbonus greift: 175 €/Jahr (Brutto ≤ 26.250 €)';
   String get subsidyRate => 'Förderquote';
   String get totalSubsidyYear => 'Gesamt-Zulage/Jahr';
-  String get taxRefundYear => 'Steuererstattung/Jahr';
   String get viaTaxOptimization => 'via Günstigerprüfung';
 
   String get tabComparison => 'Vergleich';
   String get tabAvDetail => 'AV-Depot Detail';
 
-  String get calcBasisTitle => 'Berechnungsgrundlage';
-  String get calcBasisAV => 'AV-Depot Regeln';
   String get bdContributions => 'Beiträge';
   String get bdSubsidiesYear1 => 'Staatliche Zulagen (Jahr 1)';
   String get bdTaxCostsSavings => 'Steuer & Kosten in der Ansparphase';
   String get bdCapGainsSavings => 'Kapitalerträge in der Ansparphase';
   String get bdCapGainsSavingsAV => 'Steuerfrei';
   String get bdCapGainsSavingsETF => 'Jährlich besteuert';
-  String get bdNoteLabel => '  Hinweis';
   String get bdNoteBankAccount => '→ Bankkonto';
   String get bdIntoDepotYear => 'Ins Depot pro Jahr';
   String get bdAccumulated => 'Kumuliert über Sparperiode';
@@ -943,8 +880,6 @@ class StringsDe extends AppStrings {
   String get bdNetPerMonth => 'Netto pro Monat';
   String get bdTabSavings => 'Ansparphase';
   String get bdTabPayout => 'Auszahlphase';
-  String get calcBasisETF => 'ETF-Depot Regeln';
-  String get calcBasisGeneral => 'Allgemein';
 
   String get tipGrundzulage => 'Der Staat bezuschusst Ihre Beiträge: 50 % auf die ersten 360 €/J und 25 % auf 361–1.800 €/J. Maximum 540 €/J. Fließt direkt ins Depot.';
   String get tipKinderzulage => 'Der Staat zahlt für jeden eingezahlten Euro bis zu 300 € pro Kind und Jahr dazu. Volle Zulage ab nur 25 €/Monat Eigenbeitrag.';
@@ -953,12 +888,8 @@ class StringsDe extends AppStrings {
   String get tipGuenstigerpruefung => 'Das Finanzamt prüft automatisch: Bringt der Sonderausgabenabzug auf Ihre Beiträge mehr als die Zulagen? Wenn ja, erhalten Sie die Differenz als Steuererstattung — aber auf Ihr Bankkonto, NICHT ins Depot.';
   String get tipGefoerdert => 'Geförderte Beiträge (bis 1.800 €/J): Wachsen steuerfrei, aber die GESAMTE Auszahlung im Ruhestand wird mit Einkommensteuer besteuert (nachgelagerte Besteuerung).';
   String get tipUngefoerdert => 'Ungeförderte Beiträge (über 1.800 €/J): Keine Zulagen, aber steuerfreies Wachstum in der Ansparphase. Besteuerung bei Auszahlung wartet auf offizielle BMF-Klärung (Gesetz tritt Jan 2027 in Kraft). Derzeit konservativ als volle nachgelagerte Besteuerung berechnet. Tatsächliche Behandlung könnte günstiger sein (z.B. Ertragsanteil oder Halbeinkünfteverfahren).';
-  String get tipGrenzsteuersatz => 'Ihr Grenzsteuersatz basierend auf dem Bruttoeinkommen. Das ist der Steuersatz auf den letzten verdienten Euro — nicht der Durchschnitt. Wird für die Günstigerprüfung während des Sparens verwendet.';
-  String get tipGrenzsteuersatzRente => 'Ihr Grenzsteuersatz im Ruhestand, basierend auf dem Gesamteinkommen: AV-Depot-Auszahlung + gesetzliche Rente + sonstige Einkünfte. Meist niedriger als im Erwerbsleben.';
   String get tipVorabpauschale => 'Jährliche Steuer auf unrealisierte ETF-Gewinne, berechnet aus dem Basiszins (EZB-Referenzzins). Hier vereinfacht als fester Abzug. Gilt NICHT im AV-Depot.';
   String get tipTeilfreistellung => '30 % Ihrer ETF-Gewinne sind steuerfrei, da der Fonds bereits Quellensteuer auf Fondsebene zahlt. Nur 70 % der Gewinne unterliegen der Abgeltungssteuer.';
-  String get tipAbgeltungssteuer => 'Pauschale Kapitalertragssteuer von 25 % plus 5,5 % Solidaritätszuschlag. Wird nur auf Gewinne angewandt (nicht auf Einzahlungen). Reduzierter Satz bei Kirchensteuer.';
-  String get tipKirchensteuer => 'Kirchensteuer von 8 % (Bayern/BaWü) oder 9 % (übrige Bundesländer), auf Einkommensteuer (AV) und Abgeltungssteuer (ETF). Der Abgeltungssteuersatz wird bei Kirchensteuer reduziert.';
 
   String avYieldsMore(String amount) => 'AV-Depot bringt $amount mehr.';
   String etfYieldsMore(String amount) => 'ETF-Depot bringt $amount mehr.';
@@ -970,10 +901,7 @@ class StringsDe extends AppStrings {
     'Beiträgen oder niedrigen Renditen überwiegt dieser Steuervorteil die Zulage.';
   String comparisonSubtitle(String icon, String name) =>
     '$icon $name – AV: nachgelagerte Best. / ETF: Abgeltungsst. mit 30 % Teilfreist.';
-  String get finalCapitalGross => 'Endkapital (brutto)';
   String get ownContributions => 'Eigenbeiträge';
-  String get govSubsidiesAvOnly => 'Staatl. Zulagen (nur AV)';
-  String get monthlyPayout20y => 'Monatliche Auszahlung (20 Jahre)';
 
   String get finalCapital => 'Endkapital';
   String get purchasingPowerToday => 'Kaufkraft heute';
@@ -1044,11 +972,6 @@ class StringsDe extends AppStrings {
   String get proEtfTeilfreistellung => '30 % Teilfreistellung reduziert die steuerpflichtigen Gewinne';
   String get proEtfFlexibility => 'Keine Bindungsfrist – jederzeit verfügbar ohne Einschränkungen';
   String get proEtfLowReturnsAdvantage => 'Bei niedrigen Renditen sind die Gewinne gering – weniger Steuerbelastung als nachgelagerte Vollbesteuerung';
-
-  String get etfTaxNote =>
-    'ETF-Besteuerung: Nur Gewinne werden besteuert – mit 30 % Teilfreistellung '
-    'für Aktienfonds. Das bedeutet, nur 70 % der Gewinne unterliegen der '
-    'Abgeltungssteuer. Ihre Einzahlungen erhalten Sie steuerfrei zurück.';
 
   String get resetAll => 'Alle Werte zurücksetzen';
   String get disclaimer =>
@@ -1164,7 +1087,6 @@ class StringsDe extends AppStrings {
   String get customDesc => 'Manuell eingestellt';
   String get avDepotLabel => 'AV-Depot';
   String get etfLabel => 'ETF';
-  String get etfDepotLabel => 'ETF-Depot';
   String get yearSuffix => 'J';
   String get perMonth => '/Mt';
 

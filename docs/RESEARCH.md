@@ -213,8 +213,10 @@ Results:
 **AV side — retirement payout taxation:**
 
 ```
-AvgSteuersatz = calcEinkommensteuer(Renteneinkommen) / Renteneinkommen
-Steuersatz_Rente = AvgSteuersatz × (1 + KiSt_rate)
+BaseIncome = Pension × 12 + SonstigeEinkünfte
+TaxOnAV = calcEinkommensteuer(BaseIncome + AV_Payout) − calcEinkommensteuer(BaseIncome)
+AvPayoutTaxRate = TaxOnAV / AV_Payout  // incremental rate on AV payout only
+Steuersatz_Rente = AvPayoutTaxRate × (1 + KiSt_rate)
 
 Where Renteneinkommen = AV_Jahresauszahlung + GesetzlicheRente × 12 + SonstigeEinkünfte
 ```
@@ -319,7 +321,9 @@ Else:
 // ── Gefördert: nachgelagerte Besteuerung (100% of payout taxed as income) ──
 Monatlich_Gefördert = Depot_Gefördert / (Auszahlungsdauer × 12)
 Renteneinkommen = (Depot_Gefördert / Auszahlungsdauer) + EffectiveRente × 12 + Sonstige
-AvgSteuersatz = calcEinkommensteuer(Renteneinkommen) / Renteneinkommen  // progressive §32a
+BaseIncome = Pension × 12 + SonstigeEinkünfte
+TaxOnAV = calcEinkommensteuer(BaseIncome + AV_Payout) − calcEinkommensteuer(BaseIncome)
+AvPayoutTaxRate = TaxOnAV / AV_Payout  // incremental rate on AV payout only  // progressive §32a
 Steuersatz_Rente = AvgSteuersatz × (1 + Kirchensteuer)
 Netto_Gefördert = Monatlich_Gefördert × (1 - Steuersatz_Rente)
 
