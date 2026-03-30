@@ -565,7 +565,7 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
   late TabController _tab;
 
   @override
-  void initState() { super.initState(); _tab = TabController(length: 2, vsync: this); _tab.addListener(() => setState(() {})); }
+  void initState() { super.initState(); _tab = TabController(length: 2, initialIndex: 1, vsync: this); _tab.addListener(() => setState(() {})); }
   @override
   void dispose() { _tab.dispose(); super.dispose(); }
 
