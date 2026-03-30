@@ -225,6 +225,17 @@ class _InputPanelState extends State<InputPanel> with TickerProviderStateMixin {
         min: 0, max: 5, step: 1, display: '${p.kinder}',
         onChanged: (v) => cubit.setKinder(v.round()),
         hint: s.hintChildren),
+      ...List.generate(p.kinder, (i) {
+        final age = i < p.kinderAlter.length ? p.kinderAlter[i] : 0;
+        return AppSlider(
+          label: s.childAgeLabel(i),
+          value: age.toDouble(),
+          min: 0, max: 24, step: 1,
+          display: '$age',
+          onChanged: (v) => cubit.setChildAge(i, v.round()),
+          hint: s.hintChildAge,
+        );
+      }),
       AppSlider(label: s.startingAge, value: p.alterStart.toDouble(),
         min: 18, max: 60, step: 1, display: '${p.alterStart}',
         onChanged: (v) => cubit.setAlterStart(v.round()),

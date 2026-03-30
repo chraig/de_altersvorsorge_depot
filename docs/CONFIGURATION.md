@@ -19,6 +19,7 @@ Located in: `lib/services/domain/calculator_service.dart`
 | Max Grundzulage | €540/yr | Derived | — | Calculated |
 | Kinderzulage per child | up to €300/yr | Fixed | §89 Abs. 2 EStG-E | `calcKinderzulage()` |
 | Kinderzulage match rate | 1:1 | Fixed | §89 Abs. 2 EStG-E | `calcKinderzulage()` |
+| Kinderzulage max age | 25 (kindergeldberechtigt) | Fixed | Kindergeld law | `CalcConstants.kinderzulageMaxAlter` |
 | Berufseinsteigerbonus | €200 (one-time) | Fixed | §89 Abs. 3 EStG-E | `calcBonus()` |
 | Bonus max age | 24 (under 25) | Fixed | §89 Abs. 3 EStG-E | `calcBonus()` |
 | Geringverdienerbonus | €175/yr | Fixed | §89 Abs. 4 EStG-E | `calcGeringverdienerbonus()` |
@@ -142,6 +143,7 @@ Located in: `lib/models/scenario.dart` → `PersonalScenario.defaults()`
 | Sparrate | 10 | 570 | 5 | €/Monat (max €6,840/yr per contract) |
 | Bruttojahreseinkommen | 12,000 | 250,000 | 1,000 | €/Jahr (covers 99%+ of population) |
 | Kinder | 0 | 5 | 1 | — |
+| Alter pro Kind | 0 | 24 | 1 | Jahre (Kinderzulage endet mit 25) |
 | Alter bei Start | 18 | 60 | 1 | Jahre |
 | Rentenalter | 60 | 75 | 1 | Jahre |
 | Gesetzliche Rente | 0 | 3,500 | 50 | €/Monat |

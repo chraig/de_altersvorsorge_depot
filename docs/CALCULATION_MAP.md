@@ -52,7 +52,7 @@ flowchart TD
     subgraph LOOP["For each savings year j = 0 ... spardauer-1"]
         direction TB
         INC["Income for year j<br/>bruttoJ = bruttoForYear brutto, j<br/>kinderJ = kinderAtYear kinder, j"]
-        SUB["Subsidies - SubsidyModule<br/>Grundzulage: 50% x min jbGef, 360 + 25% x rest<br/>Kinderzulage: min jbGef, 300 x kinderJ<br/>Bonus: 200 EUR if age lt 25 AND j == 0<br/>Geringverdiener: 175 EUR if bruttoJ le 26250"]
+        SUB["Subsidies - SubsidyModule<br/>Grundzulage: 50% x min jbGef, 360 + 25% x rest<br/>Kinderzulage: min jbGef, 300 x kinderJ, age-out at 25<br/>Bonus: 200 EUR if age lt 25 AND j == 0<br/>Geringverdiener: 175 EUR if bruttoJ le 26250"]
         TAX["Tax Optimization - TaxModule<br/>gstJ = getGrenzsteuersatz bruttoJ<br/>Sonderausgaben = min jb, 1800 + zulagen x gstJ<br/>Refund = difference, to bank account"]
         SPLIT["Contribution Split<br/>jbCapped = min jahresbeitrag, 6840<br/>jbGefoerdert = min jbCapped, 1800<br/>jbUngefoerdert = jbCapped - jbGefoerdert"]
         GROW["Depot Growth - tax-free<br/>depotGef = depotGef + jbGef + zulagen x 1 + r - kostenAV<br/>depotUngef = depotUngef + jbUngef x 1 + r - kostenAV"]

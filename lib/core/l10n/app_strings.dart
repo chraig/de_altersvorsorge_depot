@@ -40,6 +40,8 @@ abstract class AppStrings {
   String get hintMonthlySavings;
   String get hintGrossSalary;
   String get hintChildren;
+  String childAgeLabel(int index);
+  String get hintChildAge;
   String get hintStartingAge;
   String hintDerivedPension(String amount);
   String get hintReturn;
@@ -378,7 +380,9 @@ class StringsEn extends AppStrings {
   String payoutDurationHint(int years) => 'Payout duration: $years years (until age 85)';
   String get hintMonthlySavings => 'Your monthly contribution. Subsidized up to €150/mo (€1,800/yr). Max €570/mo (€6,840/yr) per contract. Above €150, no subsidy but preferential tax on payout.';
   String get hintGrossSalary => 'Your yearly gross income before taxes. Determines your tax rate and subsidy eligibility.';
-  String get hintChildren => 'Number of children eligible for Kindergeld. Each child adds up to €300/yr subsidy.';
+  String get hintChildren => 'Number of children eligible for Kindergeld. Each child adds up to €300/yr subsidy. Ends at age 25 (education) or 18.';
+  String childAgeLabel(int index) => 'Age of child ${index + 1}';
+  String get hintChildAge => 'Current age. Kinderzulage ends when child turns 25 (in education) or 18.';
   String get hintStartingAge => 'Age when you start saving. Younger start = longer compounding.';
   String hintDerivedPension(String amount) => 'Est. state pension: $amount/mo (derived from your income and contribution years). Override in Advanced Settings.';
   String get hintReturn => 'Expected annual return before costs. Depends on the selected macro scenario or manual input.';
@@ -776,7 +780,9 @@ class StringsDe extends AppStrings {
   String payoutDurationHint(int years) => 'Auszahlungsdauer: $years Jahre (bis Alter 85)';
   String get hintMonthlySavings => 'Ihr monatlicher Beitrag. Gefördert bis 150 €/Mt (1.800 €/J). Max 570 €/Mt (6.840 €/J) pro Vertrag. Über 150 € keine Zulage, aber begünstigte Besteuerung bei Auszahlung.';
   String get hintGrossSalary => 'Ihr jährliches Bruttoeinkommen vor Steuern. Bestimmt Ihren Steuersatz und die Förderberechtigung.';
-  String get hintChildren => 'Anzahl kindergeldberechtigter Kinder. Jedes Kind bringt bis zu 300 €/Jahr Zulage.';
+  String get hintChildren => 'Anzahl kindergeldberechtigter Kinder. Jedes Kind bringt bis zu 300 €/Jahr Zulage. Endet mit 25 (Ausbildung) oder 18.';
+  String childAgeLabel(int index) => 'Alter Kind ${index + 1}';
+  String get hintChildAge => 'Aktuelles Alter. Kinderzulage endet, wenn das Kind 25 (in Ausbildung) oder 18 wird.';
   String get hintStartingAge => 'Alter beim Start des Sparens. Früherer Start = längerer Zinseszins.';
   String hintDerivedPension(String amount) => 'Gesch. gesetzl. Rente: $amount/Mt (abgeleitet aus Einkommen und Beitragsjahren). Änderbar unter Erweiterte Einstellungen.';
   String get hintReturn => 'Erwartete jährliche Rendite vor Kosten. Abhängig vom gewählten Makro-Szenario oder manueller Eingabe.';

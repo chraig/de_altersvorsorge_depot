@@ -53,7 +53,24 @@ class CalculatorCubit extends Cubit<CalculatorState> {
   }
 
   void setKinder(int v) {
-    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(kinder: v), clearSelectedPersonal: true));
+    // Adjust kinderAlter list to match new count
+    final currentAges = [...state.currentPerson.kinderAlter];
+    while (currentAges.length < v) {
+      currentAges.add(0);
+    }
+    final trimmed = currentAges.length > v ? currentAges.sublist(0, v) : currentAges;
+    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(
+      kinder: v, kinderAlter: trimmed), clearSelectedPersonal: true));
+  }
+
+  void setChildAge(int index, int age) {
+    final ages = [...state.currentPerson.kinderAlter];
+    while (ages.length <= index) {
+      ages.add(0);
+    }
+    ages[index] = age;
+    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(
+      kinderAlter: ages), clearSelectedPersonal: true));
   }
 
   void setAlterStart(int v) {

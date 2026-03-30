@@ -79,7 +79,10 @@ Kinderzulage = min(Eigenbeitrag, 300) × Anzahl_Kinder
 - Maximum: €300 per child per year
 - Full amount reached at €300/yr own contribution (= €25/mo)
 - This is a 1:1 match up to the cap
-- Child must be kindergeldberechtigt
+- Child must be kindergeldberechtigt (receiving Kindergeld)
+- Kindergeld ends at age 18 (default) or 25 (if in education/training)
+- Calculator uses age 25 as upper bound (`CalcConstants.kinderzulageMaxAlter`)
+- Each child's age is tracked; Kinderzulage stops when `childAge + savingsYear ≥ 25`
 
 **Change from first draft**: Originally required €100/mo for full Kinderzulage;
 Koalitionseinigung lowered threshold to €25/mo.
