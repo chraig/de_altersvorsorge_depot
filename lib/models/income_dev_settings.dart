@@ -79,15 +79,35 @@ class IncomeDevSettings {
     return base;
   }
 
-  /// Number of children at savings year [j], starting from [baseKinder].
-  /// Additional children arrive at the years specified in [childArrivalYears].
-  int kinderAtYear(int baseKinder, int j) {
-    if (!enabled || childArrivalYears.isEmpty) return baseKinder;
-    int extra = 0;
-    for (final arrivalYear in childArrivalYears) {
-      if (j >= arrivalYear) extra++;
+  /// Number of kindergeldberechtigt children at savings year [j].
+  /// Accounts for:
+  /// - Base children aging out (age at start + j >= maxAge → no longer eligible)
+  /// - Dynamic children arriving and eventually aging out
+  /// [baseKinder]: number of existing children
+  /// [kinderAlter]: ages of existing children at savings start (empty = assume age 0)
+  /// [maxAge]: Kindergeld ends at this age (default 25)
+  int kinderAtYear(int baseKinder, int j, {List<int> kinderAlter = const [], int maxAge = 25}) {
+    // Count base children still eligible
+    int eligible = 0;
+    if (baseKinder > 0) {
+      for (int i = 0; i < baseKinder; i++) {
+        final ageAtStart = i < kinderAlter.length ? kinderAlter[i] : 0;
+        final ageAtYearJ = ageAtStart + j;
+        if (ageAtYearJ < maxAge) eligible++;
+      }
     }
-    return baseKinder + extra;
+
+    // Count dynamic children (from childArrivalYears) still eligible
+    if (enabled) {
+      for (final arrivalYear in childArrivalYears) {
+        if (j >= arrivalYear) {
+          final childAge = j - arrivalYear; // born at arrival year
+          if (childAge < maxAge) eligible++;
+        }
+      }
+    }
+
+    return eligible;
   }
 
   bool get hasPartTime => partTimeStartYear != null && partTimeDuration > 0;

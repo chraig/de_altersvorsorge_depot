@@ -489,7 +489,7 @@ class StringsEn extends AppStrings {
 
   // Info Tooltips
   String get tipGrundzulage => 'Government matches your contributions: 50% on the first €360/yr and 25% on €361–1,800/yr. Maximum €540/yr. Goes directly into your depot.';
-  String get tipKinderzulage => 'The state matches €1 for each €1 you contribute, up to €300 per child per year. Full grant from just €25/month contribution.';
+  String get tipKinderzulage => 'Up to €300/child/year (1:1 match from €25/mo). Child must be kindergeldberechtigt — ends at age 25 (in education) or 18. Subsidy stops when the child ages out.';
   String get tipBerufseinsteigerbonus => 'One-time €200 bonus in your first contract year if you are under 25. No ongoing payments — just the first year.';
   String get tipGeringverdienerbonus => 'Extra €175/yr if your gross income is €26,250 or less and you contribute at least €120/yr. Stacks on top of the Grundzulage.';
   String get tipGuenstigerpruefung => 'The tax office automatically checks: is the tax deduction on your contributions worth more than the subsidies? If yes, you get the difference as a tax refund — but to your bank account, NOT into the depot.';
@@ -882,7 +882,7 @@ class StringsDe extends AppStrings {
   String get bdTabPayout => 'Auszahlphase';
 
   String get tipGrundzulage => 'Der Staat bezuschusst Ihre Beiträge: 50 % auf die ersten 360 €/J und 25 % auf 361–1.800 €/J. Maximum 540 €/J. Fließt direkt ins Depot.';
-  String get tipKinderzulage => 'Der Staat zahlt für jeden eingezahlten Euro bis zu 300 € pro Kind und Jahr dazu. Volle Zulage ab nur 25 €/Monat Eigenbeitrag.';
+  String get tipKinderzulage => 'Bis 300 €/Kind/Jahr (1:1 ab 25 €/Mt). Kind muss kindergeldberechtigt sein — endet mit 25 (in Ausbildung) oder 18. Zulage entfällt danach.';
   String get tipBerufseinsteigerbonus => 'Einmaliger Bonus von 200 € im ersten Vertragsjahr, wenn Sie unter 25 sind. Keine laufenden Zahlungen — nur im ersten Jahr.';
   String get tipGeringverdienerbonus => 'Zusätzlich 175 €/J bei Bruttoeinkommen ≤ 26.250 € und Mindestbeitrag 120 €/J. Wird auf die Grundzulage aufgeschlagen.';
   String get tipGuenstigerpruefung => 'Das Finanzamt prüft automatisch: Bringt der Sonderausgabenabzug auf Ihre Beiträge mehr als die Zulagen? Wenn ja, erhalten Sie die Differenz als Steuererstattung — aber auf Ihr Bankkonto, NICHT ins Depot.';

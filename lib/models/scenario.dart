@@ -17,7 +17,8 @@ class PersonalScenario {
   String icon;
   double sparrate;           // [EUR/month] monthly savings contribution
   double brutto;             // [EUR/year] yearly gross income
-  int kinder;                // [count] number of children eligible for Kindergeld
+  int kinder;                // [count] number of existing children at savings start
+  List<int> kinderAlter;     // [years] age of each existing child at savings start (empty = assume age 0)
   int alterStart;            // [years] age at start of savings
   int spardauer;             // [years] savings duration (derived: retirementAge - startAge)
   double? gesetzlicheRenteOverride; // [EUR/month] manual override, null = auto-derive
@@ -32,6 +33,7 @@ class PersonalScenario {
     required this.sparrate,
     required this.brutto,
     required this.kinder,
+    this.kinderAlter = const [],
     required this.alterStart,
     required this.spardauer,
     this.gesetzlicheRenteOverride,
@@ -42,13 +44,14 @@ class PersonalScenario {
 
   PersonalScenario copyWith({
     String? name, String? icon, double? sparrate, double? brutto,
-    int? kinder, int? alterStart, int? spardauer,
+    int? kinder, List<int>? kinderAlter, int? alterStart, int? spardauer,
     double? gesetzlicheRenteOverride, bool clearRenteOverride = false,
     double? sonstigeEinkuenfte, int? arbeitsbeginn, bool? isCustom,
   }) => PersonalScenario(
     id: id, name: name ?? this.name, icon: icon ?? this.icon,
     sparrate: sparrate ?? this.sparrate, brutto: brutto ?? this.brutto,
-    kinder: kinder ?? this.kinder, alterStart: alterStart ?? this.alterStart,
+    kinder: kinder ?? this.kinder, kinderAlter: kinderAlter ?? this.kinderAlter,
+    alterStart: alterStart ?? this.alterStart,
     spardauer: spardauer ?? this.spardauer,
     gesetzlicheRenteOverride: clearRenteOverride ? null : (gesetzlicheRenteOverride ?? this.gesetzlicheRenteOverride),
     sonstigeEinkuenfte: sonstigeEinkuenfte ?? this.sonstigeEinkuenfte,
@@ -76,9 +79,9 @@ class PersonalScenario {
   static List<PersonalScenario> defaults(AppStrings s) => [
     PersonalScenario(name: s.presetCareerStarter, icon: '\uD83C\uDF93', sparrate: 50, brutto: 32000, kinder: 0, alterStart: 23, spardauer: 44),
     PersonalScenario(name: s.presetSingleMid30, icon: '\uD83D\uDCBC', sparrate: 150, brutto: 55000, kinder: 0, alterStart: 35, spardauer: 32),
-    PersonalScenario(name: s.presetFamily2Kids, icon: '\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66', sparrate: 100, brutto: 45000, kinder: 2, alterStart: 32, spardauer: 35),
+    PersonalScenario(name: s.presetFamily2Kids, icon: '\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66', sparrate: 100, brutto: 45000, kinder: 2, kinderAlter: [3, 5], alterStart: 32, spardauer: 35),
     PersonalScenario(name: s.presetHighEarner, icon: '\uD83D\uDCC8', sparrate: 500, brutto: 85000, kinder: 0, alterStart: 40, spardauer: 27),
-    PersonalScenario(name: s.presetPartTimeChild, icon: '\uD83D\uDC76', sparrate: 50, brutto: 22000, kinder: 1, alterStart: 30, spardauer: 37),
+    PersonalScenario(name: s.presetPartTimeChild, icon: '\uD83D\uDC76', sparrate: 50, brutto: 22000, kinder: 1, kinderAlter: [1], alterStart: 30, spardauer: 37),
   ];
 }
 

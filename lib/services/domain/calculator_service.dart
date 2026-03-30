@@ -31,6 +31,9 @@ class CalcConstants {
   // ─── KINDERZULAGE (§89 Abs. 2 EStG-E) ─────────────────────────
   /// Max €300 per child per year, 1:1 match on own contributions
   static const double kinderzulageMax = 300.0;
+  /// Child must be kindergeldberechtigt. Kindergeld ends at age 25 (in education)
+  /// or 18 (default). Using 25 as conservative upper bound.
+  static const int kinderzulageMaxAlter = 25;
 
   // ─── BERUFSEINSTEIGERBONUS (§89 Abs. 3 EStG-E) ────────────────
   /// One-time bonus for career starters (first year of contract only).
@@ -135,7 +138,10 @@ class SimulationEngine {
   /// Full subsidy breakdown for year 1.
   SubsidyBreakdown calcSubsidyBreakdown(PersonalScenario person) {
     final jb = person.jahresbeitrag;
-    final z = subsidy.calcZulage(jb, person.kinder, person.alterStart, 0, person.brutto);
+    // Year 0: use kinderAtYear for consistency (accounts for children already near age-out)
+    final kinderY0 = const IncomeDevSettings().kinderAtYear(person.kinder, 0,
+      kinderAlter: person.kinderAlter, maxAge: CalcConstants.kinderzulageMaxAlter);
+    final z = subsidy.calcZulage(jb, kinderY0, person.alterStart, 0, person.brutto);
     final gst = tax.getGrenzsteuersatz(person.brutto);
     final gp = tax.calcGuenstigerpruefung(jb, z.total, gst);
     final fq = jb > 0 ? z.total / jb : 0.0;
@@ -179,7 +185,8 @@ class SimulationEngine {
     for (int j = 0; j < person.spardauer; j++) {
       final alter = person.alterStart + j;
       final bruttoJ = incomeDev.bruttoForYear(person.brutto, j);
-      final kinderJ = incomeDev.kinderAtYear(person.kinder, j);
+      final kinderJ = incomeDev.kinderAtYear(person.kinder, j,
+        kinderAlter: person.kinderAlter, maxAge: CalcConstants.kinderzulageMaxAlter);
       final gstJ = tax.getGrenzsteuersatz(bruttoJ);
       final z = subsidy.calcZulage(jbGefoerdert, kinderJ, alter, j, bruttoJ);
       final gp = tax.calcGuenstigerpruefung(jbGefoerdert, z.total, gstJ);

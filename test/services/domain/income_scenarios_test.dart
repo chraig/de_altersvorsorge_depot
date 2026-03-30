@@ -141,6 +141,63 @@ void main() {
     });
   });
 
+  group('Child age-out (Kindergeld ends at 25)', () {
+    test('base child ages out after 25 years', () {
+      const dev = IncomeDevSettings(); // disabled, but kinderAtYear still works
+      // Child age 0 at start → eligible for 25 years (0..24), not at year 25
+      expect(dev.kinderAtYear(1, 0, kinderAlter: [0], maxAge: 25), 1);
+      expect(dev.kinderAtYear(1, 24, kinderAlter: [0], maxAge: 25), 1);
+      expect(dev.kinderAtYear(1, 25, kinderAlter: [0], maxAge: 25), 0);
+    });
+
+    test('older child ages out sooner', () {
+      const dev = IncomeDevSettings();
+      // Child age 20 at start → eligible for 5 years (20..24), out at year 5
+      expect(dev.kinderAtYear(1, 0, kinderAlter: [20], maxAge: 25), 1);
+      expect(dev.kinderAtYear(1, 4, kinderAlter: [20], maxAge: 25), 1);
+      expect(dev.kinderAtYear(1, 5, kinderAlter: [20], maxAge: 25), 0);
+    });
+
+    test('two children age out at different times', () {
+      const dev = IncomeDevSettings();
+      // Child 1: age 5, Child 2: age 15
+      // At year 0: both eligible
+      expect(dev.kinderAtYear(2, 0, kinderAlter: [5, 15], maxAge: 25), 2);
+      // At year 10: child 2 is 25 → out, child 1 is 15 → still in
+      expect(dev.kinderAtYear(2, 10, kinderAlter: [5, 15], maxAge: 25), 1);
+      // At year 20: child 1 is 25 → out too
+      expect(dev.kinderAtYear(2, 20, kinderAlter: [5, 15], maxAge: 25), 0);
+    });
+
+    test('dynamic child ages out after 25 years from arrival', () {
+      const dev = IncomeDevSettings(enabled: true, childArrivalYears: [5]);
+      // Dynamic child born at year 5, ages out at year 30 (age 25)
+      expect(dev.kinderAtYear(0, 4), 0);  // not yet arrived
+      expect(dev.kinderAtYear(0, 5), 1);  // just arrived (age 0)
+      expect(dev.kinderAtYear(0, 29), 1); // age 24, still eligible
+      expect(dev.kinderAtYear(0, 30), 0); // age 25, aged out
+    });
+
+    test('empty kinderAlter assumes age 0 for all base children', () {
+      const dev = IncomeDevSettings();
+      // 2 base children, no ages given → both assumed age 0
+      expect(dev.kinderAtYear(2, 0, maxAge: 25), 2);
+      expect(dev.kinderAtYear(2, 24, maxAge: 25), 2);
+      expect(dev.kinderAtYear(2, 25, maxAge: 25), 0);
+    });
+
+    test('family preset: children age 3 and 5, savings 35 years', () {
+      const dev = IncomeDevSettings();
+      // Child 1 (age 3): eligible until year 22 (age 25)
+      // Child 2 (age 5): eligible until year 20 (age 25)
+      expect(dev.kinderAtYear(2, 0, kinderAlter: [3, 5], maxAge: 25), 2);
+      expect(dev.kinderAtYear(2, 19, kinderAlter: [3, 5], maxAge: 25), 2);
+      expect(dev.kinderAtYear(2, 20, kinderAlter: [3, 5], maxAge: 25), 1); // child 2 out
+      expect(dev.kinderAtYear(2, 22, kinderAlter: [3, 5], maxAge: 25), 0); // both out
+      expect(dev.kinderAtYear(2, 34, kinderAlter: [3, 5], maxAge: 25), 0); // end of savings
+    });
+  });
+
   group('hasPartTime / hasChildTiming', () {
     test('hasPartTime requires both start year and duration', () {
       expect(const IncomeDevSettings(partTimeStartYear: 5, partTimeDuration: 3).hasPartTime, true);
