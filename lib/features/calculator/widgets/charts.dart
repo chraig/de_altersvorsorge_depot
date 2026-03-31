@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:avdepot_rechner/config/theme.dart';
+import 'package:avdepot_rechner/core/l10n/app_strings.dart';
 import 'package:avdepot_rechner/core/state/locale_cubit.dart';
+import 'package:avdepot_rechner/models/scenario.dart';
 import 'package:avdepot_rechner/shared/utils/fmt.dart';
 import 'package:avdepot_rechner/features/calculator/cubit/calculator_cubit.dart';
 import 'package:avdepot_rechner/features/calculator/cubit/calculator_state.dart';
@@ -273,4 +275,247 @@ class ComparisonChart extends StatelessWidget {
       },
     );
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SAVINGS PHASE STACKED BAR CHART
+// ═══════════════════════════════════════════════════════════════════
+
+class SavingsPhaseBarChart extends StatelessWidget {
+  final List<SubsidyPhase> phases;
+  final double jbGef;
+  final double jbUngef;
+  final int spardauer;
+  final AppStrings strings;
+
+  const SavingsPhaseBarChart({
+    super.key,
+    required this.phases,
+    required this.jbGef,
+    required this.jbUngef,
+    required this.spardauer,
+    required this.strings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final jbTotal = jbGef + jbUngef;
+    final groups = <BarChartGroupData>[];
+    double maxY = 0;
+
+    for (final phase in phases) {
+      for (int yr = phase.yearFrom; yr <= phase.yearTo; yr++) {
+        double y = 0;
+        final items = <BarChartRodStackItem>[];
+
+        // Own contribution
+        items.add(BarChartRodStackItem(y, y + jbTotal, AppColors.chartContrib));
+        y += jbTotal;
+
+        // Grundzulage
+        if (phase.grundzulage > 0) {
+          items.add(BarChartRodStackItem(y, y + phase.grundzulage, AppColors.chartGrundzulage));
+          y += phase.grundzulage;
+        }
+
+        // Kinderzulage
+        if (phase.kinderzulage > 0) {
+          items.add(BarChartRodStackItem(y, y + phase.kinderzulage, AppColors.chartKinderzulage));
+          y += phase.kinderzulage;
+        }
+
+        // Bonus + Geringverdiener (combined)
+        final bonusTotal = phase.bonus + phase.geringverdienerbonus;
+        if (bonusTotal > 0) {
+          items.add(BarChartRodStackItem(y, y + bonusTotal, AppColors.chartBonus));
+          y += bonusTotal;
+        }
+
+        // Tax refund
+        if (phase.steuererstattung > 0) {
+          items.add(BarChartRodStackItem(y, y + phase.steuererstattung, AppColors.chartSteuererstattung));
+          y += phase.steuererstattung;
+        }
+
+        if (y > maxY) maxY = y;
+        groups.add(BarChartGroupData(x: yr, barRods: [
+          BarChartRodData(toY: y, rodStackItems: items, width: _barWidth(spardauer), borderRadius: BorderRadius.circular(2)),
+        ]));
+      }
+    }
+
+    maxY = maxY * 1.1;
+    final s = strings;
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(s.chartSavingsTitle,
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.label)),
+      const SizedBox(height: AppSpacing.sm),
+      _legend(s),
+      const SizedBox(height: AppSpacing.md),
+      SizedBox(
+        height: 180,
+        child: BarChart(BarChartData(
+          barGroups: groups,
+          maxY: maxY,
+          gridData: FlGridData(
+            show: true, drawVerticalLine: false,
+            horizontalInterval: maxY / 4,
+            getDrawingHorizontalLine: (_) => FlLine(color: AppColors.border, strokeWidth: 0.5),
+          ),
+          titlesData: FlTitlesData(
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(sideTitles: SideTitles(
+              showTitles: true, reservedSize: 20,
+              interval: _xInterval(spardauer),
+              getTitlesWidget: (v, _) {
+                final yr = v.toInt();
+                if (yr % _xInterval(spardauer).toInt() != 0 && yr != 1) return const SizedBox.shrink();
+                return Text('$yr', style: AppTheme.monoSmall.copyWith(fontSize: 8, color: AppColors.muted));
+              },
+            )),
+            leftTitles: AxisTitles(sideTitles: SideTitles(
+              showTitles: true, reservedSize: 44, interval: maxY / 4,
+              getTitlesWidget: (v, _) => Text(Fmt.eurK(v),
+                style: AppTheme.monoSmall.copyWith(fontSize: 8, color: AppColors.muted)),
+            )),
+          ),
+          borderData: FlBorderData(show: false),
+          barTouchData: BarTouchData(
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipColor: (_) => AppColors.bg,
+              tooltipBorder: const BorderSide(color: AppColors.border),
+              getTooltipItem: (group, _, rod, __) {
+                return BarTooltipItem(
+                  '${s.bdSavingsYear(group.x, group.x)}\n${Fmt.eur(rod.toY)}',
+                  AppTheme.monoSmall.copyWith(fontSize: 9, color: AppColors.text),
+                );
+              },
+            ),
+          ),
+        )),
+      ),
+    ]);
+  }
+
+  Widget _legend(AppStrings s) {
+    return Wrap(spacing: 10, runSpacing: 4, children: [
+      _legendItem(AppColors.chartContrib, s.legendContrib),
+      _legendItem(AppColors.chartGrundzulage, s.legendGrundzulage),
+      _legendItem(AppColors.chartKinderzulage, s.legendKinderzulage),
+      _legendItem(AppColors.chartBonus, s.legendBonus),
+      _legendItem(AppColors.chartSteuererstattung, s.legendTaxRefund),
+    ]);
+  }
+
+  static Widget _legendItem(Color color, String label) {
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Container(width: 8, height: 8, decoration: BoxDecoration(
+        color: color, borderRadius: BorderRadius.circular(2))),
+      const SizedBox(width: 3),
+      Text(label, style: const TextStyle(fontSize: 9, color: AppColors.label)),
+    ]);
+  }
+
+  static double _barWidth(int years) => years <= 10 ? 14 : years <= 20 ? 10 : years <= 30 ? 7 : 5;
+  static double _xInterval(int years) => years <= 10 ? 1 : years <= 20 ? 5 : 10;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PAYOUT PHASE STACKED BAR CHART
+// ═══════════════════════════════════════════════════════════════════
+
+class PayoutPhaseBarChart extends StatelessWidget {
+  final int auszahlungsDauer;
+  final double grossAnnual;
+  final double nettoAnnual;
+  final AppStrings strings;
+
+  const PayoutPhaseBarChart({
+    super.key,
+    required this.auszahlungsDauer,
+    required this.grossAnnual,
+    required this.nettoAnnual,
+    required this.strings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final taxAnnual = grossAnnual - nettoAnnual;
+    final maxY = grossAnnual * 1.15;
+    final s = strings;
+
+    final groups = <BarChartGroupData>[];
+    for (int yr = 1; yr <= auszahlungsDauer; yr++) {
+      groups.add(BarChartGroupData(x: yr, barRods: [
+        BarChartRodData(
+          toY: grossAnnual,
+          rodStackItems: [
+            BarChartRodStackItem(0, nettoAnnual, AppColors.chartNetPayout),
+            if (taxAnnual > 0) BarChartRodStackItem(nettoAnnual, grossAnnual, AppColors.chartTax),
+          ],
+          width: _barWidth(auszahlungsDauer),
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ]));
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(s.chartPayoutTitle,
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.label)),
+      const SizedBox(height: AppSpacing.sm),
+      Wrap(spacing: 10, runSpacing: 4, children: [
+        SavingsPhaseBarChart._legendItem(AppColors.chartNetPayout, s.legendNetPayout),
+        SavingsPhaseBarChart._legendItem(AppColors.chartTax, s.legendTax),
+      ]),
+      const SizedBox(height: AppSpacing.md),
+      SizedBox(
+        height: 180,
+        child: BarChart(BarChartData(
+          barGroups: groups,
+          maxY: maxY,
+          gridData: FlGridData(
+            show: true, drawVerticalLine: false,
+            horizontalInterval: maxY / 4,
+            getDrawingHorizontalLine: (_) => FlLine(color: AppColors.border, strokeWidth: 0.5),
+          ),
+          titlesData: FlTitlesData(
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(sideTitles: SideTitles(
+              showTitles: true, reservedSize: 20,
+              interval: _xInterval(auszahlungsDauer),
+              getTitlesWidget: (v, _) {
+                final yr = v.toInt();
+                if (yr % _xInterval(auszahlungsDauer).toInt() != 0 && yr != 1) return const SizedBox.shrink();
+                return Text('$yr', style: AppTheme.monoSmall.copyWith(fontSize: 8, color: AppColors.muted));
+              },
+            )),
+            leftTitles: AxisTitles(sideTitles: SideTitles(
+              showTitles: true, reservedSize: 44, interval: maxY / 4,
+              getTitlesWidget: (v, _) => Text(Fmt.eurK(v),
+                style: AppTheme.monoSmall.copyWith(fontSize: 8, color: AppColors.muted)),
+            )),
+          ),
+          borderData: FlBorderData(show: false),
+          barTouchData: BarTouchData(
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipColor: (_) => AppColors.bg,
+              tooltipBorder: const BorderSide(color: AppColors.border),
+              getTooltipItem: (group, _, rod, __) {
+                return BarTooltipItem(
+                  '${s.legendNetPayout}: ${Fmt.eur(nettoAnnual)}\n${s.legendTax}: ${Fmt.eur(taxAnnual)}',
+                  AppTheme.monoSmall.copyWith(fontSize: 9, color: AppColors.text),
+                );
+              },
+            ),
+          ),
+        )),
+      ),
+    ]);
+  }
+
+  static double _barWidth(int years) => years <= 10 ? 14 : years <= 20 ? 10 : 7;
+  static double _xInterval(int years) => years <= 10 ? 1 : years <= 20 ? 5 : 10;
 }

@@ -112,6 +112,15 @@ class AppColors {
   static const warnBg = Color(0xFFFFFBEB);
   static const warnBorder = Color(0xFFFDE68A);
   static const warnText = Color(0xFF92400E);
+
+  // Stacked bar chart segments
+  static const chartContrib = Color(0xFF3B82F6);       // own contribution (blue)
+  static const chartGrundzulage = Color(0xFF10B981);    // Grundzulage (green)
+  static const chartKinderzulage = Color(0xFF06B6D4);   // Kinderzulage (teal)
+  static const chartBonus = Color(0xFFF59E0B);          // Berufseinsteigerbonus + Geringverdiener (amber)
+  static const chartSteuererstattung = Color(0xFF8B5CF6); // tax refund (purple)
+  static const chartNetPayout = Color(0xFF3B82F6);      // net payout (blue)
+  static const chartTax = Color(0xFFEF4444);            // tax on payout (red)
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -248,5 +257,16 @@ class AppTheme {
 
   static TextStyle get monoSmall => GoogleFonts.dmMono(
     fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.text,
+  );
+
+  /// Uppercase label style used for input panel section headers.
+  static const labelUppercase = TextStyle(
+    fontSize: 10, fontWeight: FontWeight.w600,
+    color: AppColors.label, letterSpacing: 0.3,
+  );
+
+  /// Hint text style used for secondary descriptions below labels.
+  static const hint = TextStyle(
+    fontSize: 9, color: AppColors.muted, height: 1.3,
   );
 }

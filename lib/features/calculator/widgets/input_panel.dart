@@ -6,6 +6,7 @@ import 'package:avdepot_rechner/core/responsive/screen_layout.dart';
 import 'package:avdepot_rechner/core/state/locale_cubit.dart';
 import 'package:avdepot_rechner/shared/utils/fmt.dart';
 import 'package:avdepot_rechner/models/scenario.dart';
+import 'package:avdepot_rechner/shared/widgets/common.dart';
 import 'package:avdepot_rechner/features/calculator/cubit/calculator_cubit.dart';
 import 'package:avdepot_rechner/features/calculator/cubit/calculator_state.dart';
 
@@ -279,11 +280,6 @@ class _InputPanelState extends State<InputPanel> with TickerProviderStateMixin {
         value: state.costs.kirchensteuer,
         onChanged: cubit.setKirchensteuer,
       ),
-      const Divider(height: AppSpacing.xxxl),
-      _UngefoerdertTaxToggle(
-        value: state.costs.ungefoerdertTax,
-        onChanged: cubit.setUngefoerdertTaxMode,
-      ),
     ]);
   }
 
@@ -327,8 +323,7 @@ class AppSlider extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Flexible(child: Text(label.toUpperCase(),
-                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-                  color: AppColors.label, letterSpacing: 0.3))),
+                style: AppTheme.labelUppercase)),
               Text(display, style: AppTheme.monoAccent.copyWith(fontSize: 13)),
             ],
           ),
@@ -336,7 +331,7 @@ class AppSlider extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Padding(
               padding: const EdgeInsets.only(top: 1),
-              child: Text(hint!, style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
+              child: Text(hint!, style: AppTheme.hint),
             ),
           ),
           SizedBox(
@@ -472,89 +467,14 @@ class _KirchensteuerToggle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(s.kirchensteuerLabel.toUpperCase(),
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-            color: AppColors.label, letterSpacing: 0.3)),
+          style: AppTheme.labelUppercase),
         const SizedBox(height: AppSpacing.sm),
-        Row(
-          children: [
-            _chip(s.kirchensteuerNone, 0.0),
-            const SizedBox(width: AppSpacing.md),
-            _chip(s.kirchensteuerBayBw, 0.08),
-            const SizedBox(width: AppSpacing.md),
-            _chip(s.kirchensteuerOther, 0.09),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _chip(String label, double chipValue) {
-    final selected = value == chipValue;
-    return GestureDetector(
-      onTap: () => onChanged(chipValue),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.accent : AppColors.card,
-          borderRadius: BorderRadius.circular(AppRadius.chip),
-          border: Border.all(color: selected ? AppColors.accent : AppColors.border),
-        ),
-        child: Text(label, style: TextStyle(
-          fontSize: 11, fontWeight: FontWeight.w600,
-          color: selected ? Colors.white : AppColors.label)),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// UNGEFÖRDERT TAX TOGGLE
-// ═══════════════════════════════════════════════════════════════════
-
-class _UngefoerdertTaxToggle extends StatelessWidget {
-  final UngefoerdertTaxMode value;
-  final ValueChanged<UngefoerdertTaxMode> onChanged;
-
-  const _UngefoerdertTaxToggle({required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final s = context.read<LocaleCubit>().state.strings;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(s.ungefoerdertTaxLabel.toUpperCase(),
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-            color: AppColors.label, letterSpacing: 0.3)),
-        Text(s.hintUngefoerdertTax,
-          style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
-        const SizedBox(height: AppSpacing.sm),
-        Row(children: [
-          _taxChip(s.ungefoerdertTaxNachgelagert, UngefoerdertTaxMode.nachgelagert),
-          const SizedBox(width: AppSpacing.md),
-          _taxChip(s.ungefoerdertTaxErtragsanteil, UngefoerdertTaxMode.ertragsanteil),
-          const SizedBox(width: AppSpacing.md),
-          Flexible(child: _taxChip(s.ungefoerdertTaxHalbeinkunfte, UngefoerdertTaxMode.halbeinkunfte)),
+        AppChipGroup<double>(value: value, onChanged: onChanged, options: [
+          (0.0, s.kirchensteuerNone),
+          (0.08, s.kirchensteuerBayBw),
+          (0.09, s.kirchensteuerOther),
         ]),
       ],
-    );
-  }
-
-  Widget _taxChip(String label, UngefoerdertTaxMode mode) {
-    final selected = value == mode;
-    return GestureDetector(
-      onTap: () => onChanged(mode),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.accent : AppColors.card,
-          borderRadius: BorderRadius.circular(AppRadius.chip),
-          border: Border.all(color: selected ? AppColors.accent : AppColors.border),
-        ),
-        child: Text(label, style: TextStyle(
-          fontSize: 11, fontWeight: FontWeight.w600,
-          color: selected ? Colors.white : AppColors.label)),
-      ),
     );
   }
 }
@@ -596,16 +516,16 @@ class _IncomeScenarioPanel extends StatelessWidget {
           ],
         ),
         Text(s.hintIncomeDev,
-          style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
+          style: AppTheme.hint),
 
         if (settings.enabled) ...[
           const SizedBox(height: AppSpacing.xl),
 
           // ─── GROWTH CURVE SELECTOR ────────────────────────────
-          Wrap(spacing: AppSpacing.md, runSpacing: AppSpacing.sm, children: [
-            _curveChip(s.curveLinear, GrowthCurve.linear),
-            _curveChip(s.curveStepwise, GrowthCurve.stepwise),
-            _curveChip(s.curveLogarithmic, GrowthCurve.logarithmic),
+          AppChipGroup<GrowthCurve>(value: settings.curve, onChanged: cubit.setGrowthCurve, options: [
+            (GrowthCurve.linear, s.curveLinear),
+            (GrowthCurve.stepwise, s.curveStepwise),
+            (GrowthCurve.logarithmic, s.curveLogarithmic),
           ]),
           const SizedBox(height: AppSpacing.lg),
 
@@ -653,12 +573,11 @@ class _IncomeScenarioPanel extends StatelessWidget {
               )),
               const SizedBox(width: AppSpacing.sm),
               Expanded(child: Text(s.partTimeToggle.toUpperCase(),
-                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-                  color: AppColors.label, letterSpacing: 0.3))),
+                style: AppTheme.labelUppercase)),
             ],
           ),
           Text(s.hintPartTime,
-            style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
+            style: AppTheme.hint),
           if (settings.hasPartTime) ...[
             const SizedBox(height: AppSpacing.lg),
             AppSlider(label: s.partTimeStart, value: (settings.partTimeStartYear ?? 5).toDouble(),
@@ -679,10 +598,9 @@ class _IncomeScenarioPanel extends StatelessWidget {
           // ─── CHILD ARRIVAL TIMING ─────────────────────────────
           const Divider(height: AppSpacing.xxxl),
           Text(s.childTimingLabel.toUpperCase(),
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-              color: AppColors.label, letterSpacing: 0.3)),
+            style: AppTheme.labelUppercase),
           Text(s.hintChildTiming,
-            style: const TextStyle(fontSize: 9, color: AppColors.muted, height: 1.3)),
+            style: AppTheme.hint),
           const SizedBox(height: AppSpacing.md),
           ...settings.childArrivalYears.asMap().entries.map((e) =>
             Padding(
@@ -727,21 +645,4 @@ class _IncomeScenarioPanel extends StatelessWidget {
     );
   }
 
-  Widget _curveChip(String label, GrowthCurve curve) {
-    final selected = settings.curve == curve;
-    return GestureDetector(
-      onTap: () => cubit.setGrowthCurve(curve),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.accent : AppColors.card,
-          borderRadius: BorderRadius.circular(AppRadius.chip),
-          border: Border.all(color: selected ? AppColors.accent : AppColors.border),
-        ),
-        child: Text(label, style: TextStyle(
-          fontSize: 11, fontWeight: FontWeight.w600,
-          color: selected ? Colors.white : AppColors.label)),
-      ),
-    );
-  }
 }

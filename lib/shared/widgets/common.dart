@@ -164,6 +164,41 @@ class ComparisonBar extends StatelessWidget {
   }
 }
 
+/// Generic chip group for toggling between a fixed set of options.
+class AppChipGroup<T> extends StatelessWidget {
+  final T value;
+  final List<(T, String)> options;
+  final ValueChanged<T> onChanged;
+
+  const AppChipGroup({super.key, required this.value, required this.options, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(spacing: AppSpacing.md, runSpacing: AppSpacing.sm, children: [
+      for (final (optValue, label) in options)
+        _chip(label, optValue),
+    ]);
+  }
+
+  Widget _chip(String label, T chipValue) {
+    final selected = value == chipValue;
+    return GestureDetector(
+      onTap: () => onChanged(chipValue),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.accent : AppColors.card,
+          borderRadius: BorderRadius.circular(AppRadius.chip),
+          border: Border.all(color: selected ? AppColors.accent : AppColors.border),
+        ),
+        child: Text(label, style: TextStyle(
+          fontSize: 11, fontWeight: FontWeight.w600,
+          color: selected ? Colors.white : AppColors.label)),
+      ),
+    );
+  }
+}
+
 /// Small info icon that shows a tooltip on hover (desktop) or long-press (mobile).
 class InfoTip extends StatelessWidget {
   final String message;

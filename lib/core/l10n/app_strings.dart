@@ -42,6 +42,9 @@ abstract class AppStrings {
   String get hintChildren;
   String childAgeLabel(int index);
   String get hintChildAge;
+  String get childStudyYes;
+  String get childStudyNo;
+  String get hintChildStudy;
   String get hintStartingAge;
   String hintDerivedPension(String amount);
   String get hintReturn;
@@ -103,12 +106,14 @@ abstract class AppStrings {
   String get bdCapGainsSavingsAV;
   String get bdCapGainsSavingsETF;
   String get bdIntoDepotYear;
+  String bdPhaseSubtotal(int years);
   String get bdAccumulated;
   String bdSavingsYear(int from, int to);
   String bdChildrenEligible(int count);
   String get bdTotalContributions;
   String get bdTotalSubsidies;
   String get bdTaxRefundTotal;
+  String get bdTotalIntoDepot;
   String get bdFinalCapital;
   String get bdOwnContrib;
   String get bdSubsidiesReceived;
@@ -149,6 +154,19 @@ abstract class AppStrings {
   // breakdown tabs
   String get bdTabSavings;
   String get bdTabPayout;
+  // bar chart legends
+  String get legendContrib;
+  String get legendGrundzulage;
+  String get legendKinderzulage;
+  String get legendBonus;
+  String get legendTaxRefund;
+  String get legendNetPayout;
+  String get legendTax;
+  String get chartSavingsTitle;
+  String get chartPayoutTitle;
+  // result assumptions
+  String get sectionAssumptions;
+  String get hintAssumptions;
 
   // ─── INFO TOOLTIPS ─────────────────────────────────────────────────
   String get tipGrundzulage;
@@ -383,6 +401,9 @@ class StringsEn extends AppStrings {
   String get hintChildren => 'Number of children eligible for Kindergeld. Each child adds up to €300/yr subsidy. Ends at age 25 (education) or 18.';
   String childAgeLabel(int index) => 'Age of child ${index + 1}';
   String get hintChildAge => 'Current age. Kinderzulage ends when child turns 25 (in education) or 18.';
+  String get childStudyYes => 'Education (until 25)';
+  String get childStudyNo => 'No education (until 18)';
+  String get hintChildStudy => 'Kindergeld eligibility: until 25 if child is in education/training, otherwise until 18.';
   String get hintStartingAge => 'Age when you start saving. Younger start = longer compounding.';
   String hintDerivedPension(String amount) => 'Est. state pension: $amount/mo (derived from your income and contribution years). Override in Advanced Settings.';
   String get hintReturn => 'Expected annual return before costs. Depends on the selected macro scenario or manual input.';
@@ -445,12 +466,14 @@ class StringsEn extends AppStrings {
   String get bdCapGainsSavingsAV => 'Tax-free';
   String get bdCapGainsSavingsETF => 'Taxed yearly';
   String get bdIntoDepotYear => 'Into Depot Per Year';
+  String bdPhaseSubtotal(int years) => 'Phase subtotal ($years yr)';
   String get bdAccumulated => 'Accumulated Over Savings Period';
   String bdSavingsYear(int from, int to) => from == to ? 'Savings year $from' : 'Savings years $from–$to';
   String bdChildrenEligible(int count) => '$count child${count != 1 ? 'ren' : ''} eligible';
   String get bdTotalContributions => 'Total contributions';
   String get bdTotalSubsidies => 'Total subsidies';
   String get bdTaxRefundTotal => 'Tax refund total (→ bank)';
+  String get bdTotalIntoDepot => 'Total into depot';
   String get bdFinalCapital => 'Final Capital (total)';
   String get bdOwnContrib => 'thereof own contributions';
   String get bdSubsidiesReceived => 'thereof subsidies';
@@ -490,6 +513,17 @@ class StringsEn extends AppStrings {
   String get bdNetPerMonth => 'Net per month';
   String get bdTabSavings => 'Savings Phase';
   String get bdTabPayout => 'Payout Phase';
+  String get legendContrib => 'Contribution';
+  String get legendGrundzulage => 'Grundzulage';
+  String get legendKinderzulage => 'Kinderzulage';
+  String get legendBonus => 'Bonus';
+  String get legendTaxRefund => 'Tax refund';
+  String get legendNetPayout => 'Net payout';
+  String get legendTax => 'Tax';
+  String get chartSavingsTitle => 'AV-Depot: Annual Deposits & Subsidies';
+  String get chartPayoutTitle => 'AV-Depot: Annual Payout Breakdown';
+  String get sectionAssumptions => 'Assumptions';
+  String get hintAssumptions => 'These choices affect the calculation but depend on individual circumstances.';
 
   // Info Tooltips
   String get tipGrundzulage => 'Government matches your contributions: 50% on the first €360/yr and 25% on €361–1,800/yr. Maximum €540/yr. Goes directly into your depot.';
@@ -783,6 +817,9 @@ class StringsDe extends AppStrings {
   String get hintChildren => 'Anzahl kindergeldberechtigter Kinder. Jedes Kind bringt bis zu 300 €/Jahr Zulage. Endet mit 25 (Ausbildung) oder 18.';
   String childAgeLabel(int index) => 'Alter Kind ${index + 1}';
   String get hintChildAge => 'Aktuelles Alter. Kinderzulage endet, wenn das Kind 25 (in Ausbildung) oder 18 wird.';
+  String get childStudyYes => 'Ausbildung (bis 25)';
+  String get childStudyNo => 'Keine Ausbildung (bis 18)';
+  String get hintChildStudy => 'Kindergeldberechtigung: bis 25 bei Ausbildung/Studium, sonst bis 18.';
   String get hintStartingAge => 'Alter beim Start des Sparens. Früherer Start = längerer Zinseszins.';
   String hintDerivedPension(String amount) => 'Gesch. gesetzl. Rente: $amount/Mt (abgeleitet aus Einkommen und Beitragsjahren). Änderbar unter Erweiterte Einstellungen.';
   String get hintReturn => 'Erwartete jährliche Rendite vor Kosten. Abhängig vom gewählten Makro-Szenario oder manueller Eingabe.';
@@ -841,12 +878,14 @@ class StringsDe extends AppStrings {
   String get bdCapGainsSavingsAV => 'Steuerfrei';
   String get bdCapGainsSavingsETF => 'Jährlich besteuert';
   String get bdIntoDepotYear => 'Ins Depot pro Jahr';
+  String bdPhaseSubtotal(int years) => 'Phasensumme ($years J.)';
   String get bdAccumulated => 'Kumuliert über Sparperiode';
   String bdSavingsYear(int from, int to) => from == to ? 'Sparjahr $from' : 'Sparjahre $from–$to';
   String bdChildrenEligible(int count) => '$count Kind${count != 1 ? 'er' : ''} berechtigt';
   String get bdTotalContributions => 'Eigenbeiträge gesamt';
   String get bdTotalSubsidies => 'Zulagen gesamt';
   String get bdTaxRefundTotal => 'Steuererstattung gesamt (→ Bank)';
+  String get bdTotalIntoDepot => 'Ins Depot gesamt';
   String get bdFinalCapital => 'Endkapital (gesamt)';
   String get bdOwnContrib => 'davon Eigenbeiträge';
   String get bdSubsidiesReceived => 'davon Zulagen';
@@ -886,6 +925,17 @@ class StringsDe extends AppStrings {
   String get bdNetPerMonth => 'Netto pro Monat';
   String get bdTabSavings => 'Ansparphase';
   String get bdTabPayout => 'Auszahlphase';
+  String get legendContrib => 'Eigenbeitrag';
+  String get legendGrundzulage => 'Grundzulage';
+  String get legendKinderzulage => 'Kinderzulage';
+  String get legendBonus => 'Bonus';
+  String get legendTaxRefund => 'Steuererstattung';
+  String get legendNetPayout => 'Netto-Auszahlung';
+  String get legendTax => 'Steuer';
+  String get chartSavingsTitle => 'AV-Depot: Jährliche Einzahlungen & Zulagen';
+  String get chartPayoutTitle => 'AV-Depot: Jährliche Auszahlung';
+  String get sectionAssumptions => 'Annahmen';
+  String get hintAssumptions => 'Diese Optionen beeinflussen die Berechnung, hängen aber von individuellen Umständen ab.';
 
   String get tipGrundzulage => 'Der Staat bezuschusst Ihre Beiträge: 50 % auf die ersten 360 €/J und 25 % auf 361–1.800 €/J. Maximum 540 €/J. Fließt direkt ins Depot.';
   String get tipKinderzulage => 'Bis 300 €/Kind/Jahr (1:1 ab 25 €/Mt). Kind muss kindergeldberechtigt sein — endet mit 25 (in Ausbildung) oder 18. Zulage entfällt danach.';

@@ -32,7 +32,7 @@ class CalcConstants {
   /// Max €300 per child per year, 1:1 match on own contributions
   static const double kinderzulageMax = 300.0;
   /// Child must be kindergeldberechtigt. Kindergeld ends at age 25 (in education)
-  /// or 18 (default). Using 25 as conservative upper bound.
+  /// or 18 (default). Actual max age is user-selectable via PersonalScenario.kinderStudieren.
   static const int kinderzulageMaxAlter = 25;
 
   // ─── BERUFSEINSTEIGERBONUS (§89 Abs. 3 EStG-E) ────────────────
@@ -140,7 +140,7 @@ class SimulationEngine {
     final jb = person.jahresbeitrag;
     // Year 0: use kinderAtYear for consistency (accounts for children already near age-out)
     final kinderY0 = const IncomeDevSettings().kinderAtYear(person.kinder, 0,
-      kinderAlter: person.kinderAlter, maxAge: CalcConstants.kinderzulageMaxAlter);
+      kinderAlter: person.kinderAlter, maxAge: person.kinderStudieren ? 25 : 18);
     final z = subsidy.calcZulage(jb, kinderY0, person.alterStart, 0, person.brutto);
     final gst = tax.getGrenzsteuersatz(person.brutto);
     final gp = tax.calcGuenstigerpruefung(jb, z.total, gst);
@@ -173,7 +173,7 @@ class SimulationEngine {
       final alter = person.alterStart + j;
       final bruttoJ = incomeDev.bruttoForYear(person.brutto, j);
       final kinderJ = incomeDev.kinderAtYear(person.kinder, j,
-        kinderAlter: person.kinderAlter, maxAge: CalcConstants.kinderzulageMaxAlter);
+        kinderAlter: person.kinderAlter, maxAge: person.kinderStudieren ? 25 : 18);
       final z = subsidy.calcZulage(jbGef, kinderJ, alter, j, bruttoJ);
       final gstJ = tax.getGrenzsteuersatz(bruttoJ);
       final gp = tax.calcGuenstigerpruefung(jbGef, z.total, gstJ);
@@ -241,7 +241,7 @@ class SimulationEngine {
       final alter = person.alterStart + j;
       final bruttoJ = incomeDev.bruttoForYear(person.brutto, j);
       final kinderJ = incomeDev.kinderAtYear(person.kinder, j,
-        kinderAlter: person.kinderAlter, maxAge: CalcConstants.kinderzulageMaxAlter);
+        kinderAlter: person.kinderAlter, maxAge: person.kinderStudieren ? 25 : 18);
       final gstJ = tax.getGrenzsteuersatz(bruttoJ);
       final z = subsidy.calcZulage(jbGefoerdert, kinderJ, alter, j, bruttoJ);
       final gp = tax.calcGuenstigerpruefung(jbGefoerdert, z.total, gstJ);

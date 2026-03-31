@@ -73,6 +73,10 @@ class CalculatorCubit extends Cubit<CalculatorState> {
       kinderAlter: ages), clearSelectedPersonal: true));
   }
 
+  void setKinderStudieren(bool v) {
+    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(kinderStudieren: v), clearSelectedPersonal: true));
+  }
+
   void setAlterStart(int v) {
     final retirementAge = state.currentPerson.rentenalter;
     final newSpardauer = (retirementAge - v).clamp(5, 45);
@@ -116,10 +120,6 @@ class CalculatorCubit extends Cubit<CalculatorState> {
 
   void setGesetzlicheRenteOverride(double v) {
     emit(state.copyWith(currentPerson: state.currentPerson.copyWith(gesetzlicheRenteOverride: v), clearSelectedPersonal: true));
-  }
-
-  void clearGesetzlicheRenteOverride() {
-    emit(state.copyWith(currentPerson: state.currentPerson.copyWith(clearRenteOverride: true), clearSelectedPersonal: true));
   }
 
   void setSonstigeEinkuenfte(double v) {

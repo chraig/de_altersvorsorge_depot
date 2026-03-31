@@ -329,6 +329,10 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
 
         const ComparisonChart(),
 
+        // ─── ASSUMPTIONS ────────────────────────────────────
+        const SizedBox(height: AppSpacing.xl),
+        _AssumptionsPanel(state: state),
+
         // ─── CALCULATION BREAKDOWN ───────────────────────
         const SizedBox(height: AppSpacing.xl),
         _CalculationBreakdown(state: state, av: av, etf: etf, sub: sub),
@@ -544,6 +548,63 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// ASSUMPTIONS PANEL — late-binding decisions that affect results
+// ═══════════════════════════════════════════════════════════════════
+
+class _AssumptionsPanel extends StatelessWidget {
+  final CalculatorState state;
+  const _AssumptionsPanel({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<LocaleCubit>().state.strings;
+    final cubit = context.read<CalculatorCubit>();
+    final p = state.currentPerson;
+    final costs = state.costs;
+    final hasKinder = p.kinder > 0 || state.incomeDev.childArrivalYears.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.panel),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(s.sectionAssumptions.toUpperCase(),
+          style: AppTheme.labelUppercase),
+        Text(s.hintAssumptions, style: AppTheme.hint),
+        const SizedBox(height: AppSpacing.lg),
+
+        if (hasKinder) ...[
+          Text(s.hintChildStudy, style: AppTheme.hint),
+          const SizedBox(height: AppSpacing.sm),
+          AppChipGroup<bool>(
+            value: p.kinderStudieren,
+            onChanged: cubit.setKinderStudieren,
+            options: [(true, s.childStudyYes), (false, s.childStudyNo)],
+          ),
+          const SizedBox(height: AppSpacing.xl),
+        ],
+
+        Text(s.ungefoerdertTaxLabel.toUpperCase(), style: AppTheme.labelUppercase),
+        Text(s.hintUngefoerdertTax, style: AppTheme.hint),
+        const SizedBox(height: AppSpacing.sm),
+        AppChipGroup<UngefoerdertTaxMode>(
+          value: costs.ungefoerdertTax,
+          onChanged: cubit.setUngefoerdertTaxMode,
+          options: [
+            (UngefoerdertTaxMode.nachgelagert, s.ungefoerdertTaxNachgelagert),
+            (UngefoerdertTaxMode.ertragsanteil, s.ungefoerdertTaxErtragsanteil),
+            (UngefoerdertTaxMode.halbeinkunfte, s.ungefoerdertTaxHalbeinkunfte),
+          ],
+        ),
+      ]),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // CALCULATION BREAKDOWN — phase-based, AV vs ETF side by side
 // ═══════════════════════════════════════════════════════════════════
 
@@ -706,6 +767,12 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
   Widget _savingsPhase(AppStrings s, PersonalScenario p, SubsidyBreakdown sub, List<SubsidyPhase> phases, double jbGef, double jbUngef, CostSettings costs, ETFResult etf, bool compact) {
     final jbTotal = jbGef + jbUngef;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      SavingsPhaseBarChart(
+        phases: phases, jbGef: jbGef, jbUngef: jbUngef,
+        spardauer: p.spardauer, strings: s,
+      ),
+      _dv(),
+
       _pairHeader(),
 
       _h(s.bdContributions),
@@ -718,6 +785,7 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
       // ── SUBSIDY PHASES (year ranges) ──────────────────────
       ...phases.map((phase) {
         final fq = jbGef > 0 ? phase.total / jbGef : 0.0;
+        final avIntoDepotYr = jbTotal + phase.total;
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           _h('${s.bdSavingsYear(phase.yearFrom, phase.yearTo)} — ${s.bdChildrenEligible(phase.kinder)}'),
           if (phase.yearFrom == 1) _pairFormula(s.baseGrant, Fmt.eur(phase.grundzulage), '0 €', tip: s.tipGrundzulage,
@@ -729,6 +797,10 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
           _pair(s.totalSubsidyYear, Fmt.eur(phase.total), '0 €', bold: true),
           _pair(s.subsidyRate, Fmt.pct(fq), '0,0 %'),
           if (phase.steuererstattung > 0) _pair(s.viaTaxOptimization, Fmt.eur(phase.steuererstattung), '—', tip: s.tipGuenstigerpruefung),
+          _pairFormula(s.bdIntoDepotYear, Fmt.eur(avIntoDepotYr), Fmt.eur(p.jahresbeitrag),
+            avFormula: '= ${Fmt.eur(jbTotal)} + ${Fmt.eur(phase.total)}', etfFormula: ''),
+          if (phase.years > 1)
+            _pair(s.bdPhaseSubtotal(phase.years), Fmt.eur(avIntoDepotYr * phase.years), Fmt.eur(p.jahresbeitrag * phase.years)),
           _dv(),
         ]);
       }),
@@ -745,7 +817,9 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
         avFormula: '= ${Fmt.eur(jbTotal)} × ${p.spardauer} yr', etfFormula: '= ${Fmt.eur(p.jahresbeitrag)} × ${p.spardauer} yr'),
       _pair(s.bdTotalSubsidies, Fmt.eur(phases.fold<double>(0, (sum, ph) => sum + ph.total * ph.years)), '0 €'),
       _pair(s.bdTaxRefundTotal, Fmt.eur(phases.fold<double>(0, (sum, ph) => sum + ph.steuererstattung * ph.years)), '—'),
-      _pair(s.bdIntoDepotYear, Fmt.eur(jbTotal + sub.total), Fmt.eur(p.jahresbeitrag)),
+      _pair(s.bdTotalIntoDepot,
+        Fmt.eur(phases.fold<double>(0, (sum, ph) => sum + (jbTotal + ph.total) * ph.years)),
+        Fmt.eur(p.jahresbeitrag * p.spardauer), bold: true),
     ]);
   }
 
@@ -766,6 +840,14 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
     final etfTaxPerMonth = etf.steuerAufGewinn / (auszDauer * 12);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      PayoutPhaseBarChart(
+        auszahlungsDauer: auszDauer,
+        grossAnnual: av.monatlicheAuszahlung * 12,
+        nettoAnnual: av.nettoMonatlich * 12,
+        strings: s,
+      ),
+      _dv(),
+
       _pairHeader(),
 
       _h(s.bdFinalCapital),

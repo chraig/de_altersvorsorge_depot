@@ -19,6 +19,7 @@ class PersonalScenario {
   double brutto;             // [EUR/year] yearly gross income
   int kinder;                // [count] number of existing children at savings start
   List<int> kinderAlter;     // [years] age of each existing child at savings start (empty = assume age 0)
+  bool kinderStudieren;      // true = Kindergeld until 25 (education), false = until 18
   int alterStart;            // [years] age at start of savings
   int spardauer;             // [years] savings duration (derived: retirementAge - startAge)
   double? gesetzlicheRenteOverride; // [EUR/month] manual override, null = auto-derive
@@ -34,6 +35,7 @@ class PersonalScenario {
     required this.brutto,
     required this.kinder,
     this.kinderAlter = const [],
+    this.kinderStudieren = true,
     required this.alterStart,
     required this.spardauer,
     this.gesetzlicheRenteOverride,
@@ -44,13 +46,14 @@ class PersonalScenario {
 
   PersonalScenario copyWith({
     String? name, String? icon, double? sparrate, double? brutto,
-    int? kinder, List<int>? kinderAlter, int? alterStart, int? spardauer,
+    int? kinder, List<int>? kinderAlter, bool? kinderStudieren, int? alterStart, int? spardauer,
     double? gesetzlicheRenteOverride, bool clearRenteOverride = false,
     double? sonstigeEinkuenfte, int? arbeitsbeginn, bool? isCustom,
   }) => PersonalScenario(
     id: id, name: name ?? this.name, icon: icon ?? this.icon,
     sparrate: sparrate ?? this.sparrate, brutto: brutto ?? this.brutto,
     kinder: kinder ?? this.kinder, kinderAlter: kinderAlter ?? this.kinderAlter,
+    kinderStudieren: kinderStudieren ?? this.kinderStudieren,
     alterStart: alterStart ?? this.alterStart,
     spardauer: spardauer ?? this.spardauer,
     gesetzlicheRenteOverride: clearRenteOverride ? null : (gesetzlicheRenteOverride ?? this.gesetzlicheRenteOverride),
