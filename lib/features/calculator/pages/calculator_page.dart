@@ -616,7 +616,7 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           child: _tab.index == 0
-              ? _savingsPhase(s, p, sub, jbGef, jbUngef, costs, etf, compact)
+              ? _savingsPhase(s, p, sub, widget.state.subsidyPhases, jbGef, jbUngef, costs, etf, compact)
               : _payoutPhase(s, p, av, etf, costs, jbGef, jbUngef, compact),
         ),
       ]),
@@ -703,7 +703,7 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
 
   // ─── TAB 1: SAVINGS PHASE ──────────────────────────────────────
 
-  Widget _savingsPhase(AppStrings s, PersonalScenario p, SubsidyBreakdown sub, double jbGef, double jbUngef, CostSettings costs, ETFResult etf, bool compact) {
+  Widget _savingsPhase(AppStrings s, PersonalScenario p, SubsidyBreakdown sub, List<SubsidyPhase> phases, double jbGef, double jbUngef, CostSettings costs, ETFResult etf, bool compact) {
     final jbTotal = jbGef + jbUngef;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _pairHeader(),
@@ -715,36 +715,40 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
       if (jbUngef > 0) _pair('  ${s.tipUngefoerdert.split(':')[0]}', Fmt.eur(jbUngef), '—'),
       _dv(),
 
-      _h(s.bdSubsidiesYear1),
-      _pairFormula(s.baseGrant, Fmt.eur(sub.grundzulage), '0 €', tip: s.tipGrundzulage,
-        avFormula: '50% × min(${Fmt.eur(jbGef)}, €360) + 25% × rest', etfFormula: ''),
-      _pair(s.childGrant, Fmt.eur(sub.kinderzulage), '0 €', tip: s.tipKinderzulage),
-      _pair(s.entryBonus, Fmt.eur(sub.bonus), '0 €', tip: s.tipBerufseinsteigerbonus),
-      _pair(s.lowIncomeBonus, Fmt.eur(sub.geringverdienerbonus), '0 €', tip: s.tipGeringverdienerbonus),
-      _pair(s.totalSubsidyYear, Fmt.eur(sub.total), '0 €', bold: true),
-      _pair(s.subsidyRate, Fmt.pct(sub.foerderquote), '0,0 %'),
-      _dv(),
+      // ── SUBSIDY PHASES (year ranges) ──────────────────────
+      ...phases.map((phase) {
+        final yearLabel = phase.yearFrom == phase.yearTo
+            ? 'Year ${phase.yearFrom}'
+            : 'Years ${phase.yearFrom}–${phase.yearTo}';
+        final fq = jbGef > 0 ? phase.total / jbGef : 0.0;
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _h('$yearLabel (${phase.years} yr${phase.years > 1 ? 's' : ''})'),
+          if (phase.yearFrom == 1) _pairFormula(s.baseGrant, Fmt.eur(phase.grundzulage), '0 €', tip: s.tipGrundzulage,
+            avFormula: '50% × min(${Fmt.eur(jbGef)}, €360) + 25% × rest', etfFormula: '')
+          else _pair(s.baseGrant, Fmt.eur(phase.grundzulage), '0 €', tip: s.tipGrundzulage),
+          _pair('${s.childGrant} (${phase.kinder})', Fmt.eur(phase.kinderzulage), '0 €', tip: s.tipKinderzulage),
+          if (phase.bonus > 0) _pair(s.entryBonus, Fmt.eur(phase.bonus), '0 €', tip: s.tipBerufseinsteigerbonus),
+          if (phase.geringverdienerbonus > 0) _pair(s.lowIncomeBonus, Fmt.eur(phase.geringverdienerbonus), '0 €', tip: s.tipGeringverdienerbonus),
+          _pair(s.totalSubsidyYear, Fmt.eur(phase.total), '0 €', bold: true),
+          _pair(s.subsidyRate, Fmt.pct(fq), '0,0 %'),
+          if (phase.steuererstattung > 0) _pair(s.viaTaxOptimization, Fmt.eur(phase.steuererstattung), '—', tip: s.tipGuenstigerpruefung),
+          _dv(),
+        ]);
+      }),
 
       _h(s.bdTaxCostsSavings),
       _pair(s.costAvPa.split(' p.')[0], Fmt.pct(costs.kostenAV), Fmt.pct(costs.kostenETF)),
       _pairFormula('Vorabpauschale', '—', Fmt.pct(CalcConstants.vorabpauschaleDrag), tip: s.tipVorabpauschale,
         avFormula: s.bdCapGainsSavingsAV, etfFormula: s.bdCapGainsSavingsETF),
       _pair(s.bdCapGainsSavings, s.bdCapGainsSavingsAV, s.bdCapGainsSavingsETF),
-      _pairFormula(s.viaTaxOptimization, Fmt.eur(sub.steuererstattung), '—', tip: s.tipGuenstigerpruefung,
-        avFormula: s.bdNoteBankAccount, etfFormula: ''),
-      _dv(),
-
-      _h(s.bdIntoDepotYear),
-      _pairFormula(s.bdOwnContrib, Fmt.eur(jbTotal), Fmt.eur(p.jahresbeitrag),
-        avFormula: '+ ${Fmt.eur(sub.total)} ${s.bdTotalSubsidies.toLowerCase()}', etfFormula: ''),
-      _pair('= Total', Fmt.eur(jbTotal + sub.total), Fmt.eur(p.jahresbeitrag), bold: true),
       _dv(),
 
       _h(s.bdAccumulated),
       _pairFormula(s.bdTotalContributions, Fmt.eur(jbTotal * p.spardauer), Fmt.eur(p.jahresbeitrag * p.spardauer),
         avFormula: '= ${Fmt.eur(jbTotal)} × ${p.spardauer} yr', etfFormula: '= ${Fmt.eur(p.jahresbeitrag)} × ${p.spardauer} yr'),
-      _pair(s.bdTotalSubsidies, '~${Fmt.eur(sub.total * p.spardauer)}', '0 €'),
-      _pair(s.bdTaxRefundTotal, '~${Fmt.eur(sub.steuererstattung * p.spardauer)}', '—'),
+      _pair(s.bdTotalSubsidies, Fmt.eur(phases.fold<double>(0, (sum, ph) => sum + ph.total * ph.years)), '0 €'),
+      _pair(s.bdTaxRefundTotal, Fmt.eur(phases.fold<double>(0, (sum, ph) => sum + ph.steuererstattung * ph.years)), '—'),
+      _pair(s.bdIntoDepotYear, Fmt.eur(jbTotal + sub.total), Fmt.eur(p.jahresbeitrag)),
     ]);
   }
 

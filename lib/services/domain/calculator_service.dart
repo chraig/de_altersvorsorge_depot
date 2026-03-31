@@ -157,6 +157,61 @@ class SimulationEngine {
     );
   }
 
+  /// Compute subsidy phases: groups of consecutive years with identical subsidies.
+  /// Accounts for child age-out, Berufseinsteigerbonus (year 1 only),
+  /// Geringverdienerbonus eligibility changes with income development.
+  List<SubsidyPhase> calcSubsidyPhases(PersonalScenario person, {IncomeDevSettings incomeDev = const IncomeDevSettings()}) {
+    final jb = person.jahresbeitrag;
+    final jbGef = jb < CalcConstants.grundzulageMaxBeitrag ? jb : CalcConstants.grundzulageMaxBeitrag;
+    final phases = <SubsidyPhase>[];
+
+    int phaseStart = 0;
+    double prevGrund = -1, prevKind = -1, prevBonus = -1, prevGering = -1, prevRefund = -1;
+    int prevKinder = -1;
+
+    for (int j = 0; j < person.spardauer; j++) {
+      final alter = person.alterStart + j;
+      final bruttoJ = incomeDev.bruttoForYear(person.brutto, j);
+      final kinderJ = incomeDev.kinderAtYear(person.kinder, j,
+        kinderAlter: person.kinderAlter, maxAge: CalcConstants.kinderzulageMaxAlter);
+      final z = subsidy.calcZulage(jbGef, kinderJ, alter, j, bruttoJ);
+      final gstJ = tax.getGrenzsteuersatz(bruttoJ);
+      final gp = tax.calcGuenstigerpruefung(jbGef, z.total, gstJ);
+
+      // Check if this year's values differ from previous
+      if (z.grund != prevGrund || z.kind != prevKind || z.bonus != prevBonus ||
+          z.gering != prevGering || kinderJ != prevKinder ||
+          (gp.zusaetzlich - prevRefund).abs() > 0.01) {
+        // Close previous phase
+        if (j > 0) {
+          phases.add(SubsidyPhase(
+            yearFrom: phaseStart + 1, yearTo: j,
+            kinder: prevKinder, grundzulage: prevGrund, kinderzulage: prevKind,
+            bonus: prevBonus, geringverdienerbonus: prevGering,
+            total: prevGrund + prevKind + prevBonus + prevGering,
+            steuererstattung: prevRefund,
+          ));
+        }
+        phaseStart = j;
+        prevGrund = z.grund; prevKind = z.kind; prevBonus = z.bonus;
+        prevGering = z.gering; prevKinder = kinderJ; prevRefund = gp.zusaetzlich;
+      }
+    }
+
+    // Close final phase
+    if (person.spardauer > 0) {
+      phases.add(SubsidyPhase(
+        yearFrom: phaseStart + 1, yearTo: person.spardauer,
+        kinder: prevKinder, grundzulage: prevGrund, kinderzulage: prevKind,
+        bonus: prevBonus, geringverdienerbonus: prevGering,
+        total: prevGrund + prevKind + prevBonus + prevGering,
+        steuererstattung: prevRefund,
+      ));
+    }
+
+    return phases;
+  }
+
   // ─── AV-DEPOT SIMULATION ──────────────────────────────────────
 
   AVResult simulateAV({
@@ -373,6 +428,9 @@ class CalculatorService {
 
   static SubsidyBreakdown calcSubsidyBreakdown(PersonalScenario person) =>
       _engine.calcSubsidyBreakdown(person);
+
+  static List<SubsidyPhase> calcSubsidyPhases(PersonalScenario person, {IncomeDevSettings incomeDev = const IncomeDevSettings()}) =>
+      _engine.calcSubsidyPhases(person, incomeDev: incomeDev);
 
   static AVResult simulateAV({
     required PersonalScenario person,

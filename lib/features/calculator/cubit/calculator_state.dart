@@ -51,6 +51,9 @@ class CalculatorState {
   SubsidyBreakdown get subsidyBreakdown =>
       CalculatorService.calcSubsidyBreakdown(currentPerson);
 
+  List<SubsidyPhase> get subsidyPhases =>
+      CalculatorService.calcSubsidyPhases(currentPerson, incomeDev: incomeDev);
+
   AVResult avResult(AppStrings s) => CalculatorService.simulateAV(
       person: currentPerson, macro: effectiveMacro(s), costs: costs, incomeDev: incomeDev);
 

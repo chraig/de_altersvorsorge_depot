@@ -206,6 +206,28 @@ class CostSettings {
 // SUBSIDY (ZULAGE) BREAKDOWN
 // ═══════════════════════════════════════════════════════════════════
 
+/// A phase of consecutive years with identical subsidy components.
+class SubsidyPhase {
+  final int yearFrom;   // [1-based] first year of this phase
+  final int yearTo;     // [1-based] last year of this phase
+  final int kinder;     // eligible children in this phase
+  final double grundzulage;
+  final double kinderzulage;
+  final double bonus;
+  final double geringverdienerbonus;
+  final double total;
+  final double steuererstattung;
+
+  const SubsidyPhase({
+    required this.yearFrom, required this.yearTo,
+    required this.kinder, required this.grundzulage, required this.kinderzulage,
+    required this.bonus, required this.geringverdienerbonus, required this.total,
+    required this.steuererstattung,
+  });
+
+  int get years => yearTo - yearFrom + 1;
+}
+
 /// All values are per year (matching German subsidy law).
 class SubsidyBreakdown {
   final double grundzulage;        // [EUR/year]
