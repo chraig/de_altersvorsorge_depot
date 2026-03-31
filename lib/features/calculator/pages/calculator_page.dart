@@ -717,12 +717,9 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
 
       // ── SUBSIDY PHASES (year ranges) ──────────────────────
       ...phases.map((phase) {
-        final yearLabel = phase.yearFrom == phase.yearTo
-            ? 'Year ${phase.yearFrom}'
-            : 'Years ${phase.yearFrom}–${phase.yearTo}';
         final fq = jbGef > 0 ? phase.total / jbGef : 0.0;
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _h('$yearLabel (${phase.years} yr${phase.years > 1 ? 's' : ''})'),
+          _h('${s.bdSavingsYear(phase.yearFrom, phase.yearTo)} — ${s.bdChildrenEligible(phase.kinder)}'),
           if (phase.yearFrom == 1) _pairFormula(s.baseGrant, Fmt.eur(phase.grundzulage), '0 €', tip: s.tipGrundzulage,
             avFormula: '50% × min(${Fmt.eur(jbGef)}, €360) + 25% × rest', etfFormula: '')
           else _pair(s.baseGrant, Fmt.eur(phase.grundzulage), '0 €', tip: s.tipGrundzulage),

@@ -104,6 +104,8 @@ abstract class AppStrings {
   String get bdCapGainsSavingsETF;
   String get bdIntoDepotYear;
   String get bdAccumulated;
+  String bdSavingsYear(int from, int to);
+  String bdChildrenEligible(int count);
   String get bdTotalContributions;
   String get bdTotalSubsidies;
   String get bdTaxRefundTotal;
@@ -444,6 +446,8 @@ class StringsEn extends AppStrings {
   String get bdCapGainsSavingsETF => 'Taxed yearly';
   String get bdIntoDepotYear => 'Into Depot Per Year';
   String get bdAccumulated => 'Accumulated Over Savings Period';
+  String bdSavingsYear(int from, int to) => from == to ? 'Savings year $from' : 'Savings years $from–$to';
+  String bdChildrenEligible(int count) => '$count child${count != 1 ? 'ren' : ''} eligible';
   String get bdTotalContributions => 'Total contributions';
   String get bdTotalSubsidies => 'Total subsidies';
   String get bdTaxRefundTotal => 'Tax refund total (→ bank)';
@@ -838,6 +842,8 @@ class StringsDe extends AppStrings {
   String get bdCapGainsSavingsETF => 'Jährlich besteuert';
   String get bdIntoDepotYear => 'Ins Depot pro Jahr';
   String get bdAccumulated => 'Kumuliert über Sparperiode';
+  String bdSavingsYear(int from, int to) => from == to ? 'Sparjahr $from' : 'Sparjahre $from–$to';
+  String bdChildrenEligible(int count) => '$count Kind${count != 1 ? 'er' : ''} berechtigt';
   String get bdTotalContributions => 'Eigenbeiträge gesamt';
   String get bdTotalSubsidies => 'Zulagen gesamt';
   String get bdTaxRefundTotal => 'Steuererstattung gesamt (→ Bank)';
