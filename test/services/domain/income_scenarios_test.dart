@@ -198,6 +198,43 @@ void main() {
     });
   });
 
+  group('Child age-out with maxAge 18 (kinderStudieren=false)', () {
+    test('base child ages out after 18 years', () {
+      const dev = IncomeDevSettings();
+      // Child age 0 at start → eligible for 18 years (0..17), not at year 18
+      expect(dev.kinderAtYear(1, 0, kinderAlter: [0], maxAge: 18), 1);
+      expect(dev.kinderAtYear(1, 17, kinderAlter: [0], maxAge: 18), 1);
+      expect(dev.kinderAtYear(1, 18, kinderAlter: [0], maxAge: 18), 0);
+    });
+
+    test('teenager ages out much sooner with maxAge 18', () {
+      const dev = IncomeDevSettings();
+      // Child age 15 at start → eligible for 3 years (15..17), out at year 3
+      expect(dev.kinderAtYear(1, 0, kinderAlter: [15], maxAge: 18), 1);
+      expect(dev.kinderAtYear(1, 2, kinderAlter: [15], maxAge: 18), 1);
+      expect(dev.kinderAtYear(1, 3, kinderAlter: [15], maxAge: 18), 0);
+    });
+
+    test('maxAge 18 vs 25 yields different age-out years', () {
+      const dev = IncomeDevSettings();
+      // Child age 10 at start
+      // maxAge 25: eligible until year 15 (age 25)
+      // maxAge 18: eligible until year 8 (age 18)
+      expect(dev.kinderAtYear(1, 8, kinderAlter: [10], maxAge: 25), 1);
+      expect(dev.kinderAtYear(1, 8, kinderAlter: [10], maxAge: 18), 0);
+      expect(dev.kinderAtYear(1, 14, kinderAlter: [10], maxAge: 25), 1);
+      expect(dev.kinderAtYear(1, 15, kinderAlter: [10], maxAge: 25), 0);
+    });
+
+    test('dynamic child ages out at 18 from arrival year', () {
+      const dev = IncomeDevSettings(enabled: true, childArrivalYears: [5]);
+      // Dynamic child born at year 5, ages out at year 23 (age 18) not year 30
+      expect(dev.kinderAtYear(0, 5, maxAge: 18), 1);
+      expect(dev.kinderAtYear(0, 22, maxAge: 18), 1); // age 17
+      expect(dev.kinderAtYear(0, 23, maxAge: 18), 0); // age 18, out
+    });
+  });
+
   group('hasPartTime / hasChildTiming', () {
     test('hasPartTime requires both start year and duration', () {
       expect(const IncomeDevSettings(partTimeStartYear: 5, partTimeDuration: 3).hasPartTime, true);

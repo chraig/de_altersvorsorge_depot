@@ -361,4 +361,163 @@ void main() {
       expect(breakdown.foerderquote, closeTo(1190 / 1200, 0.01));
     });
   });
+
+  group('calcSubsidyPhases', () {
+    test('single phase when nothing changes', () {
+      // No kids, age 40 → no bonus, no geringverdiener: constant subsidies
+      final p = makePerson(sparrate: 150, brutto: 85000, kinder: 0, alterStart: 40, spardauer: 10);
+      final phases = engine.calcSubsidyPhases(p);
+      expect(phases.length, 1);
+      expect(phases[0].yearFrom, 1);
+      expect(phases[0].yearTo, 10);
+      expect(phases[0].grundzulage, greaterThan(0));
+      expect(phases[0].kinderzulage, 0);
+    });
+
+    test('bonus creates separate first-year phase', () {
+      // Age 23 → Berufseinsteigerbonus in year 0 only
+      final p = makePerson(sparrate: 100, brutto: 45000, kinder: 0, alterStart: 23, spardauer: 5);
+      final phases = engine.calcSubsidyPhases(p);
+      expect(phases.length, greaterThanOrEqualTo(2));
+      expect(phases[0].yearFrom, 1);
+      expect(phases[0].yearTo, 1);
+      expect(phases[0].bonus, 200);
+      expect(phases[1].bonus, 0); // subsequent years: no bonus
+    });
+
+    test('child age-out creates phase boundary', () {
+      // Child age 20, kinderStudieren=true (maxAge 25): ages out at year 5
+      final p = PersonalScenario(
+        name: 'Test', icon: '', sparrate: 150, brutto: 85000,
+        kinder: 1, kinderAlter: [20], kinderStudieren: true,
+        alterStart: 40, spardauer: 10,
+      );
+      final phases = engine.calcSubsidyPhases(p);
+      expect(phases.length, 2);
+      // Phase 1: years 1-5, child still eligible
+      expect(phases[0].yearTo, 5);
+      expect(phases[0].kinderzulage, greaterThan(0));
+      expect(phases[0].kinder, 1);
+      // Phase 2: years 6-10, child aged out
+      expect(phases[1].yearFrom, 6);
+      expect(phases[1].kinderzulage, 0);
+      expect(phases[1].kinder, 0);
+    });
+
+    test('kinderStudieren=false creates earlier phase boundary', () {
+      // Same child age 20, but kinderStudieren=false (maxAge 18): ages out at year -2 → immediately
+      // Actually age 20 > 18, so child is already ineligible at year 0!
+      final p = PersonalScenario(
+        name: 'Test', icon: '', sparrate: 150, brutto: 85000,
+        kinder: 1, kinderAlter: [20], kinderStudieren: false,
+        alterStart: 40, spardauer: 10,
+      );
+      final phases = engine.calcSubsidyPhases(p);
+      // All years should show 0 children eligible
+      for (final phase in phases) {
+        expect(phase.kinderzulage, 0);
+        expect(phase.kinder, 0);
+      }
+    });
+
+    test('kinderStudieren=false vs true: different Kinderzulage duration', () {
+      // Child age 10, savings 20 years
+      // kinderStudieren=true: eligible until year 15 (age 25)
+      // kinderStudieren=false: eligible until year 8 (age 18)
+      final pStudy = PersonalScenario(
+        name: 'T', icon: '', sparrate: 150, brutto: 85000,
+        kinder: 1, kinderAlter: [10], kinderStudieren: true,
+        alterStart: 40, spardauer: 20,
+      );
+      final pNoStudy = PersonalScenario(
+        name: 'T', icon: '', sparrate: 150, brutto: 85000,
+        kinder: 1, kinderAlter: [10], kinderStudieren: false,
+        alterStart: 40, spardauer: 20,
+      );
+      final phasesStudy = engine.calcSubsidyPhases(pStudy);
+      final phasesNoStudy = engine.calcSubsidyPhases(pNoStudy);
+
+      // With study: Kinderzulage paid for 15 years
+      final yearsWithKindStudy = phasesStudy
+          .where((p) => p.kinderzulage > 0)
+          .fold<int>(0, (sum, p) => sum + p.years);
+      // Without study: Kinderzulage paid for 8 years
+      final yearsWithKindNoStudy = phasesNoStudy
+          .where((p) => p.kinderzulage > 0)
+          .fold<int>(0, (sum, p) => sum + p.years);
+
+      expect(yearsWithKindStudy, 15);
+      expect(yearsWithKindNoStudy, 8);
+      expect(yearsWithKindStudy, greaterThan(yearsWithKindNoStudy));
+    });
+
+    test('phases cover full savings period', () {
+      final p = makePerson(sparrate: 100, brutto: 45000, kinder: 2, alterStart: 23, spardauer: 35);
+      final phases = engine.calcSubsidyPhases(p);
+      // All years must be covered
+      final totalYears = phases.fold<int>(0, (sum, p) => sum + p.years);
+      expect(totalYears, 35);
+      // Contiguous: each phase starts where previous ended
+      for (int i = 1; i < phases.length; i++) {
+        expect(phases[i].yearFrom, phases[i - 1].yearTo + 1);
+      }
+    });
+  });
+
+  group('kinderStudieren in full AV simulation', () {
+    test('kinderStudieren=false yields less total subsidies', () {
+      // Child age 5, savings 30 years
+      // kinderStudieren=true: Kinderzulage for 20 years
+      // kinderStudieren=false: Kinderzulage for 13 years
+      final pStudy = PersonalScenario(
+        name: 'T', icon: '', sparrate: 100, brutto: 45000,
+        kinder: 1, kinderAlter: [5], kinderStudieren: true,
+        alterStart: 30, spardauer: 30,
+      );
+      final pNoStudy = pStudy.copyWith(kinderStudieren: false);
+      final m = makeMacro();
+      final costs = CostSettings();
+
+      final avStudy = engine.simulateAV(person: pStudy, macro: m, costs: costs);
+      final avNoStudy = engine.simulateAV(person: pNoStudy, macro: m, costs: costs);
+
+      expect(avStudy.zulagenGesamt, greaterThan(avNoStudy.zulagenGesamt));
+      expect(avStudy.endkapital, greaterThan(avNoStudy.endkapital));
+    });
+
+    test('kinderStudieren has no effect when no children', () {
+      final pTrue = makePerson(sparrate: 100, brutto: 45000, kinder: 0);
+      final pFalse = PersonalScenario(
+        name: 'Test', icon: '', sparrate: 100, brutto: 45000,
+        kinder: 0, kinderStudieren: false,
+        alterStart: 30, spardauer: 37,
+      );
+      final m = makeMacro();
+      final costs = CostSettings();
+
+      final avTrue = engine.simulateAV(person: pTrue, macro: m, costs: costs);
+      final avFalse = engine.simulateAV(person: pFalse, macro: m, costs: costs);
+
+      expect(avTrue.endkapital, avFalse.endkapital);
+      expect(avTrue.zulagenGesamt, avFalse.zulagenGesamt);
+    });
+
+    test('kinderStudieren=false: child already over 18 gets zero Kinderzulage', () {
+      // Child age 20 → already over 18, zero Kinderzulage from start
+      final p = PersonalScenario(
+        name: 'T', icon: '', sparrate: 100, brutto: 45000,
+        kinder: 1, kinderAlter: [20], kinderStudieren: false,
+        alterStart: 30, spardauer: 10,
+      );
+      final m = makeMacro();
+      final costs = CostSettings();
+      final av = engine.simulateAV(person: p, macro: m, costs: costs);
+
+      // Same child with kinderStudieren=true still gets 5 years of Kinderzulage
+      final pStudy = p.copyWith(kinderStudieren: true);
+      final avStudy = engine.simulateAV(person: pStudy, macro: m, costs: costs);
+
+      expect(avStudy.zulagenGesamt, greaterThan(av.zulagenGesamt));
+    });
+  });
 }
