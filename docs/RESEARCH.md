@@ -253,10 +253,15 @@ Geringverdienerbonus(brutto, jb) = €175 if (brutto ≤ 26,250) AND (jb ≥ 120
 
 ```
 Zulage(j) = Grundzulage(Jahresbeitrag)
-           + Kinderzulage(Jahresbeitrag, Kinder)
+           + Kinderzulage(Jahresbeitrag, KinderAtYear(j))
            + Berufseinsteigerbonus(Alter, j)
            + Geringverdienerbonus(Brutto_j, Jahresbeitrag)
 ```
+
+Note: Subsidies are not constant over the savings period. `calcSubsidyPhases()` groups
+consecutive years with identical subsidy components into phases (e.g., children aging
+out of Kindergeld at 25, Berufseinsteigerbonus only in year 1, Geringverdienerbonus
+eligibility changing with income development).
 
 ### German Marginal Tax Rate (piecewise approximation, §32a EStG 2024)
 

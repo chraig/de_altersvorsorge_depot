@@ -9,7 +9,7 @@ flowchart TD
     A[User Input<br/>Sliders & Toggles] --> B[PersonalScenario<br/>MacroScenario<br/>CostSettings<br/>IncomeDevSettings]
     B --> C[CalculatorState<br/>computed getters]
     C --> D[SimulationEngine]
-    D --> E[SubsidyModule<br/>calcZulage]
+    D --> E[SubsidyModule<br/>calcZulage<br/>calcSubsidyPhases]
     D --> F[TaxModule<br/>getGrenzsteuersatz<br/>calcEinkommensteuer<br/>getDurchschnittssteuersatz<br/>calcGuenstigerpruefung]
     D --> G[IncomeDevSettings<br/>bruttoForYear<br/>kinderAtYear]
     D --> H[PensionModule<br/>estimateMonthlyPension]

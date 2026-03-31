@@ -98,12 +98,10 @@ abstract class AppStrings {
 
   // ─── CALCULATION BREAKDOWN ─────────────────────────────────────────
   String get bdContributions;
-  String get bdSubsidiesYear1;
   String get bdTaxCostsSavings;
   String get bdCapGainsSavings;
   String get bdCapGainsSavingsAV;
   String get bdCapGainsSavingsETF;
-  String get bdNoteBankAccount;
   String get bdIntoDepotYear;
   String get bdAccumulated;
   String get bdTotalContributions;
@@ -440,12 +438,10 @@ class StringsEn extends AppStrings {
   // Comparison
   // Calculation Basis
   String get bdContributions => 'Contributions';
-  String get bdSubsidiesYear1 => 'Government Subsidies (Year 1)';
   String get bdTaxCostsSavings => 'Tax & Costs During Savings';
   String get bdCapGainsSavings => 'Capital gains during savings';
   String get bdCapGainsSavingsAV => 'Tax-free';
   String get bdCapGainsSavingsETF => 'Taxed yearly';
-  String get bdNoteBankAccount => '→ bank account';
   String get bdIntoDepotYear => 'Into Depot Per Year';
   String get bdAccumulated => 'Accumulated Over Savings Period';
   String get bdTotalContributions => 'Total contributions';
@@ -836,12 +832,10 @@ class StringsDe extends AppStrings {
   String get tabAvDetail => 'AV-Depot Detail';
 
   String get bdContributions => 'Beiträge';
-  String get bdSubsidiesYear1 => 'Staatliche Zulagen (Jahr 1)';
   String get bdTaxCostsSavings => 'Steuer & Kosten in der Ansparphase';
   String get bdCapGainsSavings => 'Kapitalerträge in der Ansparphase';
   String get bdCapGainsSavingsAV => 'Steuerfrei';
   String get bdCapGainsSavingsETF => 'Jährlich besteuert';
-  String get bdNoteBankAccount => '→ Bankkonto';
   String get bdIntoDepotYear => 'Ins Depot pro Jahr';
   String get bdAccumulated => 'Kumuliert über Sparperiode';
   String get bdTotalContributions => 'Eigenbeiträge gesamt';

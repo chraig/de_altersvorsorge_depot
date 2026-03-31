@@ -148,6 +148,7 @@ Constants are centralized in `CalcConstants` — update this class when legislat
 - `calcGeringverdienerbonus()` — €175/yr if gross ≤ €26,250
 - `calcZulage()` — combined yearly subsidy (record return type)
 - `calcSubsidyBreakdown()` — full year-1 breakdown for UI display
+- `calcSubsidyPhases()` — year-range breakdown (accounts for child age-out, bonus, income dev)
 
 **Tax module** (replaceable for different tax brackets):
 - `getGrenzsteuersatz()` — German marginal tax rate (2024 brackets, piecewise linear)
