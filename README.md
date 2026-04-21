@@ -525,6 +525,20 @@ Recommended: Serve over **HTTPS** (enabled by default on most hosting providers)
 
 ## License & Disclaimer
 
+### License
+
+Copyright © 2026 Christoph Aigner.
+
+This program is free software: you can redistribute it and/or modify it under the terms of the **GNU Affero General Public License v3.0** (AGPL-3.0) as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but **WITHOUT ANY WARRANTY**; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+The full license text is available in the [LICENSE](LICENSE) file or at <https://www.gnu.org/licenses/agpl-3.0.html>.
+
+**Key obligation of AGPL-3.0**: If you run a modified version of this software on a network server and allow others to interact with it, you must offer them the source code of your modified version.
+
+### Disclaimer
+
 **This tool is for educational and illustrative purposes only.** It does not constitute financial, tax, or legal advice. The calculations are based on simplified assumptions and may differ significantly from actual outcomes depending on market conditions, provider costs, individual tax situations, and legislative changes.
 
 Based on the Altersvorsorgereformgesetz as passed by the German Bundestag. The law may be subject to further amendments before or after the 1 January 2027 start date.

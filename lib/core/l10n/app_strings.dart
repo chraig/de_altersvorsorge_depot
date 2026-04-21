@@ -681,9 +681,10 @@ class StringsEn extends AppStrings {
     'Art. 6 Abs. 1 lit. f DSGVO (legitimate interest in providing the website). '
     'No further processing or storage of personal data takes place.';
   String get copyrightNotice =>
-    '© ${BuildConfig.copyrightYear} ${BuildConfig.ownerName} – All rights reserved. '
-    'The content, design, and calculations of this website may not be reproduced, '
-    'distributed, or reused in any form without prior written permission.';
+    '© ${BuildConfig.copyrightYear} ${BuildConfig.ownerName} – Licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). '
+    'This program is free software: you can redistribute it and/or modify it under the terms of the AGPL-3.0. '
+    'The full license text is available in the LICENSE file of the source repository. '
+    'This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY.';
 
   // Charts
   String get chartAllMacrosTitle => 'AV-Depot: All Macro Scenarios + ETF (dashed)';
@@ -1087,10 +1088,10 @@ class StringsDe extends AppStrings {
     'der Website). Eine weitergehende Verarbeitung oder Speicherung personenbezogener '
     'Daten findet nicht statt.';
   String get copyrightNotice =>
-    '© ${BuildConfig.copyrightYear} ${BuildConfig.ownerName} – Alle Rechte vorbehalten. '
-    'Die Inhalte, das Design und die Berechnungen dieser Website dürfen ohne '
-    'vorherige schriftliche Genehmigung nicht vervielfältigt, verbreitet oder '
-    'anderweitig verwendet werden.';
+    '© ${BuildConfig.copyrightYear} ${BuildConfig.ownerName} – Lizenziert unter der GNU Affero General Public License v3.0 (AGPL-3.0). '
+    'Dieses Programm ist freie Software: Sie können es unter den Bedingungen der AGPL-3.0 weitergeben und/oder verändern. '
+    'Der vollständige Lizenztext ist in der LICENSE-Datei des Quellcode-Repositories verfügbar. '
+    'Dieses Programm wird in der Hoffnung verteilt, dass es nützlich ist, jedoch OHNE JEGLICHE GEWÄHRLEISTUNG.';
 
   String get chartAllMacrosTitle => 'AV-Depot: Alle Makro-Szenarien + ETF (gestrichelt)';
   String chartWealthTitle(String icon, String name) => 'Vermögensentwicklung – $icon $name';
