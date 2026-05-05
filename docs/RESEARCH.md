@@ -157,7 +157,8 @@ This replaces the earlier simplification of `Grenzsteuersatz × 0.7`.
 
 ### 3.3 ETF-Depot (Private, Unfördert)
 
-**Legal basis**: §20 Abs. 1 Nr. 7 EStG (existing law)
+**Legal basis**: §20 Abs. 1 Nr. 7 EStG (existing law); fund-level Teilfreistellung
+per §20 InvStG with fund-type definitions in §2 InvStG.
 
 **During accumulation**:
 - Vorabpauschale: annual tax on unrealized gains (Basiszins × 0.7 × ETF value × 0.7 Teilfreistellung × 26.3750%)
@@ -170,15 +171,47 @@ Steuerpflichtiger_Gewinn = Gewinn × (1 - Teilfreistellung)
 Steuer = Steuerpflichtiger_Gewinn × Abgeltungssteuersatz
 
 Where:
-  Teilfreistellung = 30% for Aktienfonds (≥51% equity, §20 InvStG)
+  Teilfreistellung = 30%   // calculator assumes Aktienfonds — see table below
   Abgeltungssteuersatz = 26.3750% without Kirchensteuer (25.0000% + 1.3750% Soli)
   With Kirchensteuer: KapESt = 25% / (1 + 25% × KiSt_rate)  // §32d Abs. 1 Satz 3 EStG, plus Soli + KiSt
     → 8% KiSt (Bayern/BaWü): 27.8186%  |  9% KiSt (other): 27.9951%
 ```
 
-**Key difference**: In the ETF depot, only the GAIN is taxed (and with 30% exemption).
-In the AV-Depot, the ENTIRE payout is taxed (but at a potentially lower rate).
-This creates a crossover point depending on returns, duration, and tax rates.
+#### Teilfreistellung by fund type (§20 InvStG)
+
+Authoritative source: <https://www.gesetze-im-internet.de/invstg_2018/__20.html>
+(definitions in <https://www.gesetze-im-internet.de/invstg_2018/__2.html>).
+
+| Fund type | Continuous min. allocation (per Anlagebedingungen) | Teilfreistellung |
+|---|---|---|
+| **Aktienfonds** (§2 Abs. 6) | > 50% Kapitalbeteiligungen (typically listed equities) | **30%** |
+| **Mischfonds** (§2 Abs. 7) | ≥ 25% Kapitalbeteiligungen | 15% |
+| **Immobilienfonds**, domestic (§2 Abs. 9) | > 50% in real estate / property companies | 60% |
+| **Immobilienfonds**, foreign focus | > 50% in foreign real estate / Auslands-Objektgesellschaften | 80% |
+| **Sonstige Fonds** (bond ETFs, money-market, mixed < 25% equity) | — | **0%** |
+
+The above are private-investor rates. Higher rates apply for assets held in business
+property (60% / 30% / 80% Immobilien) and corporate taxpayers (80% / 40% Aktien) —
+not relevant for this calculator's private-investor scope.
+
+**The calculator assumes the user holds an Aktienfonds** (a typical broad equity ETF
+such as MSCI World, FTSE All-World, S&P 500). For other fund types, the ETF side of
+the comparison would be taxed differently:
+- A bond-only ETF ("sonstiger Fonds") would receive **no Teilfreistellung at all**,
+  meaning 100% of gains are taxable. The AV-Depot's relative advantage would grow
+  significantly versus what this calculator shows.
+- A Mischfonds (mixed fund 25–50% equity) would receive only 15%. Calculator output
+  remains directional but the ETF side would be taxed somewhat higher.
+- An Immobilienfonds (REIT / open real estate fund) would receive 60% or 80%, more
+  favorable than equity. Calculator would understate the ETF side's tax efficiency.
+
+If you want to model a non-Aktienfonds product, change `CalcConstants.teilfreistellung`
+to the appropriate value from the table above.
+
+**Key difference**: In the ETF depot, only the GAIN is taxed (and — for Aktienfonds —
+with 30% exemption). In the AV-Depot, the gefördert portion's entire payout is taxed
+(at a potentially lower retirement rate); the ungefördert portion uses Ertragsanteilbesteuerung.
+This creates a crossover point depending on returns, duration, tax rates, and fund type.
 
 ---
 
@@ -348,7 +381,7 @@ For j = 0 to Spardauer - 1:
 
 ```
 Gewinn = Depot - Eigenbeiträge
-Teilfreistellung = 30%                               // §20 InvStG, Aktienfonds ≥51% equity
+Teilfreistellung = 30%                               // §20 InvStG, Aktienfonds (>50% equity per §2 Abs. 6)
 Steuerpflichtiger_Gewinn = Gewinn × (1 - Teilfreistellung)
 Steuer = Steuerpflichtiger_Gewinn × Abgeltungssteuersatz
   // Abgeltungssteuersatz: 26.3750% without KiSt, 27.8186% with 8%, 27.9951% with 9%

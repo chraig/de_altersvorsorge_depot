@@ -47,7 +47,8 @@ Located in: `lib/services/domain/calculator_service.dart`
 | Reichensteuersatz | 45% | §32a EStG | `getGrenzsteuersatz()` |
 | Abgeltungssteuersatz | 26.3750% (default) | §43a + §4 SolZG | `CostSettings.abgeltungssteuersatz` |
 | Kirchensteuer | 0% / 8% / 9% | Toggle in Advanced Settings | `CostSettings.kirchensteuer` |
-| Teilfreistellung Aktienfonds | 30% | §20 InvStG | `simulateETF()` |
+| Teilfreistellung (Aktienfonds, >50% equity) | 30% | §20 InvStG, §2 Abs. 6 InvStG | `CalcConstants.teilfreistellung` |
+| Teilfreistellung — other fund types | 15% Mischfonds, 60–80% Immobilienfonds, 0% Anleihe-/Geldmarkt-ETFs | §20 InvStG | not modeled — calculator assumes Aktienfonds |
 | Vorabpauschale drag | 0.3% p.a. | Simplified (Basiszins ~2.3-3.2%) | `simulateETF()` |
 | Retirement tax | Incremental §32a on combined income | Progressive formula | `simulateAV()` |
 

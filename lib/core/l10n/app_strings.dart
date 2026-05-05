@@ -519,7 +519,7 @@ class StringsEn extends AppStrings {
   String get tipGefoerdert => 'Subsidized contributions (up to €1,800/yr): grow tax-free, but the ENTIRE payout in retirement is taxed at your income tax rate (nachgelagerte Besteuerung).';
   String get tipUngefoerdert => 'Unsubsidized contributions (above €1,800/yr): no subsidies, but still tax-free growth during savings. Payout taxed under Ertragsanteilbesteuerung (§22 Nr. 1 Satz 3a EStG): only 17% of each payout is taxed at your income rate (assumes age-67 entry).';
   String get tipVorabpauschale => 'Annual tax on unrealized ETF gains, calculated from the Basiszins (ECB reference rate). Simplified here as a fixed drag on returns. Does NOT apply inside the AV-Depot.';
-  String get tipTeilfreistellung => '30% of your ETF gains are tax-exempt because the fund already paid withholding tax at fund level. Only 70% of gains are subject to Abgeltungssteuer.';
+  String get tipTeilfreistellung => '30% of your ETF gains are tax-exempt — but only for Aktienfonds (equity funds with >50% equity per §2 Abs. 6 InvStG). Mischfonds get 15%, Immobilienfonds 60–80%, and bond/money-market ETFs get 0%. The calculator assumes a pure equity ETF.';
 
   String avYieldsMore(String amount) => 'AV-Depot yields $amount more.';
   String etfYieldsMore(String amount) => 'ETF Portfolio yields $amount more.';
@@ -602,7 +602,7 @@ class StringsEn extends AppStrings {
   String get conLowSubsidyLeverage => 'Contributions above €150/mo receive no subsidy. The unsubsidized portion is taxed under Ertragsanteilbesteuerung (only 17% of payout taxed at income rate).';
   String get conHighRetirementTax => 'High marginal tax rate – deferred taxation at high rate reduces advantage';
   String get proEtfOnlyGainsTaxed => 'Only gains are taxed – your contributions are returned tax-free';
-  String get proEtfTeilfreistellung => '30% partial exemption (Teilfreistellung) reduces taxable gains';
+  String get proEtfTeilfreistellung => '30% Teilfreistellung on equity-fund gains (Aktienfonds only — bond ETFs get 0%)';
   String get proEtfFlexibility => 'No lock-up period – withdraw any time without restrictions';
   String get proEtfLowReturnsAdvantage => 'With low returns, gains are small – less tax impact than deferred full-payout taxation';
 
@@ -622,14 +622,14 @@ class StringsEn extends AppStrings {
     '▸ Berufseinsteigerbonus (one-time €200, under 25)\n'
     '▸ Günstigerprüfung (automatic tax optimization check)\n'
     '▸ Kirchensteuer (optional: None / 8% / 9%)\n'
-    '▸ Abgeltungssteuer with 30% Teilfreistellung for ETF\n'
+    '▸ Abgeltungssteuer with 30% Teilfreistellung (Aktienfonds only — bond/mixed ETFs differ)\n'
     '▸ Vorabpauschale (simplified as 0.3% annual drag)\n'
     '▸ Nachgelagerte Besteuerung (deferred taxation on AV-Depot payouts)\n'
     '▸ 6 macro scenario presets + custom scenarios\n'
     '▸ 5 personal scenario presets + custom input';
   String get simplificationsTitle => 'Simplifications';
   String get simplificationsDetail =>
-    'Both: Single equity ETF assumed for comparability (AV-Depot may hold multiple instruments)\n'
+    'Both: Single equity ETF (Aktienfonds, >50% equity per §2 Abs. 6 InvStG) assumed for comparability. Bond/mixed/real-estate ETFs receive different (or no) Teilfreistellung — comparison would shift accordingly.\n'
     'Both: Constant annual returns (no sequence-of-returns risk)\n'
     'Both: No partial-year contributions\n'
     'Both: Fund-level withholding tax (~0.3% p.a.) not separately modeled\n'
@@ -922,7 +922,7 @@ class StringsDe extends AppStrings {
   String get tipGefoerdert => 'Geförderte Beiträge (bis 1.800 €/J): Wachsen steuerfrei, aber die GESAMTE Auszahlung im Ruhestand wird mit Einkommensteuer besteuert (nachgelagerte Besteuerung).';
   String get tipUngefoerdert => 'Ungeförderte Beiträge (über 1.800 €/J): Keine Zulagen, aber steuerfreies Wachstum in der Ansparphase. Auszahlung mit Ertragsanteilbesteuerung (§22 Nr. 1 Satz 3a EStG): nur 17 % der Auszahlung wird mit dem persönlichen Einkommensteuersatz versteuert (Annahme: Beginn mit 67).';
   String get tipVorabpauschale => 'Jährliche Steuer auf unrealisierte ETF-Gewinne, berechnet aus dem Basiszins (EZB-Referenzzins). Hier vereinfacht als fester Abzug. Gilt NICHT im AV-Depot.';
-  String get tipTeilfreistellung => '30 % Ihrer ETF-Gewinne sind steuerfrei, da der Fonds bereits Quellensteuer auf Fondsebene zahlt. Nur 70 % der Gewinne unterliegen der Abgeltungssteuer.';
+  String get tipTeilfreistellung => '30 % Ihrer ETF-Gewinne sind steuerfrei — aber nur bei Aktienfonds (>50 % Kapitalbeteiligungen gem. §2 Abs. 6 InvStG). Mischfonds: 15 %, Immobilienfonds: 60–80 %, Anleihe-/Geldmarkt-ETFs: 0 %. Der Rechner unterstellt einen reinen Aktien-ETF.';
 
   String avYieldsMore(String amount) => 'AV-Depot bringt $amount mehr.';
   String etfYieldsMore(String amount) => 'ETF-Depot bringt $amount mehr.';
@@ -1001,7 +1001,7 @@ class StringsDe extends AppStrings {
   String get conLowSubsidyLeverage => 'Beiträge über 150 €/Mt erhalten keine Zulage. Der ungeförderte Anteil wird mit Ertragsanteilbesteuerung versteuert (nur 17 % der Auszahlung mit Einkommensteuersatz).';
   String get conHighRetirementTax => 'Hoher Grenzsteuersatz – nachgelagerte Besteuerung zu hohem Satz mindert den Vorteil';
   String get proEtfOnlyGainsTaxed => 'Nur Gewinne werden besteuert – Ihre Einzahlungen erhalten Sie steuerfrei zurück';
-  String get proEtfTeilfreistellung => '30 % Teilfreistellung reduziert die steuerpflichtigen Gewinne';
+  String get proEtfTeilfreistellung => '30 % Teilfreistellung auf Gewinne (nur Aktienfonds — Anleihe-ETFs erhalten 0 %)';
   String get proEtfFlexibility => 'Keine Bindungsfrist – jederzeit verfügbar ohne Einschränkungen';
   String get proEtfLowReturnsAdvantage => 'Bei niedrigen Renditen sind die Gewinne gering – weniger Steuerbelastung als nachgelagerte Vollbesteuerung';
 
@@ -1020,14 +1020,14 @@ class StringsDe extends AppStrings {
     '▸ Berufseinsteigerbonus (einmalig 200 €, unter 25)\n'
     '▸ Günstigerprüfung (automatische Steueroptimierung)\n'
     '▸ Kirchensteuer (optional: Keine / 8 % / 9 %)\n'
-    '▸ Abgeltungssteuer mit 30 % Teilfreistellung für ETF\n'
+    '▸ Abgeltungssteuer mit 30 % Teilfreistellung (nur Aktienfonds — Anleihe-/Mischfonds abweichend)\n'
     '▸ Vorabpauschale (vereinfacht als 0,3 % jährlicher Abzug)\n'
     '▸ Nachgelagerte Besteuerung der AV-Depot-Auszahlungen\n'
     '▸ 6 Makro-Szenarien + eigene Szenarien\n'
     '▸ 5 persönliche Szenarien + freie Eingabe';
   String get simplificationsTitle => 'Vereinfachungen';
   String get simplificationsDetail =>
-    'Beide: Ein Aktien-ETF angenommen für Vergleichbarkeit (AV-Depot kann mehrere Instrumente halten)\n'
+    'Beide: Ein Aktien-ETF (Aktienfonds, >50 % Kapitalbeteiligungen gem. §2 Abs. 6 InvStG) angenommen. Anleihe-/Misch-/Immobilien-ETFs erhalten andere (oder keine) Teilfreistellung — der Vergleich verschiebt sich entsprechend.\n'
     'Beide: Konstante jährliche Rendite (kein Reihenfolge-Risiko)\n'
     'Beide: Keine unterjährigen Beiträge\n'
     'Beide: Quellensteuer auf Fondsebene (~0,3 % p.a.) nicht separat modelliert\n'

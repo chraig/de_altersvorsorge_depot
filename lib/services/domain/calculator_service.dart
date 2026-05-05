@@ -89,7 +89,23 @@ class CalcConstants {
   static const double zone5Offset = 19470.38;
 
   // ─── ETF TAXATION (§20 InvStG, §43a EStG) ─────────────────────
-  /// Partial exemption for equity funds (≥51% equity): 30% of gains tax-free
+  /// Teilfreistellung rate. The calculator assumes the user holds an **Aktienfonds**
+  /// (an equity fund / equity ETF). Per §20 Abs. 1 InvStG: 30% of distributions and
+  /// realized gains are tax-exempt for private investors.
+  ///
+  /// IMPORTANT: this rate ONLY applies if the fund qualifies as an Aktienfonds under
+  /// §2 Abs. 6 InvStG — i.e., the fund's investment terms (Anlagebedingungen)
+  /// continuously commit to investing more than 50% of its Aktivvermögen in
+  /// Kapitalbeteiligungen (typically listed equities). Other fund types receive
+  /// different (or no) Teilfreistellung:
+  ///   • Mischfonds (≥25% equity per §2 Abs. 7 InvStG): 15% (§20 Abs. 2 InvStG)
+  ///   • Immobilienfonds, domestic focus (§2 Abs. 9 InvStG): 60% (§20 Abs. 3 InvStG)
+  ///   • Immobilienfonds, foreign focus: 80% (§20 Abs. 3 InvStG)
+  ///   • Sonstige Fonds (bond ETFs, money-market funds, mixed <25%): 0%
+  ///
+  /// If the user actually holds a non-Aktienfonds product, the calculator's ETF
+  /// comparison overstates the tax advantage — most strikingly for bond ETFs which
+  /// receive no Teilfreistellung at all.
   static const double teilfreistellung = 0.30;
   /// Simplified annual Vorabpauschale drag on ETF returns.
   /// Formula: Basiszins × 0.7 × 0.70 (Teilfreistellung) × 0.26375 (AbgSt+Soli).

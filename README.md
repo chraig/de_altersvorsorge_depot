@@ -156,7 +156,9 @@ Payout period: 20 years (age 65–85)
 Rate: 26.3750% (25% + 5.5% Soli)
 With 8% Kirchensteuer (Bayern/BaWü): 27.8186%
 With 9% Kirchensteuer (other states):  27.9951%
-Teilfreistellung: 30% for Aktien-ETFs (≥51% equity)
+Teilfreistellung: 30% for Aktienfonds (equity ETFs with >50% equity per §2 Abs. 6 InvStG).
+                  Mischfonds: 15%, Immobilienfonds: 60–80%, Anleihe-/Geldmarkt-ETFs: 0%.
+                  Calculator assumes a pure equity ETF (typical World/MSCI/S&P-500 product).
 Vorabpauschale drag: ~0.3% p.a. (simplified, based on Basiszins ~2.3-3.2%)
 // Kirchensteuer is configurable via Advanced Settings toggle
 ```
@@ -334,7 +336,7 @@ For each year j = 0 ... spardauer-1:
 
 Payout phase:
   gewinn = depot - eigenbeitraege
-  steuerpflichtiger_gewinn = gewinn × (1 - 0.30)   // 30% Teilfreistellung
+  steuerpflichtiger_gewinn = gewinn × (1 - 0.30)   // 30% Teilfreistellung — Aktienfonds only (§20 InvStG)
   steuer = steuerpflichtiger_gewinn × abgeltungssteuersatz  // 26.3750% default, 27.8186% with 8% KiSt, 27.9951% with 9% KiSt
   netto = depot - steuer
   monthly = netto / 240
@@ -353,6 +355,7 @@ Payout phase:
 | Retirement tax rate | Progressive §32a average rate on combined income | Brutto used as proxy for zvE; actual zvE lower |
 | Günstigerprüfung refund | Not reinvested | Could be reinvested manually |
 | Quellensteuer on fund level | Not modeled | ~0.3% p.a. already in fund returns |
+| ETF fund type | Aktienfonds (>50% equity) assumed → 30% Teilfreistellung | Bond ETFs get 0%, Mischfonds 15%, Immobilienfonds 60–80% (§20 InvStG). Comparison shifts for non-equity funds. |
 | Wohnwirtschaftliche Verwendung | Not modeled | Tax-free withdrawal for property |
 
 ---

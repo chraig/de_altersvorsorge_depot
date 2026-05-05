@@ -84,7 +84,7 @@ flowchart TD
     GROW --> PTAX
     subgraph PTAX["Payout Tax at sale"]
         GAINS["gains = depot - totalContributions"]
-        TEIL["taxableGains = gains x 1 - 30%<br/>Teilfreistellung"]
+        TEIL["taxableGains = gains x 1 - 30%<br/>Teilfreistellung — Aktienfonds only (§20 InvStG)<br/>Bond/mixed ETFs: 0–15%, Immobilien: 60–80%"]
         ABGST["tax = taxableGains x abgeltungssteuersatz<br/>26.3750% or higher with KiSt"]
         NET["netto = depot - tax<br/>monthly = netto / auszahlungsDauer x 12"]
         GAINS --> TEIL --> ABGST --> NET
