@@ -360,26 +360,51 @@ Else:
 ### AV-Depot Year-by-Year Accumulation
 
 ```
-Jahresbeitrag = Sparrate × 12               // [EUR/month → EUR/year] input conversion
+// ── Constants (computed once; do not vary by year) ──
+Jahresbeitrag    = Sparrate × 12                                    // [EUR/month → EUR/year]
+JB_Capped        = min(Jahresbeitrag, 6840)                          // max €6,840/yr per contract
+JB_Gefördert     = min(JB_Capped, 1800)                              // subsidized portion
+JB_Ungefördert   = JB_Capped - JB_Gefördert                          // excess (no subsidy)
+
+// Note: JB_Gefördert and JB_Ungefördert are NOT indexed by j — sparrate is a
+// fixed user choice independent of income development. The split is determined
+// once and applied identically each year.
 
 For j = 0 to Spardauer - 1:
-  Alter = AlterStart + j
-  Brutto_j = IncomeDev.bruttoForYear(Brutto, j)  // static or growing
+  Alter    = AlterStart + j
+  Brutto_j = IncomeDev.bruttoForYear(Brutto, j)              // static or growing
   Grenzsteuersatz_j = Grenzsteuersatz(Brutto_j)
-  Zulage_j = Zulage(j)                           // year-specific (kinder age-out, bonus year 1 only)
+  Zulage_j = Zulage(j)                                       // year-specific: child age-out, bonus year 1 only
   // Sonderausgabenabzug capped at min(Jahresbeitrag, 1800) + Zulagen (§10a EStG-E)
   Günstigerprüfung:
-    CappedBeitrag = min(Jahresbeitrag, 1800)
-    Steuerersparnis = (CappedBeitrag + Zulage_j) × Grenzsteuersatz_j
-    Zusätzlich = max(0, Steuerersparnis - Zulage_j)  // → Girokonto, NOT depot
+    Steuerersparnis_j = (JB_Gefördert + Zulage_j) × Grenzsteuersatz_j
+    Zusätzlich_j      = max(0, Steuerersparnis_j - Zulage_j)  // → Girokonto, NOT depot
 
-  // Gefördert bucket: subsidized portion (up to €1,800/yr + subsidies)
-  JB_Gefördert = min(Jahresbeitrag, 1800)
-  JB_Ungefördert = min(Jahresbeitrag, 6840) - JB_Gefördert  // max €6,840/yr per contract
-  Depot_Gefördert = (Depot_Gefördert + JB_Gefördert + Zulage_j) × (1 + Rendite - KostenAV)
-  Depot_Ungefördert = (Depot_Ungefördert + JB_Ungefördert) × (1 + Rendite - KostenAV)
+  Depot_Gefördert   = (Depot_Gefördert   + JB_Gefördert   + Zulage_j) × (1 + Rendite - KostenAV)
+  Depot_Ungefördert = (Depot_Ungefördert + JB_Ungefördert)            × (1 + Rendite - KostenAV)
   Depot = Depot_Gefördert + Depot_Ungefördert
 ```
+
+**What about cumulative contributions per bucket?** The simulation already
+implicitly tracks them: since `JB_Gefördert` and `JB_Ungefördert` are constants,
+the cumulative contributions per bucket are simply `JB_Gefördert × Spardauer`
+and `JB_Ungefördert × Spardauer`. The wealth accumulators `Depot_Gefördert` and
+`Depot_Ungefördert` already separate the two buckets and include their
+respective Zulagen + compounded gains.
+
+The chosen payout taxation (100% of gefördert payout, 17% of ungefördert payout
+— see §3.2) only needs the bucket-end values, so the cumulative-contributions
+info is currently unused. If a future taxation rule were to require it — for
+example **Unterschiedsbetrag** (strict Riester reading, gain = cumulative payout
+− cumulative contributions) — it could be computed in one line inside the
+payout phase:
+
+```
+Unterschiedsbetrag_Ungefördert = Depot_Ungefördert − JB_Ungefördert × Spardauer
+```
+
+No simulation restructuring would be needed. The Zulagen flow into the
+gefördert bucket and are taxed in full at payout per §22 Nr. 5 EStG.
 
 ### AV-Depot Payout
 
