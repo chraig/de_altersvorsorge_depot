@@ -230,15 +230,22 @@ collection at source is governed by §43a EStG. There is no §20 Abs. 1 Nr. 7
 EStG involvement — that paragraph covers interest from non-fund Kapital­
 forderungen and does not apply to Investmentfonds.
 
-**During accumulation**:
-- Vorabpauschale: annual tax on unrealized gains (Basiszins × 0.7 × ETF value × 0.7 Teilfreistellung × 26.3750%)
-- Simplified in calculator as 0.3% annual drag on returns (Basiszins ~2.3–3.2%)
+**During accumulation** (§18 InvStG):
+- Vorabpauschale: annual tax on the year's deemed minimum gain — formally
+  `Basiszins × 0.7 × ETF_value × (1 − Teilfreistellung) × Abgeltungssteuersatz`.
+- Calculator simplifies this as a fixed `vorabpauschaleDrag = 0.3%` of depot
+  value paid out as cash each year (≈ Basiszins 2.3–3.2% × 0.7 × 0.70 × 0.26375).
+- Crucially, the cumulative Vorabpauschale paid is **credited against the
+  Abgeltungssteuer at sale** (§19 Abs. 1 InvStG, Anrechnung) — the same tax
+  is not collected twice.
 
 **At payout/sale**:
 ```
-Gewinn = Verkaufserlös - Anschaffungskosten
+Gewinn = Endkapital - Eigenbeiträge      // Endkapital is post-VP-deductions
 Steuerpflichtiger_Gewinn = Gewinn × (1 - Teilfreistellung)
-Steuer = Steuerpflichtiger_Gewinn × Abgeltungssteuersatz
+Steuer_vor_Anrechnung = Steuerpflichtiger_Gewinn × Abgeltungssteuersatz
+Steuer_nach_Anrechnung = max(0, Steuer_vor_Anrechnung − VorabpauschaleGesamt)
+NachSteuer = Endkapital − Steuer_nach_Anrechnung    // VP was already debited from the depot
 
 Where:
   Teilfreistellung = 30%   // calculator assumes Aktienfonds — see table below
@@ -495,24 +502,37 @@ to the AV is allocated to the AV buckets.
 ### ETF-Depot Year-by-Year Accumulation
 
 ```
-VorabpauschaleDrag = 0.003                          // simplified annual drag (CalcConstants)
-  // Based on Basiszins ~2.3-3.2% (2024-2026). Effective: Basiszins × 0.7 × 0.70 × 0.26375
+VorabpauschaleDrag = 0.003                          // simplified per-year VP rate (CalcConstants)
+  // Approximates Basiszins × 0.7 × (1 − Teilfreistellung) × Abgeltungssteuersatz
+  // at Basiszins 2.3–3.2% with Teilfreistellung 30% and abgSt 26.375%.
+
+VorabpauschaleGesamt = 0                            // cumulative VP cash paid
 
 For j = 0 to Spardauer - 1:
-  Depot = (Depot + Jahresbeitrag) × (1 + Rendite - KostenETF - VorabpauschaleDrag)
+  Depot       = (Depot + Jahresbeitrag) × (1 + Rendite - KostenETF)   // grow at full rate
+  VP_j        = Depot × VorabpauschaleDrag                            // VP tax paid out of depot
+  Depot       = Depot − VP_j                                          // depot debited
+  VorabpauschaleGesamt += VP_j
 ```
 
 ### ETF-Depot Payout
 
 ```
-Gewinn = Depot - Eigenbeiträge
-Teilfreistellung = 30%                               // §20 InvStG, Aktienfonds (>50% equity per §2 Abs. 6)
-Steuerpflichtiger_Gewinn = Gewinn × (1 - Teilfreistellung)
-Steuer = Steuerpflichtiger_Gewinn × Abgeltungssteuersatz
+Gewinn                    = Depot − Eigenbeiträge       // Depot already net of VP debits
+Teilfreistellung          = 30%                          // §20 InvStG, Aktienfonds (>50% equity per §2 Abs. 6)
+Steuerpflichtiger_Gewinn  = Gewinn × (1 − Teilfreistellung)
+Steuer_vor_Anrechnung     = Steuerpflichtiger_Gewinn × Abgeltungssteuersatz
   // Abgeltungssteuersatz: 26.3750% without KiSt, 27.8186% with 8%, 27.9951% with 9%
   // Formula: KapESt = 25% / (1 + 25% × KiSt_rate), then + Soli + KiSt (see §3.4)
-Netto = Depot - Steuer
-Monatlich = Netto / (Auszahlungsdauer × 12)          // [EUR → EUR/month] output conversion
+
+// Vorabpauschale already paid is credited against the sale tax (§19 Abs. 1 InvStG):
+Steuer_nach_Anrechnung    = max(0, Steuer_vor_Anrechnung − VorabpauschaleGesamt)
+Netto                     = Depot − Steuer_nach_Anrechnung   // VP was already debited from Depot
+Monatlich                 = Netto / (Auszahlungsdauer × 12)  // [EUR → EUR/month] output
+
+// Lifetime tax burden (for reporting):
+Steuer_Lifetime           = VorabpauschaleGesamt + Steuer_nach_Anrechnung
+                          ≈ Steuer_vor_Anrechnung   (when VP is fully credited, i.e. typical)
 ```
 
 ### Inflation Adjustment

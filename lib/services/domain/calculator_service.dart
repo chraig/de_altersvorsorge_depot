@@ -364,15 +364,25 @@ class SimulationEngine {
     required CostSettings costs,
   }) {
     final jb = person.jahresbeitrag;
-    final nettoRendite = macro.rendite - costs.kostenETF - CalcConstants.vorabpauschaleDrag;
+    final nettoRendite = macro.rendite - costs.kostenETF;
 
     // ── Accumulation phase ──────────────────────────────────────
+    // Vorabpauschale model (§18 InvStG): each year, depot grows at the full
+    // (rendite - kostenETF) rate; then a Vorabpauschale tax is paid out of the
+    // depot, modeled as `depot × vorabpauschaleDrag`. The cumulative amount
+    // already paid this way is credited against the Abgeltungssteuer at sale
+    // (§19 Abs. 1 InvStG), so the same tax is not collected twice.
     double depot = 0;
     double eigenBeitraege = 0;
+    double vorabpauschaleGesamt = 0; // cumulative VP-tax already paid
     final jahresWerte = <YearlyDataPoint>[];
 
     for (int j = 0; j < person.spardauer; j++) {
       depot = (depot + jb) * (1 + nettoRendite);
+      // Vorabpauschale paid out of the depot at year-end.
+      final vpJahr = depot * CalcConstants.vorabpauschaleDrag;
+      depot -= vpJahr;
+      vorabpauschaleGesamt += vpJahr;
       eigenBeitraege += jb;
 
       jahresWerte.add(YearlyDataPoint(
@@ -386,11 +396,18 @@ class SimulationEngine {
       ));
     }
 
-    // ── Payout phase: tax on gains only ─────────────────────────
+    // ── Payout phase: tax on gains, with VP credit ─────────────
+    // Final Abgeltungssteuer on the realized gain, with the cumulative
+    // Vorabpauschale already paid credited against it (§19 Abs. 1 InvStG).
     final gewinn = depot - eigenBeitraege;
     final steuerpflichtigerGewinn = gewinn * (1 - CalcConstants.teilfreistellung);
-    final steuer = steuerpflichtigerGewinn * costs.abgeltungssteuersatz;
-    final nachSteuer = depot - steuer;
+    final steuerVorAnrechnung = steuerpflichtigerGewinn * costs.abgeltungssteuersatz;
+    final steuerNachAnrechnung = steuerVorAnrechnung > vorabpauschaleGesamt
+        ? steuerVorAnrechnung - vorabpauschaleGesamt
+        : 0.0;
+    // For reporting: total tax burden over the lifetime (VP already paid + sale tax).
+    final steuer = vorabpauschaleGesamt + steuerNachAnrechnung;
+    final nachSteuer = depot - steuerNachAnrechnung;
 
     final auszahlungsDauer = person.auszahlungsDauer;
     final monatlich = nachSteuer / (auszahlungsDauer * 12);
@@ -400,6 +417,7 @@ class SimulationEngine {
       endkapitalReal: depot / pow(1 + macro.inflation, person.spardauer),
       eigenBeitraege: eigenBeitraege,
       gewinn: gewinn,
+      vorabpauschaleGesamt: vorabpauschaleGesamt,
       steuerAufGewinn: steuer,
       nachSteuer: nachSteuer,
       monatlicheAuszahlung: monatlich,

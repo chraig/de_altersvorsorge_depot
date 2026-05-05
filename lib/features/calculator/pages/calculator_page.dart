@@ -881,7 +881,7 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
       _pairFormula(s.bdDepotAfterTax,
         Fmt.eur(av.nettoMonatlich * auszDauer * 12), Fmt.eur(etf.nachSteuer), bold: true,
         avFormula: '= ${Fmt.eur(av.endkapital)} − ${Fmt.eur(avTaxPerMonth * auszDauer * 12)}',
-        etfFormula: '= ${Fmt.eur(etf.endkapital)} − ${Fmt.eur(etf.steuerAufGewinn)}'),
+        etfFormula: '= ${Fmt.eur(etf.endkapital)} − ${Fmt.eur(etf.steuerAufGewinn - etf.vorabpauschaleGesamt)}'),
       _pair(s.bdContribTaxFree, s.bdContribTaxFreeAV, Fmt.eur(etf.eigenBeitraege)),
       _dv(),
 

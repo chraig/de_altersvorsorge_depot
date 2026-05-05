@@ -142,15 +142,26 @@ void main() {
       expect(etf.eigenBeitraege, closeTo(jb, 0.01));
     });
 
-    test('gains taxed with Teilfreistellung', () {
+    test('gains taxed with Teilfreistellung (Vorabpauschale credited)', () {
       final p = makePerson(sparrate: 100, spardauer: 30, alterStart: 37);
       final m = makeMacro();
       final costs = CostSettings();
       final etf = engine.simulateETF(person: p, macro: m, costs: costs);
 
-      final expectedTax = (etf.gewinn * 0.70) * 0.26375;
-      expect(etf.steuerAufGewinn, closeTo(expectedTax, 1));
-      expect(etf.nachSteuer, closeTo(etf.endkapital - etf.steuerAufGewinn, 0.01));
+      // Lifetime tax = sale-tax-vor-Anrechnung when Vorabpauschale is fully credited
+      // (which is the typical case for long savings phases). steuerAufGewinn = lifetime
+      // total = vorabpauschaleGesamt + sale-tax-after-credit.
+      final expectedLifetimeTax = (etf.gewinn * 0.70) * 0.26375;
+      expect(etf.steuerAufGewinn, closeTo(expectedLifetimeTax, 1),
+        reason: 'When VP credit is fully utilized, lifetime tax equals gain × 0.7 × abgSt');
+
+      // Vorabpauschale was already debited from the depot during accumulation, so
+      // nachSteuer = endkapital − (only the remaining sale-tax after credit).
+      final saleTaxAfterCredit = etf.steuerAufGewinn - etf.vorabpauschaleGesamt;
+      expect(etf.nachSteuer, closeTo(etf.endkapital - saleTaxAfterCredit, 0.01));
+
+      // Cumulative VP must be positive over a 30-year accumulation.
+      expect(etf.vorabpauschaleGesamt, greaterThan(0));
     });
 
     test('Kirchensteuer increases ETF tax', () {

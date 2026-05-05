@@ -296,12 +296,13 @@ class AVResult {
 /// ETF-Depot simulation result.
 /// Accumulation in yearly steps; payout converted to monthly at output boundary.
 class ETFResult {
-  final double endkapital;            // [EUR] gross depot value at retirement
+  final double endkapital;            // [EUR] depot value at retirement (after Vorabpauschale debits during accumulation)
   final double endkapitalReal;        // [EUR] inflation-adjusted depot value
   final double eigenBeitraege;        // [EUR] cumulative own contributions
   final double gewinn;                // [EUR] total gains (endkapital - eigenBeitraege)
-  final double steuerAufGewinn;       // [EUR] Abgeltungssteuer on gains (after Teilfreistellung)
-  final double nachSteuer;            // [EUR] depot value after tax
+  final double vorabpauschaleGesamt;  // [EUR] cumulative Vorabpauschale paid during accumulation
+  final double steuerAufGewinn;       // [EUR] total lifetime tax burden = vorabpauschaleGesamt + sale-tax-after-credit
+  final double nachSteuer;            // [EUR] depot - sale-tax-after-credit (= endkapital - (steuerAufGewinn - vorabpauschaleGesamt))
   final double monatlicheAuszahlung;  // [EUR/month] net monthly payout (core→output conversion)
   final List<YearlyDataPoint> jahresWerte;
 
@@ -310,6 +311,7 @@ class ETFResult {
     required this.endkapitalReal,
     required this.eigenBeitraege,
     required this.gewinn,
+    required this.vorabpauschaleGesamt,
     required this.steuerAufGewinn,
     required this.nachSteuer,
     required this.monatlicheAuszahlung,
