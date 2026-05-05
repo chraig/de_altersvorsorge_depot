@@ -214,8 +214,21 @@ calculations.
 
 ### 3.3 ETF-Depot (Private, Unfördert)
 
-**Legal basis**: §20 Abs. 1 Nr. 7 EStG (existing law); fund-level Teilfreistellung
-per §20 InvStG with fund-type definitions in §2 InvStG.
+**Legal basis**: Investmentsteuergesetz (InvStG) governs the taxation of
+investment-fund income for private investors:
+
+- §2 InvStG — fund-type definitions (Aktienfonds, Mischfonds, Immobilienfonds, …)
+- §16 InvStG — what counts as Investmenterträge: Ausschüttungen, Vorabpauschale,
+  Veräußerungsgewinne
+- §18 InvStG — Vorabpauschale (annual tax on unrealized gains)
+- §19 InvStG — Veräußerungsgewinne (gains on sale)
+- §20 InvStG — Teilfreistellung (partial exemption by fund type)
+
+The applicable **rate** for these Investmenterträge is the Abgeltungssteuer
+fixed by §32d Abs. 1 EStG (25% + 5.5% Soli + optional Kirchensteuer);
+collection at source is governed by §43a EStG. There is no §20 Abs. 1 Nr. 7
+EStG involvement — that paragraph covers interest from non-fund Kapital­
+forderungen and does not apply to Investmentfonds.
 
 **During accumulation**:
 - Vorabpauschale: annual tax on unrealized gains (Basiszins × 0.7 × ETF value × 0.7 Teilfreistellung × 26.3750%)
