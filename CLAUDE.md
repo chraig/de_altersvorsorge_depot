@@ -150,7 +150,7 @@ Constants are centralized in `CalcConstants` — update this class when legislat
 - `calcSubsidyPhases()` — year-range breakdown (accounts for child age-out, bonus, income dev)
 
 **Tax module** (replaceable for different tax brackets):
-- `getGrenzsteuersatz()` — German marginal tax rate (2024 brackets, piecewise linear)
+- `getGrenzsteuersatz()` — German marginal tax rate (2026 brackets, piecewise linear)
 - `calcEinkommensteuer()` — exact progressive §32a tax amount (polynomial formula)
 - `getDurchschnittssteuersatz()` — average tax rate (tax / income, used for payout)
 - `calcGuenstigerpruefung()` — automatic tax optimization check

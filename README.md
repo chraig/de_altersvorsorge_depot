@@ -122,9 +122,9 @@ All tax brackets and rates are defined as static methods. Key values to review a
 // German income tax brackets (§32a EStG)
 // Update these when brackets change
 static double getGrenzsteuersatz(double brutto) {
-  if (brutto <= 11784) return 0;        // Grundfreibetrag 2024
-  if (brutto <= 17005) return 0.14;     // Eingangssteuersatz
-  if (brutto <= 66760) return 0.2397...; // Progressive zone
+  if (brutto <= 12348) return 0;        // Grundfreibetrag 2026
+  if (brutto <= 17799) return 0.14;     // Eingangssteuersatz
+  if (brutto <= 69878) return 0.2397...; // Progressive zone
   if (brutto <= 277825) return 0.42;    // Spitzensteuersatz
   return 0.45;                           // Reichensteuersatz
 }
@@ -228,7 +228,7 @@ lib/
 │       │   │   ├── simulateCombined() # AV + ETF paired
 │       │   │   └── simulateAllMacros() # Cross-product: person × all macros
 │       │   └── CalcConstants          # All legislative parameters with § references
-│       ├── tax_module.dart            # TaxModule interface + GermanTax2024
+│       ├── tax_module.dart            # TaxModule interface + GermanTax2026
 │       │   ├── getGrenzsteuersatz()   # Piecewise marginal §32a
 │       │   ├── calcEinkommensteuer()  # Exact §32a polynomial formulas
 │       │   ├── getDurchschnittssteuersatz()
@@ -346,7 +346,7 @@ Payout phase:
 |---|---|---|
 | Returns | Constant annual rate | Volatile, sequence-of-returns risk |
 | Inflation | Constant annual rate | Variable |
-| Tax brackets | Static (2024 values) | Adjusted ~annually |
+| Tax brackets | Static (2026 values per Steuerfortentwicklungsgesetz) | Adjusted ~annually |
 | Kirchensteuer | Optional toggle (0%/8%/9%) | Affects both AV payout tax and Abgeltungssteuer |
 | Soli | Included in base rate | May change |
 | Vorabpauschale | Fixed 0.3% drag | Depends on Basiszins (2.3-3.2% in 2024-2026) |
@@ -480,7 +480,7 @@ Each file isolates one module or one feature path:
 ### Adding Tests
 
 The `SimulationEngine` is constructed with default modules
-(`GermanTax2024`, `AVDepotSubsidy2027`, `EntgeltpunkteEstimator`), but tests
+(`GermanTax2026`, `AVDepotSubsidy2027`, `EntgeltpunkteEstimator`), but tests
 can inject mocks for any of the three interfaces if you want to isolate one
 module's behavior.
 
@@ -544,7 +544,7 @@ Recommended: Serve over **HTTPS** (enabled by default on most hosting providers)
 6. **No Wohnriester/wohnwirtschaftliche Verwendung**: Tax-free withdrawal for property not modeled
 7. **No Riester comparison**: Only compares AV-Depot vs. free ETF; old Riester not included
 8. **No mortality tables**: Leibrente option would require actuarial calculations
-9. **2024 tax brackets**: Should be updated when 2027 brackets are published
+9. **2026 tax brackets**: Per Steuerfortentwicklungsgesetz. Should be updated when 2027 brackets are published.
 
 ---
 

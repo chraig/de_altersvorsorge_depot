@@ -6,7 +6,7 @@ import 'package:avdepot_rechner/services/domain/tax_module.dart';
 
 void main() {
   const engine = SimulationEngine();
-  const tax = GermanTax2024();
+  const tax = GermanTax2026();
 
   PersonalScenario makePerson({
     double sparrate = 100,

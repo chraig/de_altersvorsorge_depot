@@ -2,32 +2,32 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:avdepot_rechner/services/domain/tax_module.dart';
 
 void main() {
-  const tax = GermanTax2024();
+  const tax = GermanTax2026();
 
   group('Grenzsteuersatz', () {
-    test('below Grundfreibetrag (€11,784) is 0%', () {
+    test('below Grundfreibetrag (€12,348) is 0%', () {
       expect(tax.getGrenzsteuersatz(0), 0);
       expect(tax.getGrenzsteuersatz(10000), 0);
-      expect(tax.getGrenzsteuersatz(11784), 0);
+      expect(tax.getGrenzsteuersatz(12348), 0);
     });
 
-    test('entry zone (€11,785–€17,005) is 14%', () {
+    test('entry zone (€12,349–€17,799) is 14%', () {
       expect(tax.getGrenzsteuersatz(15000), 0.14);
-      expect(tax.getGrenzsteuersatz(17005), 0.14);
+      expect(tax.getGrenzsteuersatz(17799), 0.14);
     });
 
     test('progressive zone interpolates linearly', () {
       final rate = tax.getGrenzsteuersatz(45000);
-      // 0.2397 + (45000-17005)/(66760-17005) * (0.42-0.2397)
-      final expected = 0.2397 + (45000 - 17005) / (66760 - 17005) * (0.42 - 0.2397);
+      // 0.2397 + (45000-17799)/(69878-17799) * (0.42-0.2397)
+      final expected = 0.2397 + (45000 - 17799) / (69878 - 17799) * (0.42 - 0.2397);
       expect(rate, closeTo(expected, 0.0001));
     });
 
-    test('at zone 3 end (€66,760) reaches Spitzensteuersatz', () {
-      expect(tax.getGrenzsteuersatz(66760), closeTo(0.42, 0.001));
+    test('at zone 3 end (€69,878) reaches Spitzensteuersatz', () {
+      expect(tax.getGrenzsteuersatz(69878), closeTo(0.42, 0.001));
     });
 
-    test('Spitzensteuersatz zone (€66,761–€277,825) is 42%', () {
+    test('Spitzensteuersatz zone (€69,879–€277,825) is 42%', () {
       expect(tax.getGrenzsteuersatz(85000), 0.42);
       expect(tax.getGrenzsteuersatz(200000), 0.42);
       expect(tax.getGrenzsteuersatz(277825), 0.42);
@@ -45,7 +45,7 @@ void main() {
     });
 
     test('below Grundfreibetrag → zero tax', () {
-      expect(tax.calcEinkommensteuer(11784), 0);
+      expect(tax.calcEinkommensteuer(12348), 0);
     });
 
     test('zone 2: €15,000 → positive tax', () {
@@ -56,21 +56,22 @@ void main() {
 
     test('zone 3: €45,000', () {
       final steuer = tax.calcEinkommensteuer(45000);
-      // Known approximate value: ~€8,900 for 2024
+      // 2026 zone 3: z = (45000-17799)/10000 = 2.7201
+      // (173.10 × 2.7201 + 2397) × 2.7201 + 1034.87 ≈ 8835.74
       expect(steuer, greaterThan(7000));
       expect(steuer, lessThan(12000));
     });
 
     test('zone 4: €85,000', () {
       final steuer = tax.calcEinkommensteuer(85000);
-      // 0.42 × 85000 - 10602.13 = 25097.87
-      expect(steuer, closeTo(25097.87, 1));
+      // 0.42 × 85000 - 11135.63 = 24564.37
+      expect(steuer, closeTo(24564.37, 1));
     });
 
     test('zone 5: €300,000', () {
       final steuer = tax.calcEinkommensteuer(300000);
-      // 0.45 × 300000 - 18936.88 = 116063.12
-      expect(steuer, closeTo(116063.12, 1));
+      // 0.45 × 300000 - 19470.38 = 115529.62
+      expect(steuer, closeTo(115529.62, 1));
     });
 
     test('average rate < marginal rate', () {
@@ -83,7 +84,7 @@ void main() {
     });
 
     test('average rate is 0 at Grundfreibetrag', () {
-      expect(tax.getDurchschnittssteuersatz(11784), 0);
+      expect(tax.getDurchschnittssteuersatz(12348), 0);
       expect(tax.getDurchschnittssteuersatz(0), 0);
     });
   });

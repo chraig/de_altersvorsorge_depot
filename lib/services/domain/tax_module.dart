@@ -21,13 +21,13 @@ abstract class TaxModule {
   calcGuenstigerpruefung(double jahresbeitrag, double zulageTotal, double grenzsteuersatz);
 }
 
-/// German income tax (§32a EStG, 2024 values).
+/// German income tax (§32a EStG, 2026 values per Steuerfortentwicklungsgesetz).
 /// Implements the exact piecewise polynomial formula from the law.
 ///
 /// Note: Uses Brutto as proxy for zvE (zu versteuerndes Einkommen).
 /// In reality, zvE = Brutto - Werbungskosten - Sonderausgaben etc.
-class GermanTax2024 implements TaxModule {
-  const GermanTax2024();
+class GermanTax2026 implements TaxModule {
+  const GermanTax2026();
 
   @override
   double getGrenzsteuersatz(double brutto) {
@@ -48,33 +48,39 @@ class GermanTax2024 implements TaxModule {
     return calcEinkommensteuer(brutto) / brutto;
   }
 
-  /// Exact §32a EStG 2024 formula.
-  /// Source: §32a Abs. 1 Satz 2 EStG (2024 values per Inflationsausgleichsgesetz).
+  /// Exact §32a EStG 2026 formula.
+  ///
+  /// Source: §32a Abs. 1 Satz 2 EStG, applicable from Veranlagungszeitraum 2026 per
+  /// the Steuerfortentwicklungsgesetz (Bundestag, December 2024). All thresholds
+  /// AND polynomial coefficients are written verbatim into the statute — they are
+  /// not derived or approximated here. Authoritative consolidated text:
+  /// https://www.gesetze-im-internet.de/estg/__32a.html
+  ///
+  /// All literals live in `CalcConstants` (calculator_service.dart). To update for a
+  /// new tax year, change them there in one place.
   @override
   double calcEinkommensteuer(double brutto) {
     if (brutto <= CalcConstants.grundfreibetrag) return 0;
 
     if (brutto <= CalcConstants.zone2Ende) {
-      // Zone 2: y = (zvE - 11784) / 10000
-      // Steuer = (922.98 × y + 1400) × y
-      final y = (brutto - 11784) / 10000;
-      return (922.98 * y + 1400) * y;
+      // Zone 2: tax = (zone2A × y + zone2B) × y, y = (zvE - grundfreibetrag) / 10,000
+      final y = (brutto - CalcConstants.grundfreibetrag) / 10000;
+      return (CalcConstants.zone2A * y + CalcConstants.zone2B) * y;
     }
 
     if (brutto <= CalcConstants.zone3Ende) {
-      // Zone 3: z = (zvE - 17005) / 10000
-      // Steuer = (181.19 × z + 2397) × z + 1025.38
-      final z = (brutto - 17005) / 10000;
-      return (181.19 * z + 2397) * z + 1025.38;
+      // Zone 3: tax = (zone3A × z + zone3B) × z + zone3C, z = (zvE - zone2Ende) / 10,000
+      final z = (brutto - CalcConstants.zone2Ende) / 10000;
+      return (CalcConstants.zone3A * z + CalcConstants.zone3B) * z + CalcConstants.zone3C;
     }
 
     if (brutto <= CalcConstants.zone4Ende) {
-      // Zone 4: Steuer = 0.42 × zvE - 10602.13
-      return 0.42 * brutto - 10602.13;
+      // Zone 4: tax = spitzensteuersatz × zvE - zone4Offset
+      return CalcConstants.spitzensteuersatz * brutto - CalcConstants.zone4Offset;
     }
 
-    // Zone 5: Steuer = 0.45 × zvE - 18936.88
-    return 0.45 * brutto - 18936.88;
+    // Zone 5: tax = reichensteuersatz × zvE - zone5Offset
+    return CalcConstants.reichensteuersatz * brutto - CalcConstants.zone5Offset;
   }
 
   @override

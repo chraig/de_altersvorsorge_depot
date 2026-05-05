@@ -246,14 +246,14 @@ Note: Subsidies are not constant over the savings period. `calcSubsidyPhases()` 
 consecutive years with identical subsidy components into phases (e.g., children aging
 out of Kindergeld at 18 or 25, Berufseinsteigerbonus only in year 1).
 
-### German Marginal Tax Rate (piecewise approximation, §32a EStG 2024)
+### German Marginal Tax Rate (piecewise approximation, §32a EStG 2026)
 
 ```
 Grenzsteuersatz(Brutto) =
-  0%       if Brutto ≤ 11,784   (Grundfreibetrag)
-  14%      if Brutto ≤ 17,005   (Eingangssteuersatz)
-  23.97% + (Brutto - 17,005) / (66,760 - 17,005) × (42% - 23.97%)
-           if Brutto ≤ 66,760   (Progressive zone, linear interpolation)
+  0%       if Brutto ≤ 12,348   (Grundfreibetrag)
+  14%      if Brutto ≤ 17,799   (Eingangssteuersatz)
+  23.97% + (Brutto - 17,799) / (69,878 - 17,799) × (42% - 23.97%)
+           if Brutto ≤ 69,878   (Progressive zone, linear interpolation)
   42%      if Brutto ≤ 277,825  (Spitzensteuersatz)
   45%      if Brutto > 277,825  (Reichensteuersatz)
 ```
@@ -469,29 +469,56 @@ When users create custom macros, recommended ranges:
 
 ## 6. German Income Tax Brackets
 
-### 2024 Brackets (used in calculator)
+### 2026 Brackets (used in calculator)
 
-**Legal basis**: §32a EStG (2024)
+**Legal basis**: §32a Abs. 1 Satz 2 EStG, applicable from Veranlagungszeitraum 2026,
+as amended by the **Steuerfortentwicklungsgesetz** (passed by the Bundestag in
+December 2024).
 
-| zvE (zu versteuerndes Einkommen) | Grenzsteuersatz | Formula |
+**Source of values**: The bracket thresholds and polynomial coefficients are written
+**verbatim into the statute itself**. The values below were taken from the official
+consolidated text published by the Federal Ministry of Justice at
+<https://www.gesetze-im-internet.de/estg/__32a.html> (which mirrors the Bundesgesetzblatt).
+
+| zvE (zu versteuerndes Einkommen) | Grenzsteuersatz | Tax formula |
 |---|---|---|
-| ≤ €11,784 | 0% | Grundfreibetrag |
-| €11,785 – €17,005 | 14–24% | Linear progression |
-| €17,006 – €66,760 | 24–42% | Linear progression |
-| €66,761 – €277,825 | 42% | Spitzensteuersatz |
-| > €277,825 | 45% | Reichensteuersatz |
+| ≤ €12,348 | 0% | Grundfreibetrag (no tax) |
+| €12,349 – €17,799 | 14–24% | (914.51 × y + 1,400) × y, y = (zvE − 12,348) / 10,000 |
+| €17,800 – €69,878 | 24–42% | (173.10 × z + 2,397) × z + 1,034.87, z = (zvE − 17,799) / 10,000 |
+| €69,879 – €277,825 | 42% | 0.42 × zvE − 11,135.63 (Spitzensteuersatz) |
+| > €277,825 | 45% | 0.45 × zvE − 19,470.38 (Reichensteuersatz) |
 
-**Calculator implementation**: Piecewise linear approximation (see `CalculatorService.getGrenzsteuersatz()` in `lib/services/domain/calculator_service.dart`).
-This gives the marginal rate, which is what matters for the Günstigerprüfung.
+**What the coefficients mean** (these are not free parameters — they are calibrated by the
+legislator so that the tax function is continuous at every zone boundary and so that the
+marginal rate hits the legally specified targets):
+
+- `1400 / 10,000 = 14%` → Eingangssteuersatz, the marginal rate at the start of zone 2.
+- `2397 / 10,000 = 23.97%` → marginal rate at the start of zone 3 (must equal the marginal
+  rate at the end of zone 2, ensuring smooth transition).
+- `914.51` and `173.10` → curvature coefficients. They control how steeply the marginal
+  rate climbs through each progressive zone, calibrated so the marginal rate reaches
+  exactly 24% at the end of zone 2 and exactly 42% at the end of zone 3.
+- `1034.87`, `11135.63`, `19470.38` → continuity offsets. Tax computed at a zone boundary
+  using the lower zone's formula must equal the tax computed using the upper zone's
+  formula; these constants enforce that.
+
+These are **not** interpretations or approximations on the calculator's part — they are
+the literal coefficients in the statute. Any changes here in future tax years should come
+from updates to §32a EStG, not from re-derivation.
+
+**Calculator implementation**: Exact §32a polynomial formulas in `GermanTax2026.calcEinkommensteuer()` ([lib/services/domain/tax_module.dart](../lib/services/domain/tax_module.dart)). Marginal rate (`getGrenzsteuersatz`) uses a linear interpolation across the progressive zone — used only for Günstigerprüfung where the marginal rate is the correct comparison.
 
 **Note**: The calculator uses Bruttojahreseinkommen as a proxy for zvE. In reality, zvE =
-Brutto - Werbungskosten - Sonderausgaben - etc. This simplification overstates the
-Grenzsteuersatz for most users by a few percentage points.
+Brutto − Werbungskosten − Sonderausgaben − etc. This simplification slightly overstates the
+tax for most users.
 
 ### Planned Updates
 
-Tax brackets are typically adjusted annually for inflation (kalte Progression).
-The 2027 brackets should be substituted once published by the BMF (expected late 2026).
+Tax brackets are adjusted annually for inflation (kalte Progression).
+The 2027 brackets should be substituted once published by the BMF (typically late 2026).
+When a new year is added, prefer renaming the class (e.g., `GermanTax2027`) and adding it
+as a new module rather than mutating the existing one — this preserves historical
+comparability and supports the modular tax-engine design.
 
 ---
 

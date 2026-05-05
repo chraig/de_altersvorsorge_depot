@@ -9,7 +9,7 @@ import 'package:avdepot_rechner/services/domain/pension_module.dart';
 ///
 /// Sources:
 /// - Subsidy parameters: §89 EStG-E (Altersvorsorgereformgesetz, Finanzausschuss 25.03.2026)
-/// - Tax brackets: §32a EStG (2024 values — update when 2027 brackets published by BMF)
+/// - Tax brackets: §32a EStG 2026 values (Steuerfortentwicklungsgesetz)
 /// - ETF taxation: §20 InvStG (Teilfreistellung), §43a EStG + §4 SolZG (Abgeltungssteuer)
 /// - Pension estimation: Deutsche Rentenversicherung (Rentenwert July 2024, West)
 class CalcConstants {
@@ -42,23 +42,51 @@ class CalcConstants {
   /// Must be under this age at contract start to qualify
   static const int bonusMaxAlter = 25;
 
-  // ─── INCOME TAX BRACKETS (§32a EStG, 2024 values) ─────────────
-  /// Grundfreibetrag: no tax below this (tax-free allowance)
-  static const double grundfreibetrag = 11784;
-  /// End of entry zone: 14% flat rate up to this threshold
-  static const double zone2Ende = 17005;
-  /// Entry tax rate (Eingangssteuersatz)
-  static const double zone2Satz = 0.14;
-  /// End of progressive zone: rate rises linearly from zone2Satz to Spitzensteuersatz
-  static const double zone3Ende = 66760;
-  /// Start rate of progressive zone (interpolated from §32a formula)
-  static const double zone3StartSatz = 0.2397;
-  /// Top rate for income up to zone4Ende
-  static const double spitzensteuersatz = 0.42;
-  /// Threshold for Reichensteuersatz (super-rich rate)
+  // ─── INCOME TAX BRACKETS (§32a EStG, 2026 values) ─────────────
+  // Source: Steuerfortentwicklungsgesetz, applicable from Veranlagungszeitraum 2026.
+  // Authoritative: https://www.gesetze-im-internet.de/estg/__32a.html
+  // All values below — thresholds AND polynomial coefficients — are written verbatim
+  // into §32a Abs. 1 Satz 2 EStG. Update this entire block when a new tax year applies.
+
+  // ── Zone thresholds ──
+  /// Grundfreibetrag: no tax at or below this (tax-free allowance)
+  static const double grundfreibetrag = 12348;
+  /// End of zone 2 (entry zone): marginal rate rises from 14% to 24% across this zone
+  static const double zone2Ende = 17799;
+  /// End of zone 3 (progressive zone): marginal rate rises from 24% to 42% across this zone
+  static const double zone3Ende = 69878;
+  /// End of zone 4 / start of zone 5 (Reichensteuersatz threshold)
   static const double zone4Ende = 277825;
-  /// Top marginal rate above zone4Ende
+
+  // ── Marginal rates (used by getGrenzsteuersatz for Günstigerprüfung comparison) ──
+  /// Eingangssteuersatz: marginal rate at start of zone 2
+  static const double zone2Satz = 0.14;
+  /// Marginal rate at start of zone 3 (continuity with zone 2 end)
+  static const double zone3StartSatz = 0.2397;
+  /// Spitzensteuersatz: flat 42% across zone 4
+  static const double spitzensteuersatz = 0.42;
+  /// Reichensteuersatz: flat 45% above zone4Ende
   static const double reichensteuersatz = 0.45;
+
+  // ── §32a polynomial coefficients (used by calcEinkommensteuer) ──
+  // Zone 2 formula:  tax = (zone2A × y + zone2B) × y    where y = (zvE − grundfreibetrag) / 10,000
+  // Zone 3 formula:  tax = (zone3A × z + zone3B) × z + zone3C    where z = (zvE − zone2Ende) / 10,000
+  // Zone 4 formula:  tax = spitzensteuersatz × zvE − zone4Offset
+  // Zone 5 formula:  tax = reichensteuersatz × zvE − zone5Offset
+  /// Zone 2 quadratic coefficient (curvature)
+  static const double zone2A = 914.51;
+  /// Zone 2 linear coefficient (encodes 14% Eingangssteuersatz × 10,000)
+  static const double zone2B = 1400;
+  /// Zone 3 quadratic coefficient (curvature)
+  static const double zone3A = 173.10;
+  /// Zone 3 linear coefficient (encodes 23.97% start-of-zone-3 marginal rate × 10,000)
+  static const double zone3B = 2397;
+  /// Zone 3 continuity constant (tax amount at the start of zone 3)
+  static const double zone3C = 1034.87;
+  /// Zone 4 continuity offset (so zone 4 connects smoothly to end of zone 3)
+  static const double zone4Offset = 11135.63;
+  /// Zone 5 continuity offset (so zone 5 connects smoothly to end of zone 4)
+  static const double zone5Offset = 19470.38;
 
   // ─── ETF TAXATION (§20 InvStG, §43a EStG) ─────────────────────
   /// Partial exemption for equity funds (≥51% equity): 30% of gains tax-free
@@ -103,7 +131,7 @@ class CalcConstants {
 /// Each module (tax, subsidy, pension) can be replaced independently:
 /// ```dart
 /// final engine = SimulationEngine(
-///   tax: GermanTax2024(),          // or a custom/updated implementation
+///   tax: GermanTax2026(),          // or a custom/updated implementation
 ///   subsidy: AVDepotSubsidy2027(), // or a different subsidy regime
 ///   pension: EntgeltpunkteEstimator(), // or a different pension system
 /// );
@@ -116,7 +144,7 @@ class SimulationEngine {
   final PensionModule pension;
 
   const SimulationEngine({
-    this.tax = const GermanTax2024(),
+    this.tax = const GermanTax2026(),
     this.subsidy = const AVDepotSubsidy2027(),
     this.pension = const EntgeltpunkteEstimator(),
   });

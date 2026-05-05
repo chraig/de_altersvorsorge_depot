@@ -38,11 +38,12 @@ Located in: `lib/services/domain/calculator_service.dart`
 
 | Parameter | Default | Basis | Code Location |
 |---|---|---|---|
-| Grundfreibetrag | €11,784 | §32a EStG 2024 | `getGrenzsteuersatz()` |
+| Grundfreibetrag | €12,348 | §32a EStG 2026 | `getGrenzsteuersatz()` |
 | Eingangssteuersatz | 14% | §32a EStG | `getGrenzsteuersatz()` |
-| Progressive zone end | €66,760 | §32a EStG 2024 | `getGrenzsteuersatz()` |
+| End of entry zone (zone 2) | €17,799 | §32a EStG 2026 | `getGrenzsteuersatz()` |
+| End of progressive zone (zone 3) | €69,878 | §32a EStG 2026 | `getGrenzsteuersatz()` |
 | Spitzensteuersatz | 42% | §32a EStG | `getGrenzsteuersatz()` |
-| Reichensteuersatz start | €277,826 | §32a EStG 2024 | `getGrenzsteuersatz()` |
+| Reichensteuersatz start | €277,826 | §32a EStG | `getGrenzsteuersatz()` |
 | Reichensteuersatz | 45% | §32a EStG | `getGrenzsteuersatz()` |
 | Abgeltungssteuersatz | 26.3750% (default) | §43a + §4 SolZG | `CostSettings.abgeltungssteuersatz` |
 | Kirchensteuer | 0% / 8% / 9% | Toggle in Advanced Settings | `CostSettings.kirchensteuer` |
@@ -52,14 +53,21 @@ Located in: `lib/services/domain/calculator_service.dart`
 
 ### To update tax brackets:
 
-Replace the values in `getGrenzsteuersatz()`. The function uses a piecewise linear
-approximation. For production use, consider implementing the exact §32a formulas:
+Update the constants in `CalcConstants` (calculator_service.dart) and the polynomial
+coefficients in `GermanTax2026.calcEinkommensteuer()` (tax_module.dart). The exact
+§32a formulas are already implemented:
 
 ```dart
-// Zone 2 (2024): y = (1008.70 * z + 1400) * z
-// where z = (zvE - 11784) / 10000
-// This gives the tax amount, not the marginal rate
+// Zone 2 (2026): tax = (914.51 × y + 1400) × y
+//   where y = (zvE - 12348) / 10000
+// Zone 3 (2026): tax = (173.10 × z + 2397) × z + 1034.87
+//   where z = (zvE - 17799) / 10000
+// Zone 4 (2026): tax = 0.42 × zvE - 11135.63
+// Zone 5 (2026): tax = 0.45 × zvE - 19470.38
 ```
+
+When new annual values are published, rename the class (e.g., `GermanTax2027`) so
+prior versions remain available for historical comparison.
 
 ### Kirchensteuer
 

@@ -102,7 +102,7 @@ flowchart TD
     SE --> SM[SubsidyModule<br/>interface]
     SE --> PM[PensionModule<br/>interface]
 
-    TM --> GT[GermanTax2024]
+    TM --> GT[GermanTax2026]
     SM --> AVS[AVDepotSubsidy2027]
     PM --> EPE[EntgeltpunkteEstimator]
 
@@ -150,7 +150,7 @@ flowchart TD
 | Component | File |
 |-----------|------|
 | SimulationEngine + CalcConstants | `lib/services/domain/calculator_service.dart` |
-| TaxModule + GermanTax2024 | `lib/services/domain/tax_module.dart` |
+| TaxModule + GermanTax2026 | `lib/services/domain/tax_module.dart` |
 | SubsidyModule + AVDepotSubsidy2027 | `lib/services/domain/subsidy_module.dart` |
 | PensionModule + EntgeltpunkteEstimator | `lib/services/domain/pension_module.dart` |
 | IncomeDevSettings + GrowthCurve | `lib/models/income_dev_settings.dart` |
