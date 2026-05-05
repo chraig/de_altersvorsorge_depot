@@ -318,20 +318,16 @@ AvPayoutTaxRate = TaxOnAV / AV_Payout  // incremental rate on AV payout only  //
 Steuersatz_Rente = AvgSteuersatz × (1 + Kirchensteuer)
 Netto_Gefördert = Monatlich_Gefördert × (1 - Steuersatz_Rente)
 
-// ── Ungefördert: tax treatment PENDING official BMF guidance ──
-// The Altersvorsorgereformgesetz was passed March 2026, takes effect Jan 2027.
-// No BMF-Schreiben on payout taxation of ungeförderte AV-Depot contributions yet.
-//
-// CURRENT DEFAULT: nachgelagerte Besteuerung (same as gefördert) — conservative.
-// This likely overstates the tax burden.
-//
-// POSSIBLE FUTURE TREATMENTS (modular override planned):
-//   a) Ertragsanteilbesteuerung: 17% of payout taxed at income rate (age 67)
-//   b) Halbeinkünfteverfahren: 50% of gains taxed (contract 12+ years, age 62+)
-//   c) Abgeltungssteuer with Teilfreistellung (like ETF)
+// ── Ungefördert: Ertragsanteilbesteuerung per §22 Nr. 1 Satz 3a EStG ──
+// Only the Ertragsanteil portion of each payout is taxed at the recipient's
+// income rate; the rest is treated as untaxed return of contributions.
+// Calculator simplification: always uses the age-67 Ertragsanteil (17%),
+// regardless of actual retirement age. Earlier retirement would actually
+// use higher Ertragsanteil values per the §22 EStG age table (60→22%, 65→18% etc.).
 //
 Monatlich_Ungefördert = Depot_Ungefördert / (Auszahlungsdauer × 12)
-Netto_Ungefördert = Monatlich_Ungefördert × (1 - Steuersatz_Rente × (1 + KiSt))
+Steuerpflichtig = Monatlich_Ungefördert × 0.17        // 17% Ertragsanteil at age 67
+Netto_Ungefördert = Monatlich_Ungefördert - Steuerpflichtig × AvPayoutTaxRate × (1 + KiSt)
 
 Monatlich_Netto = Netto_Gefördert + Netto_Ungefördert
 

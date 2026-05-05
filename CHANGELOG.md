@@ -6,7 +6,7 @@ All notable user-facing changes to the Altersvorsorgedepot-Rechner.
 
 ### Added
 - Progressive §32a tax calculation (exact polynomial formulas replacing marginal rate approximation)
-- Selectable ungefördert tax treatment (nachgelagert / Ertragsanteil / Halbeinkünfte) — pending BMF guidance
+- Ungefördert payout: Ertragsanteilbesteuerung (17%, age-67 entry) per §22 Nr. 1 Satz 3a EStG
 - Adjustable Arbeitsbeginn (14–35 years) for pension point estimation
 - Facts-only principle: only verified legislation implemented, uncertainties documented
 - Kirchensteuer toggle (None / 8% Bayern-BaWü / 9% other states) in Advanced Settings

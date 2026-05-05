@@ -64,7 +64,7 @@ flowchart TD
         PENS["Pension Estimation<br/>Priority: override, income-dev EP, static<br/>EP = Sum min bruttoJ, BBG / Durchschnittsentgelt x Rentenwert"]
         RTAX["Retirement Tax - progressive 32a<br/>combinedIncome = avAnnualPayout + pension x 12 + sonstige<br/>avgRate = calcEinkommensteuer combinedIncome / combinedIncome"]
         GEF["Gefoerdert: 100% taxed<br/>netto = brutto x 1 - gst x kirchenFaktor"]
-        UNGEF["Ungefoerdert: tax pending BMF guidance<br/>Default: nachgelagerte Besteuerung"]
+        UNGEF["Ungefoerdert: Ertragsanteilbesteuerung<br/>17% of payout taxed at income rate, assumes age-67 entry"]
         PENS --> RTAX --> GEF
         RTAX --> UNGEF
     end

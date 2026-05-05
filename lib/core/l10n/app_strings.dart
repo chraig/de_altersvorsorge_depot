@@ -80,11 +80,6 @@ abstract class AppStrings {
   String get kirchensteuerNone;
   String get kirchensteuerBayBw;
   String get kirchensteuerOther;
-  String get ungefoerdertTaxLabel;
-  String get ungefoerdertTaxNachgelagert;
-  String get ungefoerdertTaxErtragsanteil;
-  String get ungefoerdertTaxHalbeinkunfte;
-  String get hintUngefoerdertTax;
 
   // ─── SUBSIDY BOX ─────────────────────────────────────────────────
   String get baseGrant;
@@ -436,11 +431,6 @@ class StringsEn extends AppStrings {
   String get kirchensteuerNone => 'None';
   String get kirchensteuerBayBw => '8% (Bavaria/BaWü)';
   String get kirchensteuerOther => '9% (other states)';
-  String get ungefoerdertTaxLabel => 'AV-Depot: unsubsidized payout tax';
-  String get ungefoerdertTaxNachgelagert => 'Full (conservative)';
-  String get ungefoerdertTaxErtragsanteil => 'Ertragsanteil (17%)';
-  String get ungefoerdertTaxHalbeinkunfte => 'Halbeinkünfte (50% gains)';
-  String get hintUngefoerdertTax => 'AV-Depot only: tax on unsubsidized contributions (above €1,800/yr) at payout. BMF guidance pending. Does not affect ETF comparison.';
 
   // Subsidy
   String get baseGrant => 'Base Grant';
@@ -527,7 +517,7 @@ class StringsEn extends AppStrings {
   String get tipBerufseinsteigerbonus => 'One-time €200 bonus in your first contract year if you are under 25. No ongoing payments — just the first year.';
   String get tipGuenstigerpruefung => 'The tax office automatically checks: is the tax deduction on your contributions worth more than the subsidies? If yes, you get the difference as a tax refund — but to your bank account, NOT into the depot.';
   String get tipGefoerdert => 'Subsidized contributions (up to €1,800/yr): grow tax-free, but the ENTIRE payout in retirement is taxed at your income tax rate (nachgelagerte Besteuerung).';
-  String get tipUngefoerdert => 'Unsubsidized contributions (above €1,800/yr): no subsidies, but still tax-free growth during savings. Payout taxation is pending official BMF guidance (law takes effect Jan 2027). Currently calculated conservatively as full nachgelagerte Besteuerung. Actual treatment may be more favorable (e.g., Ertragsanteilbesteuerung or Halbeinkünfteverfahren).';
+  String get tipUngefoerdert => 'Unsubsidized contributions (above €1,800/yr): no subsidies, but still tax-free growth during savings. Payout taxed under Ertragsanteilbesteuerung (§22 Nr. 1 Satz 3a EStG): only 17% of each payout is taxed at your income rate (assumes age-67 entry).';
   String get tipVorabpauschale => 'Annual tax on unrealized ETF gains, calculated from the Basiszins (ECB reference rate). Simplified here as a fixed drag on returns. Does NOT apply inside the AV-Depot.';
   String get tipTeilfreistellung => '30% of your ETF gains are tax-exempt because the fund already paid withholding tax at fund level. Only 70% of gains are subject to Abgeltungssteuer.';
 
@@ -609,7 +599,7 @@ class StringsEn extends AppStrings {
   String get proGuenstigerpruefung => 'Tax optimization check yields additional refund';
   String get proLongDuration => 'Long savings duration – subsidies compound over decades';
   String get proTaxFreeGrowth => 'Tax-free growth during accumulation (no Vorabpauschale, no capital gains tax)';
-  String get conLowSubsidyLeverage => 'Contributions above €150/mo receive no subsidy. Entire payout currently taxed at income rate (conservative). Unsubsidized portion may receive more favorable treatment once BMF guidance is published.';
+  String get conLowSubsidyLeverage => 'Contributions above €150/mo receive no subsidy. The unsubsidized portion is taxed under Ertragsanteilbesteuerung (only 17% of payout taxed at income rate).';
   String get conHighRetirementTax => 'High marginal tax rate – deferred taxation at high rate reduces advantage';
   String get proEtfOnlyGainsTaxed => 'Only gains are taxed – your contributions are returned tax-free';
   String get proEtfTeilfreistellung => '30% partial exemption (Teilfreistellung) reduces taxable gains';
@@ -645,7 +635,7 @@ class StringsEn extends AppStrings {
     'Both: Fund-level withholding tax (~0.3% p.a.) not separately modeled\n'
     'ETF: Vorabpauschale simplified as 0.3% annual drag (actual depends on Basiszins)\n'
     'AV: Retirement tax uses progressive §32a average rate on combined income. Brutto used as proxy for zvE.\n'
-    'AV: Ungeförderte payout tax treatment pending BMF guidance — conservatively uses full nachgelagerte Besteuerung. May be more favorable (Ertragsanteil/Halbeinkünfte) once clarified.\n'
+    'AV: Ungeförderte payout uses Ertragsanteilbesteuerung (17%, age-67 entry) per §22 Nr. 1 Satz 3a EStG. Age-dependent table (60→22%, 65→18% etc.) not modeled.\n'
     'AV: Günstigerprüfung tax refund paid to bank account, not reinvested\n'
     'AV: State pension estimated from gross income (Entgeltpunkte formula, 2024 Rentenwert) – adjustable';
   String get plannedFeaturesTitle => 'Not Yet Included';
@@ -849,11 +839,6 @@ class StringsDe extends AppStrings {
   String get kirchensteuerNone => 'Keine';
   String get kirchensteuerBayBw => '8 % (Bayern/BaWü)';
   String get kirchensteuerOther => '9 % (übrige Bundesländer)';
-  String get ungefoerdertTaxLabel => 'AV-Depot: Besteuerung ungefördert';
-  String get ungefoerdertTaxNachgelagert => 'Voll (konservativ)';
-  String get ungefoerdertTaxErtragsanteil => 'Ertragsanteil (17 %)';
-  String get ungefoerdertTaxHalbeinkunfte => 'Halbeinkünfte (50 % Gewinn)';
-  String get hintUngefoerdertTax => 'Nur AV-Depot: Besteuerung ungeförderter Beiträge (über 1.800 €/J) bei Auszahlung. BMF-Klärung ausstehend. Beeinflusst nicht den ETF-Vergleich.';
 
   String get baseGrant => 'Grundzulage';
   String get childGrant => 'Kinderzulage';
@@ -935,7 +920,7 @@ class StringsDe extends AppStrings {
   String get tipBerufseinsteigerbonus => 'Einmaliger Bonus von 200 € im ersten Vertragsjahr, wenn Sie unter 25 sind. Keine laufenden Zahlungen — nur im ersten Jahr.';
   String get tipGuenstigerpruefung => 'Das Finanzamt prüft automatisch: Bringt der Sonderausgabenabzug auf Ihre Beiträge mehr als die Zulagen? Wenn ja, erhalten Sie die Differenz als Steuererstattung — aber auf Ihr Bankkonto, NICHT ins Depot.';
   String get tipGefoerdert => 'Geförderte Beiträge (bis 1.800 €/J): Wachsen steuerfrei, aber die GESAMTE Auszahlung im Ruhestand wird mit Einkommensteuer besteuert (nachgelagerte Besteuerung).';
-  String get tipUngefoerdert => 'Ungeförderte Beiträge (über 1.800 €/J): Keine Zulagen, aber steuerfreies Wachstum in der Ansparphase. Besteuerung bei Auszahlung wartet auf offizielle BMF-Klärung (Gesetz tritt Jan 2027 in Kraft). Derzeit konservativ als volle nachgelagerte Besteuerung berechnet. Tatsächliche Behandlung könnte günstiger sein (z.B. Ertragsanteil oder Halbeinkünfteverfahren).';
+  String get tipUngefoerdert => 'Ungeförderte Beiträge (über 1.800 €/J): Keine Zulagen, aber steuerfreies Wachstum in der Ansparphase. Auszahlung mit Ertragsanteilbesteuerung (§22 Nr. 1 Satz 3a EStG): nur 17 % der Auszahlung wird mit dem persönlichen Einkommensteuersatz versteuert (Annahme: Beginn mit 67).';
   String get tipVorabpauschale => 'Jährliche Steuer auf unrealisierte ETF-Gewinne, berechnet aus dem Basiszins (EZB-Referenzzins). Hier vereinfacht als fester Abzug. Gilt NICHT im AV-Depot.';
   String get tipTeilfreistellung => '30 % Ihrer ETF-Gewinne sind steuerfrei, da der Fonds bereits Quellensteuer auf Fondsebene zahlt. Nur 70 % der Gewinne unterliegen der Abgeltungssteuer.';
 
@@ -1013,7 +998,7 @@ class StringsDe extends AppStrings {
   String get proGuenstigerpruefung => 'Günstigerprüfung bringt zusätzliche Steuererstattung';
   String get proLongDuration => 'Lange Spardauer – Zulagen verzinsen sich über Jahrzehnte';
   String get proTaxFreeGrowth => 'Steuerfreies Wachstum in der Ansparphase (keine Vorabpauschale, keine Abgeltungssteuer)';
-  String get conLowSubsidyLeverage => 'Beiträge über 150 €/Mt erhalten keine Zulage. Gesamte Auszahlung derzeit konservativ mit Einkommensteuer besteuert. Ungeförderter Teil könnte günstiger behandelt werden, sobald BMF-Leitfaden veröffentlicht.';
+  String get conLowSubsidyLeverage => 'Beiträge über 150 €/Mt erhalten keine Zulage. Der ungeförderte Anteil wird mit Ertragsanteilbesteuerung versteuert (nur 17 % der Auszahlung mit Einkommensteuersatz).';
   String get conHighRetirementTax => 'Hoher Grenzsteuersatz – nachgelagerte Besteuerung zu hohem Satz mindert den Vorteil';
   String get proEtfOnlyGainsTaxed => 'Nur Gewinne werden besteuert – Ihre Einzahlungen erhalten Sie steuerfrei zurück';
   String get proEtfTeilfreistellung => '30 % Teilfreistellung reduziert die steuerpflichtigen Gewinne';
@@ -1048,7 +1033,7 @@ class StringsDe extends AppStrings {
     'Beide: Quellensteuer auf Fondsebene (~0,3 % p.a.) nicht separat modelliert\n'
     'ETF: Vorabpauschale vereinfacht als 0,3 % jährlicher Abzug (tatsächlich abhängig vom Basiszins)\n'
     'AV: Besteuerung im Ruhestand nutzt progressiven §32a-Durchschnittssteuersatz auf Gesamteinkommen. Brutto als Näherung für zvE.\n'
-    'AV: Besteuerung ungeförderter Auszahlungen wartet auf BMF-Klärung — konservativ als volle nachgelagerte Besteuerung. Könnte günstiger sein (Ertragsanteil/Halbeinkünfte) nach Klärung.\n'
+    'AV: Ungeförderte Auszahlung mit Ertragsanteilbesteuerung (17 %, Beginn mit 67) gem. §22 Nr. 1 Satz 3a EStG. Altersabhängige Tabelle (60→22 %, 65→18 % etc.) nicht modelliert.\n'
     'AV: Günstigerprüfung-Erstattung wird auf Bankkonto ausgezahlt, nicht reinvestiert\n'
     'AV: Gesetzl. Rente aus Bruttoeinkommen geschätzt (Entgeltpunkte-Formel, Rentenwert 2024) – anpassbar';
   String get plannedFeaturesTitle => 'Noch nicht enthalten';

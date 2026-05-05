@@ -222,7 +222,7 @@ Located in: `lib/config/theme.dart`
 - Part-time phases (start year, duration, percentage)
 - Child arrival timing (dynamic children added at specific savings years)
 - Per-child age tracking with kinderStudieren toggle (Kindergeld until 18 or 25)
-- Ungefördert tax treatment selector (nachgelagert / Ertragsanteil / Halbeinkünfte)
+- Ungefördert payout taxed via Ertragsanteilbesteuerung (17%, age-67 entry, §22 Nr. 1 Satz 3a EStG)
 - Progressive §32a tax calculation (exact polynomial formulas, incremental retirement tax rate)
 - Adjustable Arbeitsbeginn (14–35, affects pension EP calculation)
 - Stacked bar charts: per-year breakdown of contributions/subsidies (savings) and net/tax (payout)

@@ -72,11 +72,10 @@ class CalcConstants {
   // ─── PAYOUT PHASE ─────────────────────────────────────────────
   /// Auszahlplan must run until this age (§89 Abs. 8 EStG-E)
   static const int payoutEndAge = 85;
-  /// Ertragsanteil for Auszahlplan at payout start age 67 (BMF table, §22 EStG).
-  /// NOT currently used in calculations — pending official BMF guidance on whether
-  /// this applies to ungeförderte AV-Depot contributions.
-  /// Age 65: 18%, age 67: 17%, age 68: 16%.
-  /// Kept here for future modular override when tax treatment is clarified.
+  /// Ertragsanteil for Auszahlplan at payout start age 67 (§22 Nr. 1 Satz 3a EStG).
+  /// Used for ungeförderte AV-Depot payouts: 17% of payout taxed at income rate.
+  /// Calculator simplification: always assumes age-67 entry (17%) regardless of
+  /// actual retirement age. Age-dependent table (60→22%, 65→18%, 68→16% etc.) not modeled.
   static const double ertragsanteil67 = 0.17;
 
   // ─── PENSION ESTIMATION (Deutsche Rentenversicherung) ──────────
@@ -280,35 +279,15 @@ class SimulationEngine {
     final avPayoutTaxRate = jahresGefoerdert > 0 ? taxOnAvPayout / jahresGefoerdert : 0.0;
     final nettoGefoerdert = monatlichGefoerdert * (1 - avPayoutTaxRate * kirchensteuerFaktor);
 
-    // Ungefördert: tax treatment at payout is PENDING official BMF guidance.
-    // The Altersvorsorgereformgesetz was passed March 2026, takes effect Jan 2027.
-    // No BMF-Schreiben on payout taxation of ungeförderte AV-Depot contributions yet.
-    //
-    // Possible future treatments (to be implemented as modular override when clarified):
-    //   - Ertragsanteilbesteuerung (17% of payout taxed, §22 Nr. 1 Satz 3a EStG)
-    //   - Halbeinkünfteverfahren (50% of gains taxed, §20 Abs. 1 Nr. 6 EStG)
-    //   - Abgeltungssteuer with Teilfreistellung (like ETF)
-    //
-    // Tax treatment depends on user selection (pending official BMF guidance).
+    // Ungefördert: Ertragsanteilbesteuerung per §22 Nr. 1 Satz 3a EStG.
+    // Only 17% of the monthly payout is taxed at the recipient's income rate;
+    // the remaining 83% is treated as untaxed return of contributions.
+    // Calculator assumes age-67 entry (Ertragsanteil 17%) regardless of actual retirement age.
     double nettoUngefoerdert = 0;
     if (depotUngefoerdert > 0) {
       final monatlichUngef = depotUngefoerdert / (auszahlungsDauer * 12);
-      switch (costs.ungefoerdertTax) {
-        case UngefoerdertTaxMode.nachgelagert:
-          // Conservative: same as gefördert (100% taxed at average rate)
-          nettoUngefoerdert = monatlichUngef * (1 - avPayoutTaxRate * kirchensteuerFaktor);
-        case UngefoerdertTaxMode.ertragsanteil:
-          // Only Ertragsanteil (17% at age 67) taxed at income rate
-          final taxable = monatlichUngef * CalcConstants.ertragsanteil67;
-          nettoUngefoerdert = monatlichUngef - taxable * avPayoutTaxRate * kirchensteuerFaktor;
-        case UngefoerdertTaxMode.halbeinkunfte:
-          // 50% of gains taxed at income rate
-          final eigenUngef = jbUngefoerdert * person.spardauer;
-          final gewinnAnteil = depotUngefoerdert > eigenUngef
-              ? (depotUngefoerdert - eigenUngef) / depotUngefoerdert : 0.0;
-          final taxable = monatlichUngef * gewinnAnteil * 0.5;
-          nettoUngefoerdert = monatlichUngef - taxable * avPayoutTaxRate * kirchensteuerFaktor;
-      }
+      final taxable = monatlichUngef * CalcConstants.ertragsanteil67;
+      nettoUngefoerdert = monatlichUngef - taxable * avPayoutTaxRate * kirchensteuerFaktor;
     }
 
     final monatlich = monatlichGefoerdert + (depotUngefoerdert > 0 ? depotUngefoerdert / (auszahlungsDauer * 12) : 0);

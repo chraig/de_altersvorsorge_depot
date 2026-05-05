@@ -153,20 +153,6 @@ class MacroScenario {
 // UNGEFÖRDERT TAX TREATMENT
 // ═══════════════════════════════════════════════════════════════════
 
-/// Tax treatment options for ungeförderte AV-Depot contributions at payout.
-/// Official BMF guidance pending (law takes effect Jan 2027).
-enum UngefoerdertTaxMode {
-  /// Conservative default: same as gefördert (100% nachgelagerte Besteuerung).
-  /// Likely overstates tax. Used until official guidance is published.
-  nachgelagert,
-  /// Ertragsanteilbesteuerung: only 17% of payout taxed at income rate (age 67).
-  /// May apply to Auszahlplan payouts per §22 Nr. 1 Satz 3a EStG.
-  ertragsanteil,
-  /// Halbeinkünfteverfahren: 50% of gains taxed at income rate.
-  /// May apply per §20 Abs. 1 Nr. 6 EStG (contract 12+ years, age 62+).
-  halbeinkunfte,
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // COST SETTINGS
 // ═══════════════════════════════════════════════════════════════════
@@ -175,13 +161,11 @@ class CostSettings {
   double kostenAV;
   double kostenETF;
   double kirchensteuer; // 0.0 = none, 0.08 = Bayern/BaWü, 0.09 = other states
-  UngefoerdertTaxMode ungefoerdertTax; // default: nachgelagert (conservative)
 
   CostSettings({
     this.kostenAV = 0.005,
     this.kostenETF = 0.002,
     this.kirchensteuer = 0.0,
-    this.ungefoerdertTax = UngefoerdertTaxMode.nachgelagert,
   });
 
   /// Abgeltungssteuer + Soli + optional Kirchensteuer.
@@ -196,12 +180,11 @@ class CostSettings {
     return kapEst + soli + kiSt;
   }
 
-  CostSettings copyWith({double? kostenAV, double? kostenETF, double? kirchensteuer, UngefoerdertTaxMode? ungefoerdertTax}) =>
+  CostSettings copyWith({double? kostenAV, double? kostenETF, double? kirchensteuer}) =>
     CostSettings(
       kostenAV: kostenAV ?? this.kostenAV,
       kostenETF: kostenETF ?? this.kostenETF,
       kirchensteuer: kirchensteuer ?? this.kirchensteuer,
-      ungefoerdertTax: ungefoerdertTax ?? this.ungefoerdertTax,
     );
 }
 

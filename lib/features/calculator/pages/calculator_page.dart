@@ -559,8 +559,9 @@ class _AssumptionsPanel extends StatelessWidget {
     final s = context.watch<LocaleCubit>().state.strings;
     final cubit = context.read<CalculatorCubit>();
     final p = state.currentPerson;
-    final costs = state.costs;
     final hasKinder = p.kinder > 0 || state.incomeDev.childArrivalYears.isNotEmpty;
+
+    if (!hasKinder) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -575,28 +576,12 @@ class _AssumptionsPanel extends StatelessWidget {
         Text(s.hintAssumptions, style: AppTheme.hint),
         const SizedBox(height: AppSpacing.lg),
 
-        if (hasKinder) ...[
-          Text(s.hintChildStudy, style: AppTheme.hint),
-          const SizedBox(height: AppSpacing.sm),
-          AppChipGroup<bool>(
-            value: p.kinderStudieren,
-            onChanged: cubit.setKinderStudieren,
-            options: [(true, s.childStudyYes), (false, s.childStudyNo)],
-          ),
-          const SizedBox(height: AppSpacing.xl),
-        ],
-
-        Text(s.ungefoerdertTaxLabel.toUpperCase(), style: AppTheme.labelUppercase),
-        Text(s.hintUngefoerdertTax, style: AppTheme.hint),
+        Text(s.hintChildStudy, style: AppTheme.hint),
         const SizedBox(height: AppSpacing.sm),
-        AppChipGroup<UngefoerdertTaxMode>(
-          value: costs.ungefoerdertTax,
-          onChanged: cubit.setUngefoerdertTaxMode,
-          options: [
-            (UngefoerdertTaxMode.nachgelagert, s.ungefoerdertTaxNachgelagert),
-            (UngefoerdertTaxMode.ertragsanteil, s.ungefoerdertTaxErtragsanteil),
-            (UngefoerdertTaxMode.halbeinkunfte, s.ungefoerdertTaxHalbeinkunfte),
-          ],
+        AppChipGroup<bool>(
+          value: p.kinderStudieren,
+          onChanged: cubit.setKinderStudieren,
+          options: [(true, s.childStudyYes), (false, s.childStudyNo)],
         ),
       ]),
     );
@@ -885,9 +870,7 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
         Fmt.eur(avTaxPerMonth * 12), Fmt.eur(etf.steuerAufGewinn / auszDauer),
         avFormula: '= payout ${Fmt.eur(av.monatlicheAuszahlung * 12)} × rate ${Fmt.pct(av.grenzsteuersatzRente)}',
         etfFormula: '= total tax ${Fmt.eur(etf.steuerAufGewinn)} ÷ $auszDauer yr'),
-      if (jbUngef > 0) _pair(s.bdUngefTreatment, costs.ungefoerdertTax == UngefoerdertTaxMode.nachgelagert
-        ? 'Full (BMF pending)' : costs.ungefoerdertTax == UngefoerdertTaxMode.ertragsanteil
-          ? 'Ertragsanteil 17%' : 'Halbeinkünfte 50%', '—', tip: s.tipUngefoerdert),
+      if (jbUngef > 0) _pair(s.bdUngefTreatment, 'Ertragsanteil 17%', '—', tip: s.tipUngefoerdert),
       _dv(),
 
       _h(s.bdAfterTaxTotal(auszDauer)),

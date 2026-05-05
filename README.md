@@ -472,7 +472,7 @@ Each file isolates one module or one feature path:
 | `subsidy_module_test.dart` | Grundzulage, Kinderzulage, Berufseinsteigerbonus |
 | `tax_module_test.dart` | §32a brackets, exact polynomial, Günstigerprüfung |
 | `pension_module_test.dart` | Entgeltpunkte estimation, BBG cap, income-dev EP accumulation |
-| `contribution_cap_test.dart` | €6,840 cap, gefördert/ungefördert split, UngefoerdertTaxMode (3 modes) |
+| `contribution_cap_test.dart` | €6,840 cap, gefördert/ungefördert split, Ertragsanteilbesteuerung (17%) for ungefördert payout |
 | `income_scenarios_test.dart` | Growth curves, part-time, child arrival timing, age-out (maxAge 18 vs 25) |
 | `simulation_test.dart` | End-to-end AV/ETF simulation, calcSubsidyPhases, kinderStudieren integration |
 | `logic_test.dart` | AV vs ETF comparison, Kirchensteuer effect on both, payout-phase logic |
