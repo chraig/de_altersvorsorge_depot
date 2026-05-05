@@ -634,7 +634,7 @@ class StringsEn extends AppStrings {
     'Both: No partial-year contributions\n'
     'ETF: Vorabpauschale simplified as 0.3% annual drag (actual depends on Basiszins)\n'
     'AV: Retirement tax uses progressive §32a average rate on combined income. Brutto used as proxy for zvE.\n'
-    'AV: Ungeförderte payout uses Ertragsanteilbesteuerung (17%, age-67 entry) per §22 Nr. 1 Satz 3a EStG. Age-dependent table (60→22%, 65→18% etc.) not modeled.\n'
+    'AV: Ungeförderte payout uses Ertragsanteilbesteuerung (17%, age-67 entry) per §22 Nr. 1 Satz 3a EStG. Age-dependent table (60→22%, 65→18% etc.) not modeled. Note: the strict Riester reading of §22 Nr. 5 EStG would tax an Auszahlplan via Unterschiedsbetrag (full gains taxed) instead — calculator uses the more favorable Lebenslange-Rente rule for simplicity.\n'
     'AV: Günstigerprüfung tax refund paid to bank account, not reinvested\n'
     'AV: State pension estimated from gross income (Entgeltpunkte formula, 2024 Rentenwert) – adjustable';
   String get plannedFeaturesTitle => 'Not Yet Included';
@@ -1031,7 +1031,7 @@ class StringsDe extends AppStrings {
     'Beide: Keine unterjährigen Beiträge\n'
     'ETF: Vorabpauschale vereinfacht als 0,3 % jährlicher Abzug (tatsächlich abhängig vom Basiszins)\n'
     'AV: Besteuerung im Ruhestand nutzt progressiven §32a-Durchschnittssteuersatz auf Gesamteinkommen. Brutto als Näherung für zvE.\n'
-    'AV: Ungeförderte Auszahlung mit Ertragsanteilbesteuerung (17 %, Beginn mit 67) gem. §22 Nr. 1 Satz 3a EStG. Altersabhängige Tabelle (60→22 %, 65→18 % etc.) nicht modelliert.\n'
+    'AV: Ungeförderte Auszahlung mit Ertragsanteilbesteuerung (17 %, Beginn mit 67) gem. §22 Nr. 1 Satz 3a EStG. Altersabhängige Tabelle (60→22 %, 65→18 % etc.) nicht modelliert. Hinweis: nach strenger Riester-Lesart von §22 Nr. 5 EStG würde ein Auszahlplan stattdessen mit dem Unterschiedsbetrag (Gewinn vollständig steuerpflichtig) besteuert — der Rechner verwendet aus Vereinfachungsgründen die günstigere Lebenslange-Rente-Regel.\n'
     'AV: Günstigerprüfung-Erstattung wird auf Bankkonto ausgezahlt, nicht reinvestiert\n'
     'AV: Gesetzl. Rente aus Bruttoeinkommen geschätzt (Entgeltpunkte-Formel, Rentenwert 2024) – anpassbar';
   String get plannedFeaturesTitle => 'Noch nicht enthalten';

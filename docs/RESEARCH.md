@@ -141,18 +141,76 @@ into a separate ETF depot.
 
 ### 3.2 AV-Depot — Payout Phase
 
-**Legal basis**: §22 Nr. 5 EStG-E
+**Legal basis**: §22 Nr. 5 EStG-E. The taxation depends on whether the underlying
+contributions were subsidized (gefördert) or not (ungefördert).
 
-- **Nachgelagerte Besteuerung**: 100% of payouts are taxed as income
-- Taxed at personal Einkommensteuersatz in retirement (typically lower than working life)
-- Auszahlplan runs until age 85 (§89 Abs. 8 EStG-E)
-- Up to 30% Einmalentnahme at start of payout phase (§89 Abs. 9 EStG-E)
-- Optional: Leibrente via Versicherungsunternehmen (provider switch permitted)
+#### Geförderte Beiträge — full nachgelagerte Besteuerung
 
-**Calculator implementation**: Retirement tax rate is calculated on the combined
-annual retirement income (AV-Depot payout + estimated state pension × 12 +
-other retirement income), using the same marginal tax bracket function.
-This replaces the earlier simplification of `Grenzsteuersatz × 0.7`.
+- **100% of the payout is taxed** at the recipient's personal Einkommensteuersatz
+  in retirement. This applies to the contributions, the Zulagen credited to the
+  contract, and all gains earned on the gefördert bucket — there is no carve-out
+  for the gain portion.
+- Auszahlplan runs until age 85 (§89 Abs. 8 EStG-E).
+- Up to 30% Einmalentnahme is allowed at the start of the payout phase (§89 Abs. 9
+  EStG-E) — not currently modeled by the calculator.
+- Optional: conversion to Leibrente via a Versicherungsunternehmen (provider
+  switch permitted) — not currently modeled.
+
+#### Ungeförderte Beiträge — Ertragsanteilbesteuerung (calculator simplification)
+
+The Riester rules in §22 Nr. 5 EStG (which serve as precedent for AV-Depot) split
+the ungefördert payout treatment by payout form:
+
+1. **Lebenslange Rente** (lifelong annuity, requires Versicherer): Ertragsanteil­
+   besteuerung — only the age-dependent Ertragsanteil percentage of each payout
+   is taxed at the personal income rate (17% at age 67, 18% at age 65, etc.).
+2. **Einmalkapitalauszahlung**: taxed like a Lebensversicherung payout.
+3. **Auszahlplan / "alle anderen Fälle"**: Unterschiedsbetrag — the full
+   difference between cumulative payouts and cumulative contributions (i.e.,
+   essentially the gains) is taxed at the personal income rate.
+
+Source for the split: NRW Finanzamt — Besteuerung der späteren Auszahlungen aus
+Riester-Verträgen, citing §22 Nr. 5 Sätze 1 und 2 EStG and §22 Nr. 5 Satz 7 EStG.
+<https://www.finanzamt.nrw.de/steuerinfos/privatpersonen/riester/besteuerung-der-spaeteren-auszahlungen>
+
+**The AV-Depot is structurally an Auszahlplan** (it pays out over a fixed period
+ending at age 85, not lifelong), so the strict Riester reading would put the
+ungefördert bucket into category 3 (Unterschiedsbetrag).
+
+**Calculator simplification**: Despite the Auszahlplan structure, the calculator
+applies the **Ertragsanteilbesteuerung at 17% (age-67 entry)** — the rule that
+strictly belongs to category 1 (Lebenslange Rente) — to the ungefördert bucket.
+This is a deliberate simplification:
+
+- It treats the 18-year Auszahlplan analogously to a lifelong annuity for tax
+  purposes, even though the payouts terminate at age 85.
+- It is **more favorable** to the user than the Unterschiedsbetrag rule: only
+  17% of the payout enters the tax base, vs. essentially all gains (which can
+  be 70–85% of the depot after a long savings period).
+- Unterschiedsbetrag-Besteuerung — the strict Auszahlplan rule per the Riester
+  precedent — is **not modeled**.
+- The age-dependent Ertragsanteil table (60→22%, 65→18%, 68→16% etc.) is also
+  not modeled — the calculator uses the age-67 rate (17%) regardless of the
+  user's actual retirement age.
+
+This is a known difference from the strict Riester reading and should be kept in
+mind when interpreting results: the ungefördert bucket's net payout in the
+calculator is an upper bound; a Finanzamt applying the Auszahlplan / Unterschieds­
+betrag rule would yield a lower net payout.
+
+#### Combined retirement tax rate
+
+The AV payout is added on top of the user's other retirement income (state pension
++ other) for the marginal-rate calculation. Implementation:
+
+```
+incrementalTaxOnAV = einkommensteuer(pension + sonstige + AV) − einkommensteuer(pension + sonstige)
+avPayoutTaxRate    = incrementalTaxOnAV / AV_annualPayout
+```
+
+This is the incremental rate at which the AV payout itself is taxed, used in both
+the gefördert (100% of payout) and ungefördert (17% of payout) tax-base
+calculations.
 
 ### 3.3 ETF-Depot (Private, Unfördert)
 

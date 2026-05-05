@@ -151,5 +151,37 @@ void main() {
       final expectedNet = av.monatlicheAuszahlung * (1 - av.grenzsteuersatzRente);
       expect(av.nettoMonatlich, closeTo(expectedNet, 0.5));
     });
+
+    test('marginal rate is computed against full AV taxable income (gef + 17%×ungef)', () {
+      // With both buckets present, the rate must reflect that the 17% Ertragsanteil
+      // of ungefördert ALSO sits on top of pension+other in the §32a progression.
+      // Setup: alterStart 30 (no Berufseinsteigerbonus), no kids — so the only
+      // subsidy is the Grundzulage (€540/yr, max for €1,800 gef contribution).
+      final p = makePerson(sparrate: 500, brutto: 80000, alterStart: 30,
+        spardauer: 30, gesetzlicheRenteOverride: 1500);
+      final m = makeMacro(rendite: 0.07);
+      final av = engine.simulateAV(person: p, macro: m, costs: CostSettings());
+
+      // Bucket flows per year (constant across all 30 years for this scenario):
+      //   gef   = €1,800 contribution + €540 Grundzulage   = €2,340
+      //   ungef = €4,200 (excess above €1,800 cap)
+      // Both grow at the same nettoRendite, so the depot ratio at retirement
+      // matches the annual-flow ratio.
+      const gefAnnualFlow = 2340.0;
+      const ungefAnnualFlow = 4200.0;
+      const gefRatio = gefAnnualFlow / (gefAnnualFlow + ungefAnnualFlow);
+      const ungefRatio = ungefAnnualFlow / (gefAnnualFlow + ungefAnnualFlow);
+      final monatlichGef = av.monatlicheAuszahlung * gefRatio;
+      final monatlichUngef = av.monatlicheAuszahlung * ungefRatio;
+
+      // Predicted net per the documented formula:
+      //   gef:   monatlichGef × (1 − rate)              (100% taxable)
+      //   ungef: monatlichUngef × (1 − 0.17 × rate)    (17% taxable)
+      const ertragsanteil = 0.17;
+      final expected = monatlichGef * (1 - av.grenzsteuersatzRente)
+                     + monatlichUngef * (1 - ertragsanteil * av.grenzsteuersatzRente);
+      expect(av.nettoMonatlich, closeTo(expected, 0.5),
+        reason: 'Net payout must equal gef×(1−rate) + ungef×(1−0.17×rate)');
+    });
   });
 }

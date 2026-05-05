@@ -306,35 +306,39 @@ class SimulationEngine {
     final depot = depotGefoerdert + depotUngefoerdert;
     final auszahlungsDauer = person.auszahlungsDauer;
 
-    // Gefördert: full nachgelagerte Besteuerung (100% of payout taxed as income).
-    // The AV payout sits ON TOP of pension + other income, so we compute the
-    // incremental tax: tax(base + avPayout) - tax(base). This gives the true
-    // marginal tax burden of the AV payout, not diluted by the Grundfreibetrag.
+    // Compute the incremental tax that the AV payout adds on top of pension + other.
+    // The AV payout has two taxable components:
+    //   • gefördert: 100% of payout is taxable income (nachgelagerte Besteuerung)
+    //   • ungefördert: 17% of payout is taxable income (Ertragsanteil at age 67)
+    // Both sit on top of pension + sonstige in the §32a progression, so the marginal
+    // rate must be computed against the FULL AV taxable amount (gefördert +
+    // 17% × ungefördert), not against the gefördert portion alone.
     final effectiveRente = pension.estimateMonthlyPension(person, incomeDev);
     final monatlichGefoerdert = depotGefoerdert / (auszahlungsDauer * 12);
     final jahresGefoerdert = depotGefoerdert / auszahlungsDauer;
+    final jahresUngefoerdert = depotUngefoerdert / auszahlungsDauer;
+    final monatlichUngefoerdert = depotUngefoerdert / (auszahlungsDauer * 12);
     final baseIncome = effectiveRente * 12 + person.sonstigeEinkuenfte; // pension + other
-    final combinedIncome = jahresGefoerdert + baseIncome; // + AV payout
+    final avTaxableTotal = jahresGefoerdert + jahresUngefoerdert * CalcConstants.ertragsanteil67;
+    final combinedIncome = baseIncome + avTaxableTotal;
     final kirchensteuerFaktor = 1 + costs.kirchensteuer;
-    // Incremental tax: tax attributable to the AV payout alone
+    // Incremental income tax attributable to the AV-derived taxable income.
     final taxOnBase = tax.calcEinkommensteuer(baseIncome);
     final taxOnCombined = tax.calcEinkommensteuer(combinedIncome);
     final taxOnAvPayout = taxOnCombined - taxOnBase;
-    final avPayoutTaxRate = jahresGefoerdert > 0 ? taxOnAvPayout / jahresGefoerdert : 0.0;
+    // avPayoutTaxRate = "rate per euro of AV taxable income" (gefördert + 17%×ungefördert).
+    final avPayoutTaxRate = avTaxableTotal > 0 ? taxOnAvPayout / avTaxableTotal : 0.0;
+
+    // Apply the rate to each bucket's taxable share:
+    //   • gefördert: 100% of payout is taxable → rate applies to full payout
+    //   • ungefördert: 17% of payout is taxable → rate applies to 17% of payout
+    // Kirchensteuer is added on top of the income tax in both cases.
     final nettoGefoerdert = monatlichGefoerdert * (1 - avPayoutTaxRate * kirchensteuerFaktor);
+    final nettoUngefoerdert = depotUngefoerdert > 0
+        ? monatlichUngefoerdert * (1 - CalcConstants.ertragsanteil67 * avPayoutTaxRate * kirchensteuerFaktor)
+        : 0.0;
 
-    // Ungefördert: Ertragsanteilbesteuerung per §22 Nr. 1 Satz 3a EStG.
-    // Only 17% of the monthly payout is taxed at the recipient's income rate;
-    // the remaining 83% is treated as untaxed return of contributions.
-    // Calculator assumes age-67 entry (Ertragsanteil 17%) regardless of actual retirement age.
-    double nettoUngefoerdert = 0;
-    if (depotUngefoerdert > 0) {
-      final monatlichUngef = depotUngefoerdert / (auszahlungsDauer * 12);
-      final taxable = monatlichUngef * CalcConstants.ertragsanteil67;
-      nettoUngefoerdert = monatlichUngef - taxable * avPayoutTaxRate * kirchensteuerFaktor;
-    }
-
-    final monatlich = monatlichGefoerdert + (depotUngefoerdert > 0 ? depotUngefoerdert / (auszahlungsDauer * 12) : 0);
+    final monatlich = monatlichGefoerdert + monatlichUngefoerdert;
     final netto = nettoGefoerdert + nettoUngefoerdert;
 
     return AVResult(
