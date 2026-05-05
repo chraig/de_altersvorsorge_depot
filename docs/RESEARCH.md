@@ -232,9 +232,17 @@ forderungen and does not apply to Investmentfonds.
 
 **During accumulation** (§18 InvStG):
 - Vorabpauschale: annual tax on the year's deemed minimum gain — formally
-  `Basiszins × 0.7 × ETF_value × (1 − Teilfreistellung) × Abgeltungssteuersatz`.
-- Calculator simplifies this as a fixed `vorabpauschaleDrag = 0.3%` of depot
-  value paid out as cash each year (≈ Basiszins 2.3–3.2% × 0.7 × 0.70 × 0.26375).
+  `Basiszins × 0.7 × ETF_value × (1 − Teilfreistellung) × Abgeltungssteuersatz`,
+  where `ETF_value` is the value at the **start** of the calendar year.
+- For fund units acquired during the year, §18 InvStG reduces the VP by
+  `1/12 for each full month preceding the acquisition month`. For monthly
+  contributions distributed evenly across the year, the **average partial-year
+  factor** is `(1/12) × Σ_{k=0..11} (1 − k/12) = 6.5/12 ≈ 0.5417`. Pre-existing
+  depot value (held the full year) gets factor 1.0.
+- Calculator simplifies the rate as a fixed `vorabpauschaleDrag = 0.3%`
+  (≈ Basiszins 2.3–3.2% × 0.7 × 0.70 × 0.26375) and applies the partial-year
+  factor to new contributions: `vp_year = (depotStart + jb × 0.5417) × 0.003`,
+  paid out of the depot.
 - Crucially, the cumulative Vorabpauschale paid is **credited against the
   Abgeltungssteuer at sale** (§19 Abs. 1 InvStG, Anrechnung) — the same tax
   is not collected twice.
@@ -502,16 +510,22 @@ to the AV is allocated to the AV buckets.
 ### ETF-Depot Year-by-Year Accumulation
 
 ```
-VorabpauschaleDrag = 0.003                          // simplified per-year VP rate (CalcConstants)
+VorabpauschaleDrag       = 0.003       // simplified per-year VP rate (CalcConstants)
   // Approximates Basiszins × 0.7 × (1 − Teilfreistellung) × Abgeltungssteuersatz
   // at Basiszins 2.3–3.2% with Teilfreistellung 30% and abgSt 26.375%.
+NeuerBeitragFaktor       = 6.5 / 12    // §18 InvStG partial-year reduction
+  // Average factor for new monthly contributions: VP is reduced by 1/12 for
+  // each full month preceding the acquisition month, averaged across Jan–Dec.
 
-VorabpauschaleGesamt = 0                            // cumulative VP cash paid
+VorabpauschaleGesamt = 0               // cumulative VP cash paid
 
 For j = 0 to Spardauer - 1:
-  Depot       = (Depot + Jahresbeitrag) × (1 + Rendite - KostenETF)   // grow at full rate
-  VP_j        = Depot × VorabpauschaleDrag                            // VP tax paid out of depot
-  Depot       = Depot − VP_j                                          // depot debited
+  Depot_StartOfYear = Depot                                                       // held the full year (factor 1.0)
+  Depot             = (Depot + Jahresbeitrag) × (1 + Rendite − KostenETF)         // grow at full rate
+  // VP base: full-year for prior holdings + partial-year for new contribution.
+  VP_Base_j         = Depot_StartOfYear + Jahresbeitrag × NeuerBeitragFaktor
+  VP_j              = VP_Base_j × VorabpauschaleDrag                              // tax paid out of depot
+  Depot             = Depot − VP_j
   VorabpauschaleGesamt += VP_j
 ```
 

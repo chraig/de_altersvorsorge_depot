@@ -135,11 +135,18 @@ void main() {
       final costs = CostSettings(kostenETF: 0.002);
       final etf = engine.simulateETF(person: p, macro: m, costs: costs);
 
-      final jb = 1200.0;
-      final nettoRendite = 0.07 - 0.002 - CalcConstants.vorabpauschaleDrag; // rendite - kostenETF - vorabpauschale
-      final expected = jb * (1 + nettoRendite);
-      expect(etf.endkapital, closeTo(expected, 1));
+      const jb = 1200.0;
+      // New ETF model (§18 + §19 InvStG):
+      //   1. depot grows at full rate: jb × (1 + rendite − kostenETF)
+      //   2. VP_base = depotStart (0) + jb × partialYearFactor (~0.5417)
+      //   3. VP_year = VP_base × vorabpauschaleDrag, debited from depot
+      const grown = jb * (1 + 0.07 - 0.002);
+      final vpBase = jb * CalcConstants.vorabpauschaleNeuerBeitragFaktor;
+      final vpYear = vpBase * CalcConstants.vorabpauschaleDrag;
+      final expected = grown - vpYear;
+      expect(etf.endkapital, closeTo(expected, 0.01));
       expect(etf.eigenBeitraege, closeTo(jb, 0.01));
+      expect(etf.vorabpauschaleGesamt, closeTo(vpYear, 0.01));
     });
 
     test('gains taxed with Teilfreistellung (Vorabpauschale credited)', () {

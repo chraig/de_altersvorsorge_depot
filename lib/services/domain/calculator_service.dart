@@ -112,6 +112,13 @@ class CalcConstants {
   /// At Basiszins 2.29% (2024): effective ~0.30%. At 3.20% (2026): ~0.41%.
   /// Using 0.30% as a reasonable mid-range approximation.
   static const double vorabpauschaleDrag = 0.003;
+  /// Average partial-year factor for new contributions in the Vorabpauschale
+  /// computation (§18 InvStG: VP is reduced by 1/12 for each full month
+  /// preceding the acquisition month). For monthly contributions distributed
+  /// evenly across the year, the average factor is `(1/12) × Σ_{k=0..11} (1 − k/12)
+  /// = 6.5 / 12 ≈ 0.5417`. Pre-existing depot value (held the full year) gets
+  /// the full factor 1.0.
+  static const double vorabpauschaleNeuerBeitragFaktor = 6.5 / 12;
 
   // ─── PAYOUT PHASE ─────────────────────────────────────────────
   /// Auszahlplan must run until this age (§89 Abs. 8 EStG-E)
@@ -367,20 +374,26 @@ class SimulationEngine {
     final nettoRendite = macro.rendite - costs.kostenETF;
 
     // ── Accumulation phase ──────────────────────────────────────
-    // Vorabpauschale model (§18 InvStG): each year, depot grows at the full
-    // (rendite - kostenETF) rate; then a Vorabpauschale tax is paid out of the
-    // depot, modeled as `depot × vorabpauschaleDrag`. The cumulative amount
-    // already paid this way is credited against the Abgeltungssteuer at sale
-    // (§19 Abs. 1 InvStG), so the same tax is not collected twice.
+    // Vorabpauschale model (§18 InvStG):
+    //   • The VP base is the value at the START of the year (held the full
+    //     year), not the year-end value. The new contribution made during the
+    //     year gets the §18 partial-year reduction — averaged across monthly
+    //     contributions, the new-contribution factor is 6.5/12 ≈ 0.5417.
+    //   • The VP tax is paid out of the depot, modeled as `vp_base × drag`.
+    //   • The cumulative VP paid is credited against the Abgeltungssteuer at
+    //     sale (§19 Abs. 1 InvStG), so the same tax is not collected twice.
     double depot = 0;
     double eigenBeitraege = 0;
     double vorabpauschaleGesamt = 0; // cumulative VP-tax already paid
     final jahresWerte = <YearlyDataPoint>[];
 
     for (int j = 0; j < person.spardauer; j++) {
-      depot = (depot + jb) * (1 + nettoRendite);
-      // Vorabpauschale paid out of the depot at year-end.
-      final vpJahr = depot * CalcConstants.vorabpauschaleDrag;
+      final depotStartOfYear = depot;                                     // held the full year (factor 1.0)
+      depot = (depot + jb) * (1 + nettoRendite);                          // grow at full rate
+      // VP base: start-of-year depot (full year) + jb × partial-year factor (~0.5417).
+      final vpBase = depotStartOfYear
+          + jb * CalcConstants.vorabpauschaleNeuerBeitragFaktor;
+      final vpJahr = vpBase * CalcConstants.vorabpauschaleDrag;
       depot -= vpJahr;
       vorabpauschaleGesamt += vpJahr;
       eigenBeitraege += jb;
