@@ -294,16 +294,20 @@ Results:
 **AV side — retirement payout taxation:**
 
 ```
-BaseIncome = Pension × 12 + SonstigeEinkünfte
-TaxOnAV = calcEinkommensteuer(BaseIncome + AV_Payout) − calcEinkommensteuer(BaseIncome)
-AvPayoutTaxRate = TaxOnAV / AV_Payout  // incremental rate on AV payout only
-Steuersatz_Rente = AvPayoutTaxRate × (1 + KiSt_rate)
+BaseIncome      = Pension × 12 + SonstigeEinkünfte
+AV_Taxable      = Jahres_Gefördert + Jahres_Ungefördert × 0.17    // 100% gef + 17% Ertragsanteil ungef
+TaxOnAV         = calcEinkommensteuer(BaseIncome + AV_Taxable) − calcEinkommensteuer(BaseIncome)
+AvPayoutTaxRate = TaxOnAV / AV_Taxable                             // rate per euro of AV taxable income
 
-Where Renteneinkommen = AV_Jahresauszahlung + GesetzlicheRente × 12 + SonstigeEinkünfte
+// Per-bucket net (Kirchensteuer added on top of the income tax in both cases):
+Netto_Gefördert   = Monatlich_Gefördert   × (1 − AvPayoutTaxRate × (1 + KiSt_rate))
+Netto_Ungefördert = Monatlich_Ungefördert × (1 − 0.17 × AvPayoutTaxRate × (1 + KiSt_rate))
 ```
 
-Note: Uses marginal rate (Grenzsteuersatz), which slightly overstates tax compared
-to the actual average rate (Durchschnittssteuersatz). See Design Decisions below.
+The tax on the AV payout is computed via the exact §32a polynomial (not the
+marginal rate on the last euro), and is incremental — only the additional tax
+attributable to the AV-derived taxable income is allocated to the AV buckets.
+The user's pension and other income retain their own implicit tax burden.
 
 ---
 
@@ -348,13 +352,32 @@ Grenzsteuersatz(Brutto) =
   45%      if Brutto > 277,825  (Reichensteuersatz)
 ```
 
-### Income Development (opt-in, linear growth)
+### Income Development (opt-in)
+
+When the income-development toggle is off (default), `Brutto_j = Brutto` for all
+years and `Kinder_j` depends only on the static `kinderAlter` ageing-out logic.
+
+When enabled, the calculator supports three growth curves plus an optional
+part-time phase. All produce a year-specific `Brutto_j` consumed downstream
+by the marginal-rate calculation, the Geringverdiener eligibility check (note:
+Geringverdienerbonus has been removed from the code, but eligibility-based
+phase boundaries still apply for other components), and the pension EP
+accumulation. Implementation: `IncomeDevSettings.bruttoForYear()`.
 
 ```
-If enabled:
-  Brutto_j = Brutto × (1 + GrowthRate)^j    // compound annual growth
-Else:
-  Brutto_j = Brutto                          // static income (default)
+// ── Base growth curve ──
+GrowthCurve.linear:        Brutto_j = Brutto × (1 + GrowthRate)^j         // 0–8% p.a.
+GrowthCurve.stepwise:      Brutto_j = Brutto × (1 + PromotionIncrease)^floor(j / PromotionInterval)
+GrowthCurve.logarithmic:   Brutto_j = Brutto + (SalaryCap − Brutto) × (1 − 1 / (1 + 0.1 × j))
+
+// ── Optional part-time overlay ──
+If PartTimeStart_j ≤ j < PartTimeStart_j + PartTimeDuration:
+  Brutto_j ← Brutto_j × PartTimePercent                                    // typically 0.2–0.8
+
+// ── Child arrival timing (independent of growth curve) ──
+Kinder_j = (number of base children still under maxAge at year j)
+         + (number of childArrivalYears ≤ j with arrival_age + (j − arrival_year) < maxAge)
+   where maxAge = 25 if kinderStudieren else 18
 ```
 
 ### AV-Depot Year-by-Year Accumulation
@@ -416,38 +439,45 @@ Auszahlungsdauer = (85 - Rentenalter), clamped to 5–30 years
 
 // ── Pension estimation for retirement tax calculation ──
 If manual override set:
-  EffectiveRente = gesetzlicheRenteOverride         // [EUR/month]
+  EffectiveRente = gesetzlicheRenteOverride            // [EUR/month]
 Else if income development enabled:
-  TotalEP = Σ min(Brutto_j, BBG) / Durchschnittsentgelt  // accumulated per year
-    + preSavingsYears × min(Brutto, BBG) / Durchschnittsentgelt
-  EffectiveRente = TotalEP × Rentenwert             // [EUR/month]
+  TotalEP = Σ_j min(Brutto_j, BBG) / Durchschnittsentgelt
+          + preSavingsYears × min(Brutto, BBG) / Durchschnittsentgelt
+  EffectiveRente = TotalEP × Rentenwert                // [EUR/month]
 Else:
-  EffectiveRente = geschaetzteRente                 // static estimate
+  EffectiveRente = geschaetzteRente                    // static estimate
 
-// ── Gefördert: nachgelagerte Besteuerung (100% of payout taxed as income) ──
-Monatlich_Gefördert = Depot_Gefördert / (Auszahlungsdauer × 12)
-Renteneinkommen = (Depot_Gefördert / Auszahlungsdauer) + EffectiveRente × 12 + Sonstige
-BaseIncome = Pension × 12 + SonstigeEinkünfte
-TaxOnAV = calcEinkommensteuer(BaseIncome + AV_Payout) − calcEinkommensteuer(BaseIncome)
-AvPayoutTaxRate = TaxOnAV / AV_Payout  // incremental rate on AV payout only  // progressive §32a
-Steuersatz_Rente = AvgSteuersatz × (1 + Kirchensteuer)
-Netto_Gefördert = Monatlich_Gefördert × (1 - Steuersatz_Rente)
+// ── Annual + monthly payouts per bucket ──
+Jahres_Gefördert      = Depot_Gefördert   / Auszahlungsdauer        // [EUR/year]
+Jahres_Ungefördert    = Depot_Ungefördert / Auszahlungsdauer        // [EUR/year]
+Monatlich_Gefördert   = Jahres_Gefördert   / 12                     // [EUR/month]
+Monatlich_Ungefördert = Jahres_Ungefördert / 12                     // [EUR/month]
 
-// ── Ungefördert: Ertragsanteilbesteuerung per §22 Nr. 1 Satz 3a EStG ──
-// Only the Ertragsanteil portion of each payout is taxed at the recipient's
-// income rate; the rest is treated as untaxed return of contributions.
-// Calculator simplification: always uses the age-67 Ertragsanteil (17%),
-// regardless of actual retirement age. Earlier retirement would actually
-// use higher Ertragsanteil values per the §22 EStG age table (60→22%, 65→18% etc.).
-//
-Monatlich_Ungefördert = Depot_Ungefördert / (Auszahlungsdauer × 12)
-Steuerpflichtig = Monatlich_Ungefördert × 0.17        // 17% Ertragsanteil at age 67
-Netto_Ungefördert = Monatlich_Ungefördert - Steuerpflichtig × AvPayoutTaxRate × (1 + KiSt)
+// ── Incremental tax rate computed against the FULL AV taxable income ──
+// Gefördert: 100% of payout is taxable.
+// Ungefördert: 17% of payout is taxable (Ertragsanteil at age 67 — calculator
+// simplification; the §22 EStG age table 60→22%, 65→18%, 68→16% etc. is not
+// modeled, and the strict Riester reading would apply Unterschiedsbetrag for
+// the Auszahlplan instead — see §3.2 for the deliberate simplification).
+BaseIncome      = EffectiveRente × 12 + SonstigeEinkünfte
+AV_Taxable      = Jahres_Gefördert + Jahres_Ungefördert × 0.17
+CombinedIncome  = BaseIncome + AV_Taxable
+TaxOnAV         = calcEinkommensteuer(CombinedIncome) − calcEinkommensteuer(BaseIncome)
+AvPayoutTaxRate = TaxOnAV / AV_Taxable                              // rate per euro of taxable AV income
 
-Monatlich_Netto = Netto_Gefördert + Netto_Ungefördert
-
-Note: Uses marginal rate (overstates tax vs. actual average rate). See Design Decisions.
+// ── Per-bucket net payouts (Kirchensteuer added on top of the income tax) ──
+KiStFaktor          = 1 + Kirchensteuer
+Netto_Gefördert     = Monatlich_Gefördert   × (1 − AvPayoutTaxRate × KiStFaktor)
+Netto_Ungefördert   = Monatlich_Ungefördert × (1 − 0.17 × AvPayoutTaxRate × KiStFaktor)
+Monatlich_Brutto    = Monatlich_Gefördert + Monatlich_Ungefördert
+Monatlich_Netto     = Netto_Gefördert + Netto_Ungefördert
 ```
+
+The tax is computed via the exact §32a polynomial; the resulting `AvPayoutTaxRate`
+represents the rate at which each euro of AV-derived taxable income is taxed when
+added on top of the user's pension + other income. The pension and other income
+retain their own implicit tax burden — only the **incremental** tax attributable
+to the AV is allocated to the AV buckets.
 
 ### ETF-Depot Year-by-Year Accumulation
 
@@ -493,12 +523,23 @@ rounding errors without improving accuracy.
 - Core: All subsidy, tax, and accumulation calculations use yearly amounts.
 - Output boundary: `monatlicheAuszahlung = depot / (auszahlungsDauer × 12)` converts back.
 
-**Progressive §32a tax for retirement payout**: The calculator uses the exact §32a
-polynomial formula (`calcEinkommensteuer`) on combined retirement income, then derives
-the average rate (`Durchschnittssteuersatz = tax / income`). This is the correct
-approach — it computes the actual tax across all brackets, not the marginal rate on
-the last euro. The remaining simplification is using Brutto as proxy for zvE. This is a
-simplification.
+**Progressive §32a tax for retirement payout — incremental, not average**: The
+calculator uses the exact §32a polynomial (`calcEinkommensteuer`) twice — once on
+the user's base retirement income (pension + other) and once on that income plus
+the AV taxable amount. The difference is the incremental tax that the AV payout
+adds, divided by the AV taxable amount to obtain `AvPayoutTaxRate`. This rate is
+the correct one to apply: it captures exactly how the AV's taxable income is taxed
+when stacked on top of pension + other in the §32a progression, without double-
+counting the tax already implicitly borne by the pension.
+
+This differs from a simple average-rate (`tax / income`) approach, which would
+dilute the AV's marginal tax burden with the lower-bracket portion of the pension
+income. It also differs from a marginal-rate-on-the-last-euro approach, which
+would overstate the tax when the AV taxable amount spans multiple brackets.
+
+The remaining simplification is using **Brutto as a proxy for zvE** (zu
+versteuerndes Einkommen). In reality, zvE = Brutto − Werbungskosten −
+Sonderausgaben − etc. This slightly overstates `AvPayoutTaxRate` for most users.
 
 ---
 
