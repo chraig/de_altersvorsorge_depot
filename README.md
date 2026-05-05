@@ -354,7 +354,6 @@ Payout phase:
 | Vorabpauschale | Fixed 0.3% drag | Depends on Basiszins (2.3-3.2% in 2024-2026) |
 | Retirement tax rate | Progressive §32a average rate on combined income | Brutto used as proxy for zvE; actual zvE lower |
 | Günstigerprüfung refund | Not reinvested | Could be reinvested manually |
-| Quellensteuer on fund level | Not modeled | ~0.3% p.a. already in fund returns |
 | ETF fund type | Aktienfonds (>50% equity) assumed → 30% Teilfreistellung | Bond ETFs get 0%, Mischfonds 15%, Immobilienfonds 60–80% (§20 InvStG). Comparison shifts for non-equity funds. |
 | Wohnwirtschaftliche Verwendung | Not modeled | Tax-free withdrawal for property |
 

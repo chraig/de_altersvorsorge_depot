@@ -138,7 +138,6 @@ into a separate ETF depot.
 - **No Abgeltungssteuer** on dividends or capital gains within the depot
 - **No Vorabpauschale** (the annual tax on unrealized ETF gains)
 - **Tax-free rebalancing**: switching between funds inside the AV-Depot triggers no tax
-- Fund-level Quellensteuer (~0.3% p.a.) still applies but is internal to the fund NAV
 
 ### 3.2 AV-Depot — Payout Phase
 
