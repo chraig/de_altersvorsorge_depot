@@ -1,40 +1,113 @@
 # Income Development Over Savings Period
 
-## Current Implementation (v1.1.0)
+Income development is **opt-in** via a toggle in the "Income Scenarios" tab of the input panel.
+When disabled (default), gross income stays static across all savings years. When enabled, the
+configured curve, part-time phases, and child arrival timing all flow through to year-by-year
+brutto, subsidies, tax rates, and pension Entgeltpunkte accumulation.
 
-Basic linear income growth, **opt-in** via Advanced Settings toggle.
+---
 
-### What's Built
+## Current Implementation (v1.1.0+)
 
-- Toggle: "Model Income Growth" (off by default)
-- Annual growth rate slider (0–8%, default 2%)
-- When enabled, gross income compounds annually: `brutto(j) = brutto × (1 + growthRate)^j`
-- Year-by-year impact on:
-  - Grenzsteuersatz (marginal tax rate changes as income grows)
-  - Geringverdienerbonus eligibility (drops off when income exceeds €26,250)
-  - Günstigerprüfung refund (changes with marginal rate)
-  - Pension estimate (Entgeltpunkte accumulated per year with growing income, capped at BBG)
-- Payout phase: retirement tax uses income-development-adjusted pension estimate
+### 1. Growth Curves
 
-### Data Model
+Three selectable curve types, all implemented in `IncomeDevSettings.bruttoForYear()`:
+
+- **Linear** (default): compound annual growth
+  ```
+  brutto(j) = brutto × (1 + growthRate)^j
+  ```
+  Range: 0–8% p.a. (slider step 0.5%)
+
+- **Step-wise**: flat salary with periodic promotions
+  ```
+  brutto(j) = brutto × (1 + promotionIncrease)^floor(j / promotionInterval)
+  ```
+  Range: interval 1–15 yr, increase 5–50% per step
+
+- **Logarithmic**: fast early growth, plateaus at salary cap
+  ```
+  brutto(j) = brutto + (salaryCap - brutto) × (1 - 1 / (1 + 0.1 × j))
+  ```
+  Range: salaryCap €40k–€200k
+
+### 2. Part-Time Phases
+
+Models reduced-income periods (parental leave, sabbatical):
+
+- Toggle: "Part-Time Phase"
+- Start year (0–spardauer-1), duration (1–10 yr), percentage (20–80% of full-time brutto)
+- During phase, `bruttoForYear()` multiplies the curve output by `partTimePercent`
+
+### 3. Child Arrival Timing
+
+Dynamic children list — adds children mid-savings-period in addition to the static `kinder` count:
+
+- List of arrival years (e.g., `[3, 6]` = first child year 3, second child year 6)
+- Each dynamic child counts toward Kinderzulage from arrival year onward
+- Ages out at 25 (or 18 if `kinderStudieren=false`) — same logic as base children
+- Implemented in `IncomeDevSettings.kinderAtYear()`
+
+### 4. Year-by-Year Impact
+
+When income development is enabled, every year's brutto flows into:
+
+- **Marginal tax rate** (`getGrenzsteuersatz(bruttoJ)`) — changes Günstigerprüfung refund per year
+- **Geringverdienerbonus eligibility** — drops off when brutto crosses €26,250 threshold
+- **Pension Entgeltpunkte accumulation** — `Σ min(bruttoJ, BBG) / Durchschnittsentgelt` per savings year, plus pre-savings years at base brutto. Affects retirement tax base.
+- **Subsidy phase boundaries** — `calcSubsidyPhases()` creates a new phase whenever any subsidy component changes, including Geringverdienerbonus toggling on/off.
+
+---
+
+## Data Model
 
 ```dart
 class IncomeDevSettings {
-  final bool enabled;      // default: false
-  final double growthRate;  // default: 0.02 (2% p.a.)
+  final bool enabled;                  // default: false
+  final GrowthCurve curve;             // default: linear
+  final double growthRate;             // linear: 0–8% p.a.
+  final int promotionInterval;         // step-wise: 1–15 yr
+  final double promotionIncrease;      // step-wise: 5–50% per step
+  final double salaryCap;              // logarithmic: €40k–€200k
+  final int? partTimeStartYear;        // null = no part-time
+  final int partTimeDuration;
+  final double partTimePercent;        // 20–80%
+  final List<int> childArrivalYears;   // dynamic children
 
-  double bruttoForYear(double brutto, int j) =>
-    enabled ? brutto * pow(1 + growthRate, j) : brutto;
+  double bruttoForYear(double brutto, int j);
+  int kinderAtYear(int baseKinder, int j, {List<int> kinderAlter, int maxAge});
+
+  bool get hasPartTime;
+  bool get hasChildTiming;
 }
+
+enum GrowthCurve { linear, stepwise, logarithmic }
 ```
 
-### Code Locations
+---
 
-- Model: `lib/models/scenario.dart` → `IncomeDevSettings`
-- State: `lib/features/calculator/cubit/calculator_state.dart` → `incomeDev` field
-- Cubit: `lib/features/calculator/cubit/calculator_cubit.dart` → `toggleIncomeDev()`, `setIncomeGrowthRate()`
-- Simulation: `lib/services/domain/calculator_service.dart` → `simulateAV(incomeDev:)`, `_computeEffectiveRente()`
-- UI: `lib/features/calculator/widgets/input_panel.dart` → `_IncomeDevToggle`
+## Code Locations
+
+- **Model**: `lib/models/income_dev_settings.dart` → `IncomeDevSettings`, `GrowthCurve`
+- **State**: `lib/features/calculator/cubit/calculator_state.dart` → `incomeDev` field
+- **Cubit setters**: `lib/features/calculator/cubit/calculator_cubit.dart` →
+  `toggleIncomeDev()`, `setGrowthCurve()`, `setIncomeGrowthRate()`,
+  `setPromotionInterval()`, `setPromotionIncrease()`, `setSalaryCap()`,
+  `setPartTimeStartYear()`, `setPartTimeDuration()`, `setPartTimePercent()`,
+  `addChildArrivalYear()`, `updateChildArrivalYear()`, `removeChildArrivalYear()`
+- **Simulation**: `lib/services/domain/calculator_service.dart` → `simulateAV()` and
+  `calcSubsidyPhases()` accept `incomeDev`; pension EP via `EntgeltpunkteEstimator`
+- **UI**: `lib/features/calculator/widgets/input_panel.dart` → `_IncomeScenarioPanel`
+  (third tab in input panel)
+
+---
+
+## Tests
+
+- **Unit tests**: `test/services/domain/income_scenarios_test.dart` covers all three curves,
+  part-time phases, child arrival timing, age-out at maxAge 18 vs 25
+- **Integration tests**: `test/services/domain/simulation_test.dart` verifies that income
+  development flows through to AV results (subsidies, endkapital, pension estimate)
 
 ---
 
@@ -42,35 +115,24 @@ class IncomeDevSettings {
 
 Not yet implemented. Listed in priority order.
 
-### 1. Growth Curves
+### 1. Salary Trajectory Mini-Chart
 
-Replace simple compound growth with selectable curve types:
+A small chart in the input panel showing projected income year-by-year, including
+part-time phases and growth curve. Helps the user visualize what they've configured
+before scrolling to see the impact on results.
 
-- **Step-wise**: Flat salary with periodic promotions every N years
-  - `salary(j) = brutto × (1 + promotion_pct)^floor(j / promotion_interval)`
-- **Logarithmic**: Fast early growth, plateaus at salary cap
-  - `salary(j) = brutto + (salary_cap - brutto) × (1 - 1/(1 + 0.1×j))`
+### 2. Negative Growth (Career Break)
 
-### 2. Part-Time Phases
+Currently growth rate slider is 0–8%. A negative range (-3% to 0%) would let users
+model career setbacks or industry downturns.
 
-Model reduced income periods (e.g., parental leave):
+### 3. Multiple Part-Time Phases
 
-- Part-time start year, duration, percentage (e.g., 50% for 3 years)
-- `brutto(j) *= partTimePercentage` during the phase
+Currently a single part-time phase is supported. Real careers may have several
+(e.g., parental leave for two children, then a later sabbatical).
 
-### 3. Child Arrival Timing
+### 4. Per-Child Education Toggle
 
-Dynamic children count instead of static:
-
-- List of years when each child arrives
-- Kinderzulage starts at arrival year, stops when child turns 25
-- Could trigger part-time phase automatically
-
-### 4. Salary Cap
-
-Beitragsbemessungsgrenze already caps pension points. Could also
-cap income growth (e.g., logarithmic approach to a user-defined max).
-
-### 5. Salary Trajectory Chart
-
-Mini-chart in input panel showing projected income over savings period.
+`kinderStudieren` is currently a single boolean affecting all children. A per-child
+toggle would let users model "child 1 went to university (until 25), child 2 went
+straight to work (until 18)".

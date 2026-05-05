@@ -90,9 +90,9 @@ All managed via `pubspec.yaml`:
 ```bash
 flutter pub get          # Install dependencies
 flutter run -d chrome    # Development with hot reload
-flutter run -d chrome --web-renderer html   # Alternative renderer (smaller)
-flutter run -d chrome --web-renderer canvaskit  # Better charts (default)
 ```
+
+The `--web-renderer` flag is no longer needed in modern Flutter — CanvasKit is selected automatically for web builds.
 
 ### 3. Environment Variables
 
@@ -219,19 +219,27 @@ lib/
 │       ├── AVResult / ETFResult       # Full simulation results
 │       └── CombinedResult             # AV + ETF paired for comparison (+ delta getters)
 ├── services/
-│   └── domain/
-│       └── calculator_service.dart    # Pure static calculation engine
-│           ├── calcGrundzulage()      # 50%/25% two-tier subsidy
-│           ├── calcKinderzulage()     # Up to €300/child 1:1 match
-│           ├── calcBonus()            # One-time €200 (under 25, first year)
-│           ├── calcZulage()           # Combined yearly subsidy (record return type)
-│           ├── getGrenzsteuersatz()   # German marginal tax rate approximation
-│           ├── calcGuenstigerpruefung()
-│           ├── calcSubsidyBreakdown() # Full year-1 breakdown
-│           ├── simulateAV()           # Year-by-year AV-Depot simulation
-│           ├── simulateETF()          # Year-by-year ETF-Depot simulation
-│           ├── simulateCombined()     # AV + ETF paired
-│           └── simulateAllMacros()    # Cross-product: person × all macros
+│   └── domain/                        # Modular calculation engine
+│       ├── calculator_service.dart    # SimulationEngine + static facade + CalcConstants
+│       │   ├── SimulationEngine       # Orchestrator with injectable modules
+│       │   │   ├── calcSubsidyBreakdown() / calcSubsidyPhases()
+│       │   │   ├── simulateAV()       # Gefördert/ungefördert split
+│       │   │   ├── simulateETF()      # Vorabpauschale + Teilfreistellung
+│       │   │   ├── simulateCombined() # AV + ETF paired
+│       │   │   └── simulateAllMacros() # Cross-product: person × all macros
+│       │   └── CalcConstants          # All legislative parameters with § references
+│       ├── tax_module.dart            # TaxModule interface + GermanTax2024
+│       │   ├── getGrenzsteuersatz()   # Piecewise marginal §32a
+│       │   ├── calcEinkommensteuer()  # Exact §32a polynomial formulas
+│       │   ├── getDurchschnittssteuersatz()
+│       │   └── calcGuenstigerpruefung() # Capped at min(jb, €1,800)
+│       ├── subsidy_module.dart        # SubsidyModule interface + AVDepotSubsidy2027
+│       │   ├── calcGrundzulage()      # 50%/25% two-tier subsidy
+│       │   ├── calcKinderzulage()     # Up to €300/child 1:1 match
+│       │   ├── calcBonus()            # One-time €200 (under 25, first year)
+│       │   ├── calcGeringverdienerbonus()
+│       │   └── calcZulage()           # Combined yearly subsidy
+│       └── pension_module.dart        # PensionModule interface + EntgeltpunkteEstimator
 ├── features/
 │   └── calculator/
 │       ├── cubit/
@@ -247,16 +255,18 @@ lib/
 │       ├── pages/
 │       │   └── calculator_page.dart   # Main UI layout with tabs
 │       └── widgets/
-│           ├── input_panel.dart       # Sliders, PersonalScenarioBar, dialogs
+│           ├── input_panel.dart       # Sliders, AppChipGroup toggles, IncomeScenarioPanel
 │           ├── macro_section.dart     # MacroScenarioGrid, MacroCard, dialogs
-│           ├── charts.dart            # MacroOverlayChart, ComparisonChart (fl_chart)
+│           ├── charts.dart            # Line charts (MacroOverlay, Comparison)
+│           │                          # + Stacked bar charts (Savings/Payout phase)
 │           └── compound_table.dart    # DataTable: macro × key figures breakdown
 └── shared/
     ├── utils/
     │   └── fmt.dart                   # Formatting: eur(), pct(), eurK(), signed()
     └── widgets/
         └── common.dart                # StatCard, MiniBar, ComparisonBar,
-                                       # SectionDivider, ResultBanner
+                                       # SectionDivider, ResultBanner, InfoTip,
+                                       # AppChipGroup<T> (generic chip toggle)
 ```
 
 ### Data Flow
@@ -268,7 +278,9 @@ CalculatorCubit (flutter_bloc Cubit)
     ↓  setter methods → emit(state.copyWith(...))
     ↓
 CalculatorState (immutable, with computed getters)
-    ↓  getters call CalculatorService static methods
+    ↓  getters delegate to CalculatorService.*
+    ↓  CalculatorService is a static facade over SimulationEngine
+    ↓  SimulationEngine composes TaxModule + SubsidyModule + PensionModule
     ↓
 Widget rebuild via context.watch<CalculatorCubit>()
     ↓
@@ -276,6 +288,8 @@ Charts, Tables, Cards re-render with new data
 ```
 
 All calculations are **pull-based** (computed in `CalculatorState` getters, not pushed/cached), ensuring results are always consistent with the latest state. The `AppSettingsScope` wraps the widget tree with `MultiBlocProvider`, exposing both the `CalculatorCubit` and `LocaleCubit` for language switching.
+
+Each calculation module (tax, subsidy, pension) implements an abstract interface, so alternative regimes can be plugged in without touching `SimulationEngine` — useful for modeling future tax-bracket updates or different subsidy designs.
 
 ---
 
@@ -286,17 +300,31 @@ See [docs/RESEARCH.md](docs/RESEARCH.md) for full legislative sources and formul
 ### AV-Depot Simulation (per year)
 
 ```
-For each year j = 0 ... spardauer-1:
-  1. zulage = Grundzulage(jahresbeitrag) + Kinderzulage(jahresbeitrag, kinder) + Bonus(alter, j)
-  2. günstigerprüfung = (jahresbeitrag + zulage) × grenzsteuersatz
-     → if > zulage: additional refund on Girokonto (not reinvested)
-  3. depot = (depot + jahresbeitrag + zulage) × (1 + rendite - kosten_av)
-  4. No taxes on gains during accumulation (no Abgeltungssteuer, no Vorabpauschale)
+jbCapped       = min(jahresbeitrag, 6840)         // contract cap
+jbGefördert    = min(jbCapped, 1800)              // subsidized portion
+jbUngefördert  = jbCapped - jbGefördert           // excess
 
-Payout phase (20 years, age 65–85):
-  monthly_brutto = depot / 240
-  monthly_netto = monthly_brutto × (1 - durchschnittssteuersatz × (1 + kirchensteuer))
-  // durchschnittssteuersatz = calcEinkommensteuer(combined_income) / combined_income
+For each year j = 0 ... spardauer-1:
+  1. bruttoJ  = incomeDev.bruttoForYear(brutto, j)
+     kinderJ  = incomeDev.kinderAtYear(kinder, j, kinderAlter, maxAge)
+     // maxAge = 25 if kinderStudieren else 18
+  2. zulage = Grundzulage(jbGefördert)
+            + Kinderzulage(jbGefördert, kinderJ)
+            + Berufseinsteigerbonus(alter, j)
+            + Geringverdienerbonus(bruttoJ, jbGefördert)
+  3. Günstigerprüfung: refund = max(0, (jbGefördert + zulage) × grenzsteuersatz(bruttoJ) - zulage)
+     → refund goes to Girokonto, NOT reinvested
+  4. depotGef    = (depotGef    + jbGefördert + zulage) × (1 + rendite - kostenAV)
+     depotUngef  = (depotUngef  + jbUngefördert)        × (1 + rendite - kostenAV)
+  5. No taxes on gains during accumulation (no Abgeltungssteuer, no Vorabpauschale)
+
+Payout phase (until age 85):
+  // Incremental retirement tax: tax the AV payout at its true marginal contribution
+  baseIncome      = pension × 12 + sonstigeEinkünfte
+  taxOnAV         = calcEinkommensteuer(baseIncome + avAnnualPayout)
+                  - calcEinkommensteuer(baseIncome)
+  avPayoutTaxRate = taxOnAV / avAnnualPayout
+  netto           = brutto × (1 - avPayoutTaxRate × (1 + kirchensteuer))
 ```
 
 ### ETF-Depot Simulation (per year)
@@ -431,37 +459,37 @@ To add PDF/CSV export:
 
 ## Testing
 
-### Unit Tests (Calculator)
+The full suite (currently 181 tests) runs with:
 
 ```bash
-flutter test test/calculator_test.dart
+flutter test
 ```
 
-Example test structure:
-```dart
-test('Grundzulage at max contribution', () {
-  expect(CalculatorService.calcGrundzulage(1800), 540.0);
-});
+### Test Suite Layout
 
-test('Grundzulage at 360 boundary', () {
-  expect(CalculatorService.calcGrundzulage(360), 180.0);
-});
+All tests live under `test/services/domain/` and target the calculation engine.
+Each file isolates one module or one feature path:
 
-test('Kinderzulage caps at 300 per child', () {
-  expect(CalculatorService.calcKinderzulage(500, 2), 600.0);
-});
-```
+| File | Coverage |
+|---|---|
+| `subsidy_module_test.dart` | Grundzulage, Kinderzulage, Berufseinsteigerbonus, Geringverdienerbonus |
+| `tax_module_test.dart` | §32a brackets, exact polynomial, Günstigerprüfung |
+| `pension_module_test.dart` | Entgeltpunkte estimation, BBG cap, income-dev EP accumulation |
+| `contribution_cap_test.dart` | €6,840 cap, gefördert/ungefördert split, UngefoerdertTaxMode (3 modes) |
+| `income_scenarios_test.dart` | Growth curves, part-time, child arrival timing, age-out (maxAge 18 vs 25) |
+| `simulation_test.dart` | End-to-end AV/ETF simulation, calcSubsidyPhases, kinderStudieren integration |
+| `logic_test.dart` | AV vs ETF comparison, Kirchensteuer effect on both, payout-phase logic |
 
-### Widget Tests
+### Adding Tests
 
+The `SimulationEngine` is constructed with default modules
+(`GermanTax2024`, `AVDepotSubsidy2027`, `EntgeltpunkteEstimator`), but tests
+can inject mocks for any of the three interfaces if you want to isolate one
+module's behavior.
+
+Run a single file:
 ```bash
-flutter test test/widget_test.dart
-```
-
-### Integration Tests
-
-```bash
-flutter test integration_test/
+flutter test test/services/domain/subsidy_module_test.dart
 ```
 
 ---

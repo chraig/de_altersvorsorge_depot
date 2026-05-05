@@ -19,7 +19,7 @@ Located in: `lib/services/domain/calculator_service.dart`
 | Max Grundzulage | €540/yr | Derived | — | Calculated |
 | Kinderzulage per child | up to €300/yr | Fixed | §89 Abs. 2 EStG-E | `calcKinderzulage()` |
 | Kinderzulage match rate | 1:1 | Fixed | §89 Abs. 2 EStG-E | `calcKinderzulage()` |
-| Kinderzulage max age | 25 (kindergeldberechtigt) | Fixed | Kindergeld law | `CalcConstants.kinderzulageMaxAlter` |
+| Kinderzulage max age | 25 if education / 18 otherwise | User toggle | Kindergeld law | `PersonalScenario.kinderStudieren` (Assumptions panel) |
 | Berufseinsteigerbonus | €200 (one-time) | Fixed | §89 Abs. 3 EStG-E | `calcBonus()` |
 | Bonus max age | 24 (under 25) | Fixed | §89 Abs. 3 EStG-E | `calcBonus()` |
 | Geringverdienerbonus | €175/yr | Fixed | §89 Abs. 4 EStG-E | `calcGeringverdienerbonus()` |
@@ -222,25 +222,25 @@ Located in: `lib/config/theme.dart`
 
 - Kirchensteuer toggle (None / 8% Bayern-BaWü / 9% other states)
 - Geringverdienerbonus (€175/yr for gross ≤ €26,250)
-- Income development toggle (3 growth curves, part-time, child timing)
+- Income development toggle with 3 growth curves (linear, step-wise, logarithmic)
+- Part-time phases (start year, duration, percentage)
+- Child arrival timing (dynamic children added at specific savings years)
+- Per-child age tracking with kinderStudieren toggle (Kindergeld until 18 or 25)
 - Ungefördert tax treatment selector (nachgelagert / Ertragsanteil / Halbeinkünfte)
-- Progressive §32a tax calculation (exact polynomial formulas, not marginal rate)
+- Progressive §32a tax calculation (exact polynomial formulas, incremental retirement tax rate)
 - Adjustable Arbeitsbeginn (14–35, affects pension EP calculation)
+- Stacked bar charts: per-year breakdown of contributions/subsidies (savings) and net/tax (payout)
+- Phase-based subsidy breakdown (year ranges with identical components grouped)
 
 ### Planned for Future Versions
 
-```dart
-class FeatureFlags {
-  static const bool enableEinmalentnahme = false;
-  static const bool enableRiesterComparison = false;
-  static const bool enableMonteCarloSim = false;
-  static const bool enablePDFExport = false;
-  static const bool enableDarkMode = false;
-  static const bool enableIncomeGrowthCurves = false; // step-wise, logarithmic
-  static const bool enablePartTimePhases = false;
-  static const bool enableChildArrivalTiming = false;
-}
-```
+- Einmalentnahme (up to 30% lump-sum at retirement, §89 Abs. 9 EStG-E)
+- Riester comparison (legacy product comparison alongside ETF)
+- Monte Carlo simulation (volatile returns instead of constant)
+- PDF / CSV export of results
+- Dark mode
+- Salary trajectory mini-chart in input panel
+- Per-child education toggle (currently a single global flag)
 
 ---
 
