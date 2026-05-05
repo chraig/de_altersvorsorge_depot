@@ -324,11 +324,10 @@ class SavingsPhaseBarChart extends StatelessWidget {
           y += phase.kinderzulage;
         }
 
-        // Bonus + Geringverdiener (combined)
-        final bonusTotal = phase.bonus + phase.geringverdienerbonus;
-        if (bonusTotal > 0) {
-          items.add(BarChartRodStackItem(y, y + bonusTotal, AppColors.chartBonus));
-          y += bonusTotal;
+        // Berufseinsteigerbonus
+        if (phase.bonus > 0) {
+          items.add(BarChartRodStackItem(y, y + phase.bonus, AppColors.chartBonus));
+          y += phase.bonus;
         }
 
         // Tax refund

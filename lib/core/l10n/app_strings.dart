@@ -90,7 +90,6 @@ abstract class AppStrings {
   String get baseGrant;
   String get childGrant;
   String get entryBonus;
-  String get lowIncomeBonus;
   String get subsidyRate;
   String get totalSubsidyYear;
   String get viaTaxOptimization;
@@ -172,7 +171,6 @@ abstract class AppStrings {
   String get tipGrundzulage;
   String get tipKinderzulage;
   String get tipBerufseinsteigerbonus;
-  String get tipGeringverdienerbonus;
   String get tipGuenstigerpruefung;
   String get tipGefoerdert;
   String get tipUngefoerdert;
@@ -226,7 +224,6 @@ abstract class AppStrings {
   String get etfProsTitle;
   String get proHighSubsidyRate;
   String get proKinderzulage;
-  String get proGeringverdienerbonus;
   String get proBerufseinsteigerbonus;
   String get proGuenstigerpruefung;
   String get proLongDuration;
@@ -449,7 +446,6 @@ class StringsEn extends AppStrings {
   String get baseGrant => 'Base Grant';
   String get childGrant => 'Child Grant';
   String get entryBonus => 'Entry Bonus';
-  String get lowIncomeBonus => 'Low-Income Bonus';
   String get subsidyRate => 'Subsidy Rate';
   String get totalSubsidyYear => 'Total Subsidy/Year';
   String get viaTaxOptimization => 'via tax optimization check';
@@ -529,7 +525,6 @@ class StringsEn extends AppStrings {
   String get tipGrundzulage => 'Government matches your contributions: 50% on the first €360/yr and 25% on €361–1,800/yr. Maximum €540/yr. Goes directly into your depot.';
   String get tipKinderzulage => 'Up to €300/child/year (1:1 match from €25/mo). Child must be kindergeldberechtigt — ends at age 25 (in education) or 18. Subsidy stops when the child ages out.';
   String get tipBerufseinsteigerbonus => 'One-time €200 bonus in your first contract year if you are under 25. No ongoing payments — just the first year.';
-  String get tipGeringverdienerbonus => 'Extra €175/yr if your gross income is €26,250 or less and you contribute at least €120/yr. Stacks on top of the Grundzulage.';
   String get tipGuenstigerpruefung => 'The tax office automatically checks: is the tax deduction on your contributions worth more than the subsidies? If yes, you get the difference as a tax refund — but to your bank account, NOT into the depot.';
   String get tipGefoerdert => 'Subsidized contributions (up to €1,800/yr): grow tax-free, but the ENTIRE payout in retirement is taxed at your income tax rate (nachgelagerte Besteuerung).';
   String get tipUngefoerdert => 'Unsubsidized contributions (above €1,800/yr): no subsidies, but still tax-free growth during savings. Payout taxation is pending official BMF guidance (law takes effect Jan 2027). Currently calculated conservatively as full nachgelagerte Besteuerung. Actual treatment may be more favorable (e.g., Ertragsanteilbesteuerung or Halbeinkünfteverfahren).';
@@ -610,7 +605,6 @@ class StringsEn extends AppStrings {
   String get etfProsTitle => 'ETF Portfolio advantages';
   String get proHighSubsidyRate => 'High subsidy rate on your contributions';
   String get proKinderzulage => 'Child grant active (€300/child/yr)';
-  String get proGeringverdienerbonus => 'Low-income bonus applies (+€175/yr)';
   String get proBerufseinsteigerbonus => 'Career starter bonus active (one-time +€200)';
   String get proGuenstigerpruefung => 'Tax optimization check yields additional refund';
   String get proLongDuration => 'Long savings duration – subsidies compound over decades';
@@ -636,7 +630,6 @@ class StringsEn extends AppStrings {
     '▸ Grundzulage (50%/25% two-tier subsidy on up to €1,800/yr)\n'
     '▸ Kinderzulage (up to €300/child/yr, 1:1 match)\n'
     '▸ Berufseinsteigerbonus (one-time €200, under 25)\n'
-    '▸ Geringverdienerbonus (€175/yr for gross ≤ €26,250)\n'
     '▸ Günstigerprüfung (automatic tax optimization check)\n'
     '▸ Kirchensteuer (optional: None / 8% / 9%)\n'
     '▸ Abgeltungssteuer with 30% Teilfreistellung for ETF\n'
@@ -865,7 +858,6 @@ class StringsDe extends AppStrings {
   String get baseGrant => 'Grundzulage';
   String get childGrant => 'Kinderzulage';
   String get entryBonus => 'Bonus';
-  String get lowIncomeBonus => 'Geringverdienerbonus';
   String get subsidyRate => 'Förderquote';
   String get totalSubsidyYear => 'Gesamt-Zulage/Jahr';
   String get viaTaxOptimization => 'via Günstigerprüfung';
@@ -941,7 +933,6 @@ class StringsDe extends AppStrings {
   String get tipGrundzulage => 'Der Staat bezuschusst Ihre Beiträge: 50 % auf die ersten 360 €/J und 25 % auf 361–1.800 €/J. Maximum 540 €/J. Fließt direkt ins Depot.';
   String get tipKinderzulage => 'Bis 300 €/Kind/Jahr (1:1 ab 25 €/Mt). Kind muss kindergeldberechtigt sein — endet mit 25 (in Ausbildung) oder 18. Zulage entfällt danach.';
   String get tipBerufseinsteigerbonus => 'Einmaliger Bonus von 200 € im ersten Vertragsjahr, wenn Sie unter 25 sind. Keine laufenden Zahlungen — nur im ersten Jahr.';
-  String get tipGeringverdienerbonus => 'Zusätzlich 175 €/J bei Bruttoeinkommen ≤ 26.250 € und Mindestbeitrag 120 €/J. Wird auf die Grundzulage aufgeschlagen.';
   String get tipGuenstigerpruefung => 'Das Finanzamt prüft automatisch: Bringt der Sonderausgabenabzug auf Ihre Beiträge mehr als die Zulagen? Wenn ja, erhalten Sie die Differenz als Steuererstattung — aber auf Ihr Bankkonto, NICHT ins Depot.';
   String get tipGefoerdert => 'Geförderte Beiträge (bis 1.800 €/J): Wachsen steuerfrei, aber die GESAMTE Auszahlung im Ruhestand wird mit Einkommensteuer besteuert (nachgelagerte Besteuerung).';
   String get tipUngefoerdert => 'Ungeförderte Beiträge (über 1.800 €/J): Keine Zulagen, aber steuerfreies Wachstum in der Ansparphase. Besteuerung bei Auszahlung wartet auf offizielle BMF-Klärung (Gesetz tritt Jan 2027 in Kraft). Derzeit konservativ als volle nachgelagerte Besteuerung berechnet. Tatsächliche Behandlung könnte günstiger sein (z.B. Ertragsanteil oder Halbeinkünfteverfahren).';
@@ -1018,7 +1009,6 @@ class StringsDe extends AppStrings {
   String get etfProsTitle => 'Vorteile ETF-Depot';
   String get proHighSubsidyRate => 'Hohe Förderquote auf Ihre Beiträge';
   String get proKinderzulage => 'Kinderzulage aktiv (300 €/Kind/Jahr)';
-  String get proGeringverdienerbonus => 'Geringverdienerbonus greift (+175 €/Jahr)';
   String get proBerufseinsteigerbonus => 'Berufseinsteigerbonus aktiv (einmalig +200 €)';
   String get proGuenstigerpruefung => 'Günstigerprüfung bringt zusätzliche Steuererstattung';
   String get proLongDuration => 'Lange Spardauer – Zulagen verzinsen sich über Jahrzehnte';
@@ -1043,7 +1033,6 @@ class StringsDe extends AppStrings {
     '▸ Grundzulage (50 %/25 % Zwei-Stufen-Förderung auf bis zu 1.800 €/Jahr)\n'
     '▸ Kinderzulage (bis 300 €/Kind/Jahr, 1:1 Zuschuss)\n'
     '▸ Berufseinsteigerbonus (einmalig 200 €, unter 25)\n'
-    '▸ Geringverdienerbonus (175 €/Jahr bei Brutto ≤ 26.250 €)\n'
     '▸ Günstigerprüfung (automatische Steueroptimierung)\n'
     '▸ Kirchensteuer (optional: Keine / 8 % / 9 %)\n'
     '▸ Abgeltungssteuer mit 30 % Teilfreistellung für ETF\n'

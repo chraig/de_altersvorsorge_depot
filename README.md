@@ -237,7 +237,6 @@ lib/
 │       │   ├── calcGrundzulage()      # 50%/25% two-tier subsidy
 │       │   ├── calcKinderzulage()     # Up to €300/child 1:1 match
 │       │   ├── calcBonus()            # One-time €200 (under 25, first year)
-│       │   ├── calcGeringverdienerbonus()
 │       │   └── calcZulage()           # Combined yearly subsidy
 │       └── pension_module.dart        # PensionModule interface + EntgeltpunkteEstimator
 ├── features/
@@ -311,7 +310,6 @@ For each year j = 0 ... spardauer-1:
   2. zulage = Grundzulage(jbGefördert)
             + Kinderzulage(jbGefördert, kinderJ)
             + Berufseinsteigerbonus(alter, j)
-            + Geringverdienerbonus(bruttoJ, jbGefördert)
   3. Günstigerprüfung: refund = max(0, (jbGefördert + zulage) × grenzsteuersatz(bruttoJ) - zulage)
      → refund goes to Girokonto, NOT reinvested
   4. depotGef    = (depotGef    + jbGefördert + zulage) × (1 + rendite - kostenAV)
@@ -394,7 +392,6 @@ Source: Finanzausschuss amendment to Drucksache 21/4088, §89 EStG-E
 | Selbstständige | Excluded | **Included** |
 | Öffentlicher Träger | Not planned | **Mandated** (Standarddepot) |
 | Berufseinsteigerbonus | One-time €200 | **Unchanged** |
-| Geringverdienerbonus | €175/yr under €26,250 | **Unchanged** |
 
 ### Macro Scenario Assumptions
 
@@ -472,7 +469,7 @@ Each file isolates one module or one feature path:
 
 | File | Coverage |
 |---|---|
-| `subsidy_module_test.dart` | Grundzulage, Kinderzulage, Berufseinsteigerbonus, Geringverdienerbonus |
+| `subsidy_module_test.dart` | Grundzulage, Kinderzulage, Berufseinsteigerbonus |
 | `tax_module_test.dart` | §32a brackets, exact polynomial, Günstigerprüfung |
 | `pension_module_test.dart` | Entgeltpunkte estimation, BBG cap, income-dev EP accumulation |
 | `contribution_cap_test.dart` | €6,840 cap, gefördert/ungefördert split, UngefoerdertTaxMode (3 modes) |

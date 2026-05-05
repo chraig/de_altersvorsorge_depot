@@ -217,14 +217,13 @@ class SubsidyPhase {
   final double grundzulage;
   final double kinderzulage;
   final double bonus;
-  final double geringverdienerbonus;
   final double total;
   final double steuererstattung;
 
   const SubsidyPhase({
     required this.yearFrom, required this.yearTo,
     required this.kinder, required this.grundzulage, required this.kinderzulage,
-    required this.bonus, required this.geringverdienerbonus, required this.total,
+    required this.bonus, required this.total,
     required this.steuererstattung,
   });
 
@@ -236,7 +235,6 @@ class SubsidyBreakdown {
   final double grundzulage;        // [EUR/year]
   final double kinderzulage;       // [EUR/year]
   final double bonus;              // [EUR/year] (one-time, only in year 1)
-  final double geringverdienerbonus; // [EUR/year]
   final double total;              // [EUR/year] sum of all subsidies
   final double foerderquote;       // [ratio] total / jahresbeitrag
   final double steuererstattung;   // [EUR/year] Günstigerprüfung refund (NOT in depot)
@@ -246,7 +244,6 @@ class SubsidyBreakdown {
     required this.grundzulage,
     required this.kinderzulage,
     required this.bonus,
-    required this.geringverdienerbonus,
     required this.total,
     required this.foerderquote,
     required this.steuererstattung,

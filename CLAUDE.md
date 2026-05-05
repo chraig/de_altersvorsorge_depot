@@ -145,7 +145,6 @@ Constants are centralized in `CalcConstants` — update this class when legislat
 - `calcGrundzulage()` — 50%/25% two-tier subsidy
 - `calcKinderzulage()` — up to €300/child 1:1 match
 - `calcBonus()` — one-time €200 (under 25, first year)
-- `calcGeringverdienerbonus()` — €175/yr if gross ≤ €26,250
 - `calcZulage()` — combined yearly subsidy (record return type)
 - `calcSubsidyBreakdown()` — full year-1 breakdown for UI display
 - `calcSubsidyPhases()` — year-range breakdown (accounts for child age-out, bonus, income dev)

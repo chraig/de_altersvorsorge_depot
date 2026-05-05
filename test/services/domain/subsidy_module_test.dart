@@ -100,35 +100,12 @@ void main() {
     });
   });
 
-  group('Geringverdienerbonus', () {
-    test('eligible: brutto 22k, contribution 1200/yr', () {
-      expect(subsidy.calcGeringverdienerbonus(22000, 1200), 175);
-    });
-
-    test('eligible: at threshold (€26,250) and min contribution (€120)', () {
-      expect(subsidy.calcGeringverdienerbonus(26250, 120), 175);
-    });
-
-    test('ineligible: brutto above threshold', () {
-      expect(subsidy.calcGeringverdienerbonus(26251, 1200), 0);
-    });
-
-    test('ineligible: contribution below minimum', () {
-      expect(subsidy.calcGeringverdienerbonus(22000, 100), 0);
-    });
-
-    test('ineligible: contribution zero', () {
-      expect(subsidy.calcGeringverdienerbonus(22000, 0), 0);
-    });
-  });
-
   group('Combined Zulage', () {
     test('career starter: age 23, 600/yr, 32k brutto, 0 kids', () {
       final z = subsidy.calcZulage(600, 0, 23, 0, 32000);
       expect(z.grund, closeTo(240, 0.01)); // 360×50% + 240×25%
       expect(z.kind, 0);
       expect(z.bonus, 200); // one-time, year 0
-      expect(z.gering, 0); // 32k > 26,250
       expect(z.total, closeTo(440, 0.01));
     });
 
@@ -137,7 +114,6 @@ void main() {
       expect(z.grund, closeTo(390, 0.01));
       expect(z.kind, closeTo(600, 0.01));
       expect(z.bonus, 0); // age 32 > 25
-      expect(z.gering, 0); // 45k > 26,250
       expect(z.total, closeTo(990, 0.01));
     });
 
@@ -146,8 +122,7 @@ void main() {
       expect(z.grund, closeTo(240, 0.01));
       expect(z.kind, closeTo(300, 0.01)); // min(600, 300) × 1
       expect(z.bonus, 0);
-      expect(z.gering, 175); // 22k ≤ 26,250 and 600 ≥ 120
-      expect(z.total, closeTo(715, 0.01));
+      expect(z.total, closeTo(540, 0.01));
     });
 
     test('year 1 no longer gets Berufseinsteigerbonus', () {

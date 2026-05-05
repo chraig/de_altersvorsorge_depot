@@ -9,7 +9,6 @@ All notable user-facing changes to the Altersvorsorgedepot-Rechner.
 - Selectable ungefördert tax treatment (nachgelagert / Ertragsanteil / Halbeinkünfte) — pending BMF guidance
 - Adjustable Arbeitsbeginn (14–35 years) for pension point estimation
 - Facts-only principle: only verified legislation implemented, uncertainties documented
-- Geringverdienerbonus (€175/yr for gross ≤ €26,250) with green banner when active
 - Kirchensteuer toggle (None / 8% Bayern-BaWü / 9% other states) in Advanced Settings
 - Dynamic pros/cons section in comparison results, adapting to the current scenario
 - "Included in This Calculator" section in footer listing all implemented features

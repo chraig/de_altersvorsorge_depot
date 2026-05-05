@@ -93,41 +93,6 @@ void main() {
   // SUBSIDY ELIGIBILITY TRANSITIONS
   // ═══════════════════════════════════════════════════════════════
 
-  group('Geringverdienerbonus eligibility with income development', () {
-    test('starts eligible, loses eligibility as income grows', () {
-      // Start at 25k, grow 3% → crosses 26,250 after ~2 years
-      final p = makePerson(sparrate: 50, brutto: 25000, alterStart: 25, spardauer: 10);
-      final m = makeMacro();
-      const dev = IncomeDevSettings(enabled: true, growthRate: 0.03);
-      final av = engine.simulateAV(person: p, macro: m, costs: CostSettings(), incomeDev: dev);
-
-      // Verify Geringverdiener applies in year 0 and 1
-      final breakdown0 = engine.calcSubsidyBreakdown(p);
-      expect(breakdown0.geringverdienerbonus, 175);
-
-      // After year 2, income = 25000 × 1.03^2 = 26522 > 26250
-      // Total zulagen should be less than if Geringverdiener applied all 10 years
-      final avStatic = engine.simulateAV(person: p, macro: m, costs: CostSettings());
-      // With growth, fewer years of Geringverdienerbonus → less total zulagen?
-      // Actually no — static 25k always qualifies, growth makes it lose eligibility
-      expect(av.zulagenGesamt, lessThan(avStatic.zulagenGesamt),
-        reason: 'Income growth causes loss of Geringverdienerbonus in later years');
-    });
-
-    test('income always below threshold keeps Geringverdienerbonus', () {
-      final p = makePerson(sparrate: 50, brutto: 20000, alterStart: 25, spardauer: 10);
-      final m = makeMacro();
-      // Even at 2% growth: 20000 × 1.02^10 = 24,380 → still below 26,250
-      const dev = IncomeDevSettings(enabled: true, growthRate: 0.02);
-      final avGrow = engine.simulateAV(person: p, macro: m, costs: CostSettings(), incomeDev: dev);
-      final avStatic = engine.simulateAV(person: p, macro: m, costs: CostSettings());
-
-      // Both should get Geringverdienerbonus all 10 years → similar zulagen
-      // (Growth version gets slightly more from Günstigerprüfung as income rises)
-      expect(avGrow.zulagenGesamt, closeTo(avStatic.zulagenGesamt, 1));
-    });
-  });
-
   group('Berufseinsteigerbonus one-time behavior', () {
     test('only first year counts — same person, bonus vs no bonus age', () {
       // Same spardauer, same brutto, only age differs (23 vs 26)
@@ -328,11 +293,9 @@ void main() {
       expect(breakdown.bonus, 200);
     });
 
-    test('part-time + child qualifies for Geringverdienerbonus', () {
+    test('part-time + child preset has Kinderzulage', () {
       final teilzeit = presets[4]; // Teilzeit + Kind
-      expect(teilzeit.brutto, lessThanOrEqualTo(26250));
       final breakdown = engine.calcSubsidyBreakdown(teilzeit);
-      expect(breakdown.geringverdienerbonus, 175);
       expect(breakdown.kinderzulage, greaterThan(0));
     });
 

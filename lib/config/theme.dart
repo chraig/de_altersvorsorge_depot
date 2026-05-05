@@ -117,7 +117,7 @@ class AppColors {
   static const chartContrib = Color(0xFF3B82F6);       // own contribution (blue)
   static const chartGrundzulage = Color(0xFF10B981);    // Grundzulage (green)
   static const chartKinderzulage = Color(0xFF06B6D4);   // Kinderzulage (teal)
-  static const chartBonus = Color(0xFFF59E0B);          // Berufseinsteigerbonus + Geringverdiener (amber)
+  static const chartBonus = Color(0xFFF59E0B);          // Berufseinsteigerbonus (amber)
   static const chartSteuererstattung = Color(0xFF8B5CF6); // tax refund (purple)
   static const chartNetPayout = Color(0xFF3B82F6);      // net payout (blue)
   static const chartTax = Color(0xFFEF4444);            // tax on payout (red)

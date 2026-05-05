@@ -27,7 +27,7 @@ void main() {
 
   group('AV-Depot Simulation', () {
     test('1-year accumulation with no subsidies scenario', () {
-      // High income, no kids, age 40 → no bonus, no geringverdiener
+      // High income, no kids, age 40 → no bonus
       final p = makePerson(sparrate: 150, brutto: 85000, alterStart: 40, spardauer: 1);
       final m = makeMacro(rendite: 0.07);
       final costs = CostSettings(kostenAV: 0.005);
@@ -199,22 +199,6 @@ void main() {
       expect(dev.bruttoForYear(32000, 30), closeTo(32000 * pow(1.02, 30), 1));
     });
 
-    test('income dev affects Geringverdienerbonus eligibility', () {
-      // Start at 25k (eligible), grow 3% → crosses 26,250 after ~2 years
-      final p = makePerson(sparrate: 50, brutto: 25000, alterStart: 25, spardauer: 10);
-      final m = makeMacro();
-      final costs = CostSettings();
-      const dev = IncomeDevSettings(enabled: true, growthRate: 0.03);
-
-      final av = engine.simulateAV(person: p, macro: m, costs: costs, incomeDev: dev);
-      // Should get Geringverdienerbonus only in early years
-      // Year 0: 25000 → eligible
-      // Year 1: 25750 → eligible
-      // Year 2: 26522 → exceeds 26250 → ineligible
-      // Total zulagen should include 175 for ~2 years only
-      expect(av.zulagenGesamt, greaterThan(0));
-    });
-
     test('income dev produces higher AV result than static', () {
       final p = makePerson(sparrate: 100, brutto: 40000, alterStart: 30, spardauer: 37);
       final m = makeMacro();
@@ -263,7 +247,7 @@ void main() {
       );
       final avNoPt = engine.simulateAV(person: p, macro: m, costs: CostSettings(), incomeDev: devNoPt);
       final avPt = engine.simulateAV(person: p, macro: m, costs: CostSettings(), incomeDev: devPt);
-      // Part-time reduces income → may qualify for Geringverdienerbonus in those years
+      // Part-time reduces income → smaller Günstigerprüfung refund in those years
       // or reduce Günstigerprüfung → different total
       expect(avPt.steuererstattungGesamt, isNot(avNoPt.steuererstattungGesamt));
     });
@@ -356,7 +340,6 @@ void main() {
       expect(breakdown.grundzulage, closeTo(390, 0.01)); // 1200: 360×50% + 840×25%
       expect(breakdown.kinderzulage, closeTo(600, 0.01)); // min(1200,300) × 2
       expect(breakdown.bonus, 200); // age 23, year 0
-      expect(breakdown.geringverdienerbonus, 0); // 45k > 26,250
       expect(breakdown.total, closeTo(1190, 0.01));
       expect(breakdown.foerderquote, closeTo(1190 / 1200, 0.01));
     });
@@ -364,7 +347,7 @@ void main() {
 
   group('calcSubsidyPhases', () {
     test('single phase when nothing changes', () {
-      // No kids, age 40 → no bonus, no geringverdiener: constant subsidies
+      // No kids, age 40 → no bonus: constant subsidies
       final p = makePerson(sparrate: 150, brutto: 85000, kinder: 0, alterStart: 40, spardauer: 10);
       final phases = engine.calcSubsidyPhases(p);
       expect(phases.length, 1);

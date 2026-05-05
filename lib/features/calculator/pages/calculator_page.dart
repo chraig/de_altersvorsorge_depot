@@ -355,7 +355,6 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
     // AV pros
     if (sub.foerderquote > 0.25) avPros.add(s.proHighSubsidyRate);
     if (sub.kinderzulage > 0) avPros.add(s.proKinderzulage);
-    if (sub.geringverdienerbonus > 0) avPros.add(s.proGeringverdienerbonus);
     if (sub.bonus > 0) avPros.add(s.proBerufseinsteigerbonus);
     if (sub.steuererstattung > 0) avPros.add(s.proGuenstigerpruefung);
     if (p.spardauer >= 25) avPros.add(s.proLongDuration);
@@ -793,7 +792,6 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
           else _pair(s.baseGrant, Fmt.eur(phase.grundzulage), '0 €', tip: s.tipGrundzulage),
           _pair('${s.childGrant} (${phase.kinder})', Fmt.eur(phase.kinderzulage), '0 €', tip: s.tipKinderzulage),
           if (phase.bonus > 0) _pair(s.entryBonus, Fmt.eur(phase.bonus), '0 €', tip: s.tipBerufseinsteigerbonus),
-          if (phase.geringverdienerbonus > 0) _pair(s.lowIncomeBonus, Fmt.eur(phase.geringverdienerbonus), '0 €', tip: s.tipGeringverdienerbonus),
           _pair(s.totalSubsidyYear, Fmt.eur(phase.total), '0 €', bold: true),
           _pair(s.subsidyRate, Fmt.pct(fq), '0,0 %'),
           if (phase.steuererstattung > 0) _pair(s.viaTaxOptimization, Fmt.eur(phase.steuererstattung), '—', tip: s.tipGuenstigerpruefung),

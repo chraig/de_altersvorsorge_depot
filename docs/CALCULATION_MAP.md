@@ -30,7 +30,7 @@ flowchart TD
 | UI Input | Model Field | Unit | Used By |
 |----------|------------|------|---------|
 | Monthly Savings | `PersonalScenario.sparrate` | EUR/month | `jahresbeitrag` x12, subsidy calc, depot accumulation |
-| Gross Annual Income | `PersonalScenario.brutto` | EUR/year | tax rate, Geringverdienerbonus, pension EP, income dev base |
+| Gross Annual Income | `PersonalScenario.brutto` | EUR/year | tax rate, pension EP, income dev base |
 | Number of Children | `PersonalScenario.kinder` | count | Kinderzulage (may change with child timing) |
 | Starting Age | `PersonalScenario.alterStart` | years | Berufseinsteigerbonus eligibility, savings duration |
 | Retirement Age | derived as `spardauer` | years | payout duration (85 - retirement age) |
@@ -52,7 +52,7 @@ flowchart TD
     subgraph LOOP["For each savings year j = 0 ... spardauer-1"]
         direction TB
         INC["Income for year j<br/>bruttoJ = bruttoForYear brutto, j<br/>kinderJ = kinderAtYear kinder, j"]
-        SUB["Subsidies - SubsidyModule<br/>Grundzulage: 50% x min jbGef, 360 + 25% x rest<br/>Kinderzulage: min jbGef, 300 x kinderJ, age-out at 25<br/>Bonus: 200 EUR if age lt 25 AND j == 0<br/>Geringverdiener: 175 EUR if bruttoJ le 26250"]
+        SUB["Subsidies - SubsidyModule<br/>Grundzulage: 50% x min jbGef, 360 + 25% x rest<br/>Kinderzulage: min jbGef, 300 x kinderJ, age-out at 18 or 25<br/>Bonus: 200 EUR if age lt 25 AND j == 0"]
         TAX["Tax Optimization - TaxModule<br/>gstJ = getGrenzsteuersatz bruttoJ<br/>Sonderausgaben = min jb, 1800 + zulagen x gstJ<br/>Refund = difference, to bank account"]
         SPLIT["Contribution Split<br/>jbCapped = min jahresbeitrag, 6840<br/>jbGefoerdert = min jbCapped, 1800<br/>jbUngefoerdert = jbCapped - jbGefoerdert"]
         GROW["Depot Growth - tax-free<br/>depotGef = depotGef + jbGef + zulagen x 1 + r - kostenAV<br/>depotUngef = depotUngef + jbUngef x 1 + r - kostenAV"]
@@ -131,7 +131,7 @@ flowchart TD
 | Changed Input | Affects Depot Capital | Affects Net Payout | Affects Subsidies |
 |---------------|----------------------|-------------------|-------------------|
 | Savings Rate | yes, directly | yes | yes, via contribution |
-| Gross Income | no | yes, retirement tax | Only Geringverdienerbonus |
+| Gross Income | no | yes, retirement tax | no |
 | Children | no | no | yes, Kinderzulage |
 | Starting Age | yes, longer compounding | yes | yes, Berufseinsteigerbonus |
 | Retirement Age | yes, duration | yes, payout years | no |
@@ -140,7 +140,7 @@ flowchart TD
 | Return p.a. | yes, directly | yes | no |
 | AV/ETF Cost | yes, reduces return | yes | no |
 | Kirchensteuer | no | yes, both AV + ETF | no |
-| Income Growth | no | yes, pension + tax | Only Geringverdienerbonus timing |
+| Income Growth | no | yes, pension + tax | no |
 | Macro Scenario | yes, return + inflation | yes | no |
 
 ---

@@ -42,14 +42,6 @@ class CalcConstants {
   /// Must be under this age at contract start to qualify
   static const int bonusMaxAlter = 25;
 
-  // ─── GERINGVERDIENERBONUS (§89 Abs. 4 EStG-E) ─────────────────
-  /// Extra yearly subsidy for low-income earners
-  static const double geringverdienerBetrag = 175.0;
-  /// Gross income threshold: only eligible at or below this
-  static const double geringverdienerGrenze = 26250.0;
-  /// Minimum annual contribution required for any subsidy
-  static const double mindestbeitrag = 120.0;
-
   // ─── INCOME TAX BRACKETS (§32a EStG, 2024 values) ─────────────
   /// Grundfreibetrag: no tax below this (tax-free allowance)
   static const double grundfreibetrag = 11784;
@@ -149,7 +141,6 @@ class SimulationEngine {
       grundzulage: z.grund,
       kinderzulage: z.kind,
       bonus: z.bonus,
-      geringverdienerbonus: z.gering,
       total: z.total,
       foerderquote: fq,
       steuererstattung: gp.zusaetzlich,
@@ -158,15 +149,14 @@ class SimulationEngine {
   }
 
   /// Compute subsidy phases: groups of consecutive years with identical subsidies.
-  /// Accounts for child age-out, Berufseinsteigerbonus (year 1 only),
-  /// Geringverdienerbonus eligibility changes with income development.
+  /// Accounts for child age-out and Berufseinsteigerbonus (year 1 only).
   List<SubsidyPhase> calcSubsidyPhases(PersonalScenario person, {IncomeDevSettings incomeDev = const IncomeDevSettings()}) {
     final jb = person.jahresbeitrag;
     final jbGef = jb < CalcConstants.grundzulageMaxBeitrag ? jb : CalcConstants.grundzulageMaxBeitrag;
     final phases = <SubsidyPhase>[];
 
     int phaseStart = 0;
-    double prevGrund = -1, prevKind = -1, prevBonus = -1, prevGering = -1, prevRefund = -1;
+    double prevGrund = -1, prevKind = -1, prevBonus = -1, prevRefund = -1;
     int prevKinder = -1;
 
     for (int j = 0; j < person.spardauer; j++) {
@@ -180,21 +170,21 @@ class SimulationEngine {
 
       // Check if this year's values differ from previous
       if (z.grund != prevGrund || z.kind != prevKind || z.bonus != prevBonus ||
-          z.gering != prevGering || kinderJ != prevKinder ||
+          kinderJ != prevKinder ||
           (gp.zusaetzlich - prevRefund).abs() > 0.01) {
         // Close previous phase
         if (j > 0) {
           phases.add(SubsidyPhase(
             yearFrom: phaseStart + 1, yearTo: j,
             kinder: prevKinder, grundzulage: prevGrund, kinderzulage: prevKind,
-            bonus: prevBonus, geringverdienerbonus: prevGering,
-            total: prevGrund + prevKind + prevBonus + prevGering,
+            bonus: prevBonus,
+            total: prevGrund + prevKind + prevBonus,
             steuererstattung: prevRefund,
           ));
         }
         phaseStart = j;
         prevGrund = z.grund; prevKind = z.kind; prevBonus = z.bonus;
-        prevGering = z.gering; prevKinder = kinderJ; prevRefund = gp.zusaetzlich;
+        prevKinder = kinderJ; prevRefund = gp.zusaetzlich;
       }
     }
 
@@ -203,8 +193,8 @@ class SimulationEngine {
       phases.add(SubsidyPhase(
         yearFrom: phaseStart + 1, yearTo: person.spardauer,
         kinder: prevKinder, grundzulage: prevGrund, kinderzulage: prevKind,
-        bonus: prevBonus, geringverdienerbonus: prevGering,
-        total: prevGrund + prevKind + prevBonus + prevGering,
+        bonus: prevBonus,
+        total: prevGrund + prevKind + prevBonus,
         steuererstattung: prevRefund,
       ));
     }

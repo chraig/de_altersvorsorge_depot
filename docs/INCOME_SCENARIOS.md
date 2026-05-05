@@ -53,9 +53,8 @@ Dynamic children list — adds children mid-savings-period in addition to the st
 When income development is enabled, every year's brutto flows into:
 
 - **Marginal tax rate** (`getGrenzsteuersatz(bruttoJ)`) — changes Günstigerprüfung refund per year
-- **Geringverdienerbonus eligibility** — drops off when brutto crosses €26,250 threshold
 - **Pension Entgeltpunkte accumulation** — `Σ min(bruttoJ, BBG) / Durchschnittsentgelt` per savings year, plus pre-savings years at base brutto. Affects retirement tax base.
-- **Subsidy phase boundaries** — `calcSubsidyPhases()` creates a new phase whenever any subsidy component changes, including Geringverdienerbonus toggling on/off.
+- **Subsidy phase boundaries** — `calcSubsidyPhases()` creates a new phase whenever any subsidy component changes (e.g., children aging out, Berufseinsteigerbonus only in year 1, Günstigerprüfung refund changing with income).
 
 ---
 

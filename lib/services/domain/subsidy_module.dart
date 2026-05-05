@@ -5,12 +5,12 @@ import 'package:avdepot_rechner/services/domain/calculator_service.dart';
 abstract class SubsidyModule {
   /// Calculate all subsidies for one year.
   /// Returns individual amounts and total.
-  ({double grund, double kind, double bonus, double gering, double total})
+  ({double grund, double kind, double bonus, double total})
   calcZulage(double jahresbeitrag, int kinder, int alter, int bonusJahre, double brutto);
 }
 
 /// AV-Depot subsidies as defined by the Altersvorsorgereformgesetz (2027).
-/// Implements Grundzulage, Kinderzulage, Berufseinsteigerbonus, Geringverdienerbonus.
+/// Implements Grundzulage, Kinderzulage, Berufseinsteigerbonus.
 class AVDepotSubsidy2027 implements SubsidyModule {
   const AVDepotSubsidy2027();
 
@@ -39,19 +39,12 @@ class AVDepotSubsidy2027 implements SubsidyModule {
         ? CalcConstants.bonusBetrag : 0.0;
   }
 
-  /// Geringverdienerbonus: extra subsidy for low-income earners.
-  double calcGeringverdienerbonus(double brutto, double jahresbeitrag) {
-    return (brutto <= CalcConstants.geringverdienerGrenze && jahresbeitrag >= CalcConstants.mindestbeitrag)
-        ? CalcConstants.geringverdienerBetrag : 0.0;
-  }
-
   @override
-  ({double grund, double kind, double bonus, double gering, double total})
+  ({double grund, double kind, double bonus, double total})
   calcZulage(double jahresbeitrag, int kinder, int alter, int bonusJahre, double brutto) {
     final grund = calcGrundzulage(jahresbeitrag);
     final kind = calcKinderzulage(jahresbeitrag, kinder);
     final bonus = calcBonus(alter, bonusJahre);
-    final gering = calcGeringverdienerbonus(brutto, jahresbeitrag);
-    return (grund: grund, kind: kind, bonus: bonus, gering: gering, total: grund + kind + bonus + gering);
+    return (grund: grund, kind: kind, bonus: bonus, total: grund + kind + bonus);
   }
 }

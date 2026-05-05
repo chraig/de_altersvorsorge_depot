@@ -100,8 +100,8 @@ void main() {
     });
 
     test('low income: Zulagen are better than Sonderausgabenabzug', () {
-      // €600 contribution + €715 subsidy (with Geringverdiener+Kind), 0% rate
-      final gp = tax.calcGuenstigerpruefung(600, 715, 0);
+      // €600 contribution + €540 subsidy (Grundzulage + Kinderzulage), 0% rate
+      final gp = tax.calcGuenstigerpruefung(600, 540, 0);
       expect(gp.steuerersparnis, 0);
       expect(gp.zusaetzlich, 0);
       expect(gp.vorteil, false);

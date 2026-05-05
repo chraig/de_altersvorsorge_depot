@@ -97,21 +97,9 @@ Bonus = €200 if (alter_bei_abschluss < 25) AND (vertragsjahr == 1)
 
 - One-time €200 bonus in the first year of contract (BMF FAQ: "einmalig 200 Euro")
 - Not proportional to contributions
-- Requires active contributions (Mindestbeitrag €120/yr)
 - Must be under 25 at contract start
 
-### 2.4 Geringverdienerbonus
-
-**Legal basis**: §89 Abs. 4 EStG-E
-
-```
-Geringverdienerbonus = €175 if (brutto ≤ 26,250) AND (Eigenbeitrag ≥ 120)
-```
-
-- Implemented: €175/yr added to total subsidy when conditions are met
-- Stacks on top of Grundzulage
-
-### 2.5 Günstigerprüfung (Tax Optimization Check)
+### 2.4 Günstigerprüfung (Tax Optimization Check)
 
 **Legal basis**: §10a EStG-E (modified)
 
@@ -244,9 +232,6 @@ Kinderzulage(jb, kinder) = min(jb, 300) × kinder
 
 Berufseinsteigerbonus(alter, j) = €200 if (alter < 25) AND (j == 0), else 0
   // One-time bonus in first savings year only. Source: BMF FAQ "einmalig".
-
-Geringverdienerbonus(brutto, jb) = €175 if (brutto ≤ 26,250) AND (jb ≥ 120), else 0
-  // Mindestbeitrag: €120/year. Stacks on top of Grundzulage.
 ```
 
 ### Combined Yearly Subsidy
@@ -255,13 +240,11 @@ Geringverdienerbonus(brutto, jb) = €175 if (brutto ≤ 26,250) AND (jb ≥ 120
 Zulage(j) = Grundzulage(Jahresbeitrag)
            + Kinderzulage(Jahresbeitrag, KinderAtYear(j))
            + Berufseinsteigerbonus(Alter, j)
-           + Geringverdienerbonus(Brutto_j, Jahresbeitrag)
 ```
 
 Note: Subsidies are not constant over the savings period. `calcSubsidyPhases()` groups
 consecutive years with identical subsidy components into phases (e.g., children aging
-out of Kindergeld at 25, Berufseinsteigerbonus only in year 1, Geringverdienerbonus
-eligibility changing with income development).
+out of Kindergeld at 18 or 25, Berufseinsteigerbonus only in year 1).
 
 ### German Marginal Tax Rate (piecewise approximation, §32a EStG 2024)
 
@@ -293,7 +276,7 @@ For j = 0 to Spardauer - 1:
   Alter = AlterStart + j
   Brutto_j = IncomeDev.bruttoForYear(Brutto, j)  // static or growing
   Grenzsteuersatz_j = Grenzsteuersatz(Brutto_j)
-  Zulage_j = Zulage(j)                           // uses Brutto_j for Geringverdienerbonus
+  Zulage_j = Zulage(j)                           // year-specific (kinder age-out, bonus year 1 only)
   // Sonderausgabenabzug capped at min(Jahresbeitrag, 1800) + Zulagen (§10a EStG-E)
   Günstigerprüfung:
     CappedBeitrag = min(Jahresbeitrag, 1800)

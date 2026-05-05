@@ -22,9 +22,6 @@ Located in: `lib/services/domain/calculator_service.dart`
 | Kinderzulage max age | 25 if education / 18 otherwise | User toggle | Kindergeld law | `PersonalScenario.kinderStudieren` (Assumptions panel) |
 | Berufseinsteigerbonus | €200 (one-time) | Fixed | §89 Abs. 3 EStG-E | `calcBonus()` |
 | Bonus max age | 24 (under 25) | Fixed | §89 Abs. 3 EStG-E | `calcBonus()` |
-| Geringverdienerbonus | €175/yr | Fixed | §89 Abs. 4 EStG-E | `calcGeringverdienerbonus()` |
-| Geringverdiener threshold | €26,250 brutto | Fixed | §89 Abs. 4 EStG-E | `calcGeringverdienerbonus()` |
-| Mindestbeitrag | €120/yr | Not enforced | §89 Abs. 1 EStG-E | Slider min=€10/mo |
 | Höchstbeitrag (gefördert) | €1,800/yr | Enforced in calc | §89 Abs. 1 EStG-E | `calcGrundzulage()` |
 
 ### To modify Förderung parameters:
@@ -221,7 +218,6 @@ Located in: `lib/config/theme.dart`
 ### Already Implemented
 
 - Kirchensteuer toggle (None / 8% Bayern-BaWü / 9% other states)
-- Geringverdienerbonus (€175/yr for gross ≤ €26,250)
 - Income development toggle with 3 growth curves (linear, step-wise, logarithmic)
 - Part-time phases (start year, duration, percentage)
 - Child arrival timing (dynamic children added at specific savings years)
