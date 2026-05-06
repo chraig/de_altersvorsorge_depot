@@ -53,7 +53,7 @@ lib/
     state/                     # AppSettings coordinator, AppSettingsScope, LocaleCubit
   models/                      # Pure data classes (PersonalScenario, MacroScenario, results)
   services/
-    domain/                    # Pure static calculation engine (CalculatorService)
+    domain/                    # Pure calculation engine (SimulationEngine + injectable tax/subsidy/pension modules)
   features/                    # Feature modules (vertical slices)
     calculator/                # Calculator feature (cubit + pages + widgets)
   shared/                      # Reusable utilities and widgets
@@ -90,7 +90,7 @@ This project uses **Cubit** (not Bloc) for all state management — the data flo
 
 - States use **immutable classes** with `copyWith` for state changes
 - All state changes go through `emit(state.copyWith(...))` — never mutate state directly
-- Computed getters in `CalculatorState` call `CalculatorService` static methods (pull-based, never stale)
+- Computed getters in `CalculatorState` delegate to `SimulationEngine.standard` (pull-based, never stale)
 - `AppSettingsScope` wraps the widget tree with `MultiBlocProvider`
 
 ### File Naming
