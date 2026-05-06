@@ -296,6 +296,68 @@ class YearlyDataPoint {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// ACCUMULATION RESULTS — output of the savings phase only
+// ═══════════════════════════════════════════════════════════════════
+//
+// These are the savings-phase outputs at retirement age, plus the
+// supplementary state the payout phase needs as input. Web integrators
+// can consume these directly to integrate just the savings simulation
+// (gross capital at age 67, year-by-year curve) without yet wiring up
+// the payout module — see lib/services/domain/payout_module.dart.
+
+/// AV-Depot accumulation result.
+/// Includes the bucket split (gefördert vs. ungefördert) because the
+/// payout-phase tax treatment differs by bucket (§22 Nr. 5 vs. Nr. 1
+/// Satz 3a EStG). For a simple "just give me gross capital" view, use
+/// `endkapital` directly.
+class AVAccumulation {
+  final double depotGefoerdert;       // [EUR] subsidized bucket at retirement
+  final double depotUngefoerdert;     // [EUR] unsubsidized bucket at retirement
+  final double eigenBeitraege;        // [EUR] cumulative own contributions
+  final double zulagenGesamt;         // [EUR] cumulative subsidies (in depot)
+  final double steuererstattungGesamt; // [EUR] cumulative Günstigerprüfung refunds (NOT in depot)
+  final double endkapitalReal;        // [EUR] inflation-adjusted depot value at retirement
+  final double grenzsteuersatz;       // [ratio] marginal tax rate during working life (display only)
+  final List<YearlyDataPoint> jahresWerte;
+
+  const AVAccumulation({
+    required this.depotGefoerdert,
+    required this.depotUngefoerdert,
+    required this.eigenBeitraege,
+    required this.zulagenGesamt,
+    required this.steuererstattungGesamt,
+    required this.endkapitalReal,
+    required this.grenzsteuersatz,
+    required this.jahresWerte,
+  });
+
+  double get endkapital => depotGefoerdert + depotUngefoerdert;
+  double get wertzuwachs => endkapital - eigenBeitraege - zulagenGesamt;
+}
+
+/// ETF-Depot accumulation result.
+/// `endkapital` is already net of Vorabpauschale debits; `vorabpauschaleGesamt`
+/// is the cumulative VP cash paid during accumulation, needed for the §19 Abs. 1
+/// InvStG sale-tax credit during payout.
+class ETFAccumulation {
+  final double endkapital;            // [EUR] depot value at retirement (after VP debits)
+  final double endkapitalReal;        // [EUR] inflation-adjusted depot value
+  final double eigenBeitraege;        // [EUR] cumulative own contributions
+  final double vorabpauschaleGesamt;  // [EUR] cumulative VP cash paid during accumulation
+  final List<YearlyDataPoint> jahresWerte;
+
+  const ETFAccumulation({
+    required this.endkapital,
+    required this.endkapitalReal,
+    required this.eigenBeitraege,
+    required this.vorabpauschaleGesamt,
+    required this.jahresWerte,
+  });
+
+  double get gewinn => endkapital - eigenBeitraege; // gain at retirement
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // SIMULATION RESULTS
 // ═══════════════════════════════════════════════════════════════════
 

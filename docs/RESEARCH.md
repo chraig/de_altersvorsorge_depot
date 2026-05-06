@@ -7,6 +7,13 @@ design decisions behind the calculator's financial logic.
 `lib/services/domain/calculator_service.dart` as the `CalcConstants` class.
 Update that class when legislation changes; this document serves as the authoritative reference.
 
+The simulation runs in two phases: **accumulation** (savings phase) lives in
+`SimulationEngine.simulateAVAccumulation` / `simulateETFAccumulation`, and
+**payout** lives in pluggable modules in
+`lib/services/domain/payout_module.dart` (default impls: `AnnuityAVPayout`,
+`AnnuityETFPayout`). The full `simulateAV` / `simulateETF` chain the two phases.
+The pseudo-code in §3.5 describes the default annuity-based payout regime.
+
 ---
 
 ## 1. Legislative Timeline

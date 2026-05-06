@@ -3,6 +3,7 @@ import 'package:avdepot_rechner/models/scenario.dart';
 import 'package:avdepot_rechner/services/domain/tax_module.dart';
 import 'package:avdepot_rechner/services/domain/subsidy_module.dart';
 import 'package:avdepot_rechner/services/domain/pension_module.dart';
+import 'package:avdepot_rechner/services/domain/payout_module.dart';
 
 /// All legislative and tax parameters in one place.
 /// Update these when tax brackets change or legislation is amended.
@@ -193,25 +194,44 @@ int _kinderAt(PersonalScenario person, IncomeDevSettings incomeDev, int j) =>
 
 /// Simulation engine with injectable modules.
 ///
-/// Each module (tax, subsidy, pension) can be replaced independently:
+/// The simulation is split into two phases that web integrators can adopt
+/// independently:
+///
+///   1. **Accumulation** — `simulateAVAccumulation` / `simulateETFAccumulation`
+///      run the savings phase only and return everything needed to display the
+///      gross capital at retirement (and the bucket split / VP credit needed
+///      to feed the payout phase later).
+///   2. **Payout** — `avPayout` / `etfPayout` modules consume the accumulation
+///      result plus person/macro/costs and produce monthly payout figures.
+///
+/// `simulateAV` / `simulateETF` chain the two phases and return the combined
+/// `AVResult` / `ETFResult` used by the UI.
+///
+/// Each module can be replaced independently — useful for modeling alternative
+/// regimes (Lebenslange Rente, strict Riester reading, updated tax brackets,
+/// different subsidy designs):
 /// ```dart
 /// final engine = SimulationEngine(
-///   tax: GermanTax2026(),          // or a custom/updated implementation
-///   subsidy: AVDepotSubsidy2027(), // or a different subsidy regime
-///   pension: EntgeltpunkteEstimator(), // or a different pension system
+///   tax:       GermanTax2026(),
+///   subsidy:   AVDepotSubsidy2027(),
+///   pension:   EntgeltpunkteEstimator(),
+///   avPayout:  AnnuityAVPayout(),
+///   etfPayout: AnnuityETFPayout(),
 /// );
 /// ```
-///
-/// Default constructor uses the standard 2024/2027 implementations.
 class SimulationEngine {
   final TaxModule tax;
   final SubsidyModule subsidy;
   final PensionModule pension;
+  final AVPayoutModule avPayout;
+  final ETFPayoutModule etfPayout;
 
   const SimulationEngine({
     this.tax = const GermanTax2026(),
     this.subsidy = const AVDepotSubsidy2027(),
     this.pension = const EntgeltpunkteEstimator(),
+    this.avPayout = const AnnuityAVPayout(),
+    this.etfPayout = const AnnuityETFPayout(),
   });
 
   /// Default engine with standard modules.
@@ -291,9 +311,17 @@ class SimulationEngine {
     return phases;
   }
 
-  // ─── AV-DEPOT SIMULATION ──────────────────────────────────────
+  // ─── AV-DEPOT ACCUMULATION (savings phase only) ──────────────
+  //
+  // Web integrators can call this directly to drive the savings-phase UI
+  // (year-by-year curve, gross capital at age 67) without yet wiring up
+  // the payout module. Pass the result into [avPayout.compute] later to
+  // obtain the monthly payout figures.
 
-  AVResult simulateAV({
+  /// Run the AV-Depot savings phase only.
+  /// Returns the bucket-aware accumulation state at retirement plus the
+  /// year-by-year curve. Does NOT compute payout figures.
+  AVAccumulation simulateAVAccumulation({
     required PersonalScenario person,
     required MacroScenario macro,
     required CostSettings costs,
@@ -304,10 +332,9 @@ class SimulationEngine {
     final jbUngefoerdert = person.jahresbeitragUngefoerdert;
     final nettoRendite = macro.rendite - costs.kostenAV;
 
-    // ── Accumulation phase ──────────────────────────────────────
     // Two buckets grow in the same depot but tracked separately for payout tax.
-    double depotGefoerdert = 0; // subsidized bucket: full nachgelagerte Besteuerung
-    double depotUngefoerdert = 0; // unsubsidized bucket: Ertragsanteilbesteuerung
+    double depotGefoerdert = 0;   // subsidized: full nachgelagerte Besteuerung
+    double depotUngefoerdert = 0; // unsubsidized: Ertragsanteilbesteuerung
     double eigenBeitraege = 0;
     double zulagenGesamt = 0;
     double steuererstattungGesamt = 0;
@@ -344,72 +371,29 @@ class SimulationEngine {
       ));
     }
 
-    // ── Payout phase ────────────────────────────────────────────
     final depot = depotGefoerdert + depotUngefoerdert;
-    final auszahlungsDauer = person.auszahlungsDauer;
-
-    // Compute the incremental tax that the AV payout adds on top of pension + other.
-    // The AV payout has two taxable components:
-    //   • gefördert: 100% of payout is taxable income (nachgelagerte Besteuerung)
-    //   • ungefördert: 17% of payout is taxable income (Ertragsanteil at age 67)
-    // Both sit on top of pension + sonstige in the §32a progression, so the marginal
-    // rate must be computed against the FULL AV taxable amount (gefördert +
-    // 17% × ungefördert), not against the gefördert portion alone.
-    //
-    // Each bucket continues to compound at `nettoRendite` during the payout phase
-    // (no new contributions, no new Zulagen, but the depot stays invested). The
-    // gross monthly payout per bucket is the constant annuity payment that depletes
-    // the bucket exactly at the end of `auszahlungsDauer` years. Monthly periods
-    // are used so the displayed monthly figure reflects real-world monthly
-    // compounding during retirement.
-    final effectiveRente = pension.estimateMonthlyPension(person, incomeDev);
-    final monthlyRate = pow(1 + nettoRendite, 1.0 / 12).toDouble() - 1;
-    final months = auszahlungsDauer * 12;
-    final monatlichGefoerdert   = annuityPayment(depotGefoerdert,   monthlyRate, months);
-    final monatlichUngefoerdert = annuityPayment(depotUngefoerdert, monthlyRate, months);
-    final jahresGefoerdert   = monatlichGefoerdert   * 12;
-    final jahresUngefoerdert = monatlichUngefoerdert * 12;
-    final baseIncome = effectiveRente * 12 + person.sonstigeEinkuenfte; // pension + other
-    final avTaxableTotal = jahresGefoerdert + jahresUngefoerdert * CalcConstants.ertragsanteil67;
-    final combinedIncome = baseIncome + avTaxableTotal;
-    final kirchensteuerFaktor = 1 + costs.kirchensteuerRate;
-    // Incremental income tax attributable to the AV-derived taxable income.
-    final taxOnBase = tax.calcEinkommensteuer(baseIncome);
-    final taxOnCombined = tax.calcEinkommensteuer(combinedIncome);
-    final taxOnAvPayout = taxOnCombined - taxOnBase;
-    // avPayoutTaxRate = "rate per euro of AV taxable income" (gefördert + 17%×ungefördert).
-    final avPayoutTaxRate = avTaxableTotal > 0 ? taxOnAvPayout / avTaxableTotal : 0.0;
-
-    // Apply the rate to each bucket's taxable share:
-    //   • gefördert: 100% of payout is taxable → rate applies to full payout
-    //   • ungefördert: 17% of payout is taxable → rate applies to 17% of payout
-    // Kirchensteuer is added on top of the income tax in both cases.
-    final nettoGefoerdert = monatlichGefoerdert * (1 - avPayoutTaxRate * kirchensteuerFaktor);
-    final nettoUngefoerdert = depotUngefoerdert > 0
-        ? monatlichUngefoerdert * (1 - CalcConstants.ertragsanteil67 * avPayoutTaxRate * kirchensteuerFaktor)
-        : 0.0;
-
-    final monatlich = monatlichGefoerdert + monatlichUngefoerdert;
-    final netto = nettoGefoerdert + nettoUngefoerdert;
-
-    return AVResult(
-      endkapital: depot,
-      endkapitalReal: depot / pow(1 + macro.inflation, person.spardauer),
+    return AVAccumulation(
+      depotGefoerdert: depotGefoerdert,
+      depotUngefoerdert: depotUngefoerdert,
       eigenBeitraege: eigenBeitraege,
       zulagenGesamt: zulagenGesamt,
       steuererstattungGesamt: steuererstattungGesamt,
-      monatlicheAuszahlung: monatlich,
-      nettoMonatlich: netto,
+      endkapitalReal: depot / pow(1 + macro.inflation, person.spardauer),
       grenzsteuersatz: tax.getGrenzsteuersatz(person.brutto),
-      grenzsteuersatzRente: avPayoutTaxRate,
-      wertzuwachs: depot - eigenBeitraege - zulagenGesamt,
       jahresWerte: jahresWerte,
     );
   }
 
-  // ─── ETF-DEPOT SIMULATION ────────────────────────────────────
+  // ─── ETF-DEPOT ACCUMULATION (savings phase only) ─────────────
 
-  ETFResult simulateETF({
+  /// Run the ETF-Depot savings phase only.
+  /// Vorabpauschale model (§18 InvStG):
+  ///   • VP base = start-of-year depot (full year) + jb × NeuerBeitragFaktor
+  ///     (6.5/12, the §18 partial-year average).
+  ///   • VP cash is paid out of the depot as `vp_base × drag`.
+  ///   • Cumulative VP is returned in `vorabpauschaleGesamt` for the payout
+  ///     phase to credit against the sale tax (§19 Abs. 1 InvStG).
+  ETFAccumulation simulateETFAccumulation({
     required PersonalScenario person,
     required MacroScenario macro,
     required CostSettings costs,
@@ -417,24 +401,14 @@ class SimulationEngine {
     final jb = person.jahresbeitrag;
     final nettoRendite = macro.rendite - costs.kostenETF;
 
-    // ── Accumulation phase ──────────────────────────────────────
-    // Vorabpauschale model (§18 InvStG):
-    //   • The VP base is the value at the START of the year (held the full
-    //     year), not the year-end value. The new contribution made during the
-    //     year gets the §18 partial-year reduction — averaged across monthly
-    //     contributions, the new-contribution factor is 6.5/12 ≈ 0.5417.
-    //   • The VP tax is paid out of the depot, modeled as `vp_base × drag`.
-    //   • The cumulative VP paid is credited against the Abgeltungssteuer at
-    //     sale (§19 Abs. 1 InvStG), so the same tax is not collected twice.
     double depot = 0;
     double eigenBeitraege = 0;
-    double vorabpauschaleGesamt = 0; // cumulative VP-tax already paid
+    double vorabpauschaleGesamt = 0;
     final jahresWerte = <YearlyDataPoint>[];
 
     for (int j = 0; j < person.spardauer; j++) {
-      final depotStartOfYear = depot;                                     // held the full year (factor 1.0)
-      depot = (depot + jb) * (1 + nettoRendite);                          // grow at full rate
-      // VP base: start-of-year depot (full year) + jb × partial-year factor (~0.5417).
+      final depotStartOfYear = depot;                            // held the full year (factor 1.0)
+      depot = (depot + jb) * (1 + nettoRendite);                 // grow at full rate
       final vpBase = depotStartOfYear
           + jb * CalcConstants.vorabpauschaleNeuerBeitragFaktor;
       final vpJahr = vpBase * CalcConstants.vorabpauschaleDrag;
@@ -453,72 +427,74 @@ class SimulationEngine {
       ));
     }
 
-    // ── Payout phase ─────────────────────────────────────────────
-    // The depot continues to compound at `nettoRendite` during retirement (no
-    // new contributions). Monthly compounding is used so the displayed monthly
-    // payout matches a real Auszahlplan.
-    //
-    // Gross monthly payout = constant annuity payment that depletes the depot
-    // exactly at the end of `auszahlungsDauer` years.
-    //
-    // Tax is applied per month via an effective tax rate `etfTaxRatePayout`
-    // (analogous to AV's `avPayoutTaxRate`). Each month the user pays
-    //   tax_per_month = monatlichBrutto × etfTaxRatePayout
-    // and receives
-    //   monatlich = monatlichBrutto × (1 − etfTaxRatePayout)
-    //
-    // The rate is calibrated so the cumulative tax across all payout months
-    // matches the legally-correct lifetime sale tax (Abgeltungssteuer on the
-    // total taxable gain extracted, with Vorabpauschale credit per §19 Abs. 1
-    // InvStG). Because Abgeltungssteuer is FLAT (not progressive) and total
-    // gain extracted = total gross − cost basis (conservation of money), the
-    // per-month rate equals the lifetime-average rate exactly:
-    //
-    //   etfTaxRatePayout = lifetimeSaleTax / lifetimeGross
-    //
-    // i.e. computing month-by-month or via the lifetime totals produces the
-    // same monthly tax. We use the closed-form path because it's simpler and
-    // gives the user a constant monthly net (UX-friendly).
-    //
-    // This replaces the earlier "lump-sum tax at retirement" model, which
-    // implicitly assumed the user sold everything at retirement and parked
-    // the post-tax amount tax-free — unrealistic for an 18-year payout.
-    final auszahlungsDauer = person.auszahlungsDauer;
-    final monthlyRate = pow(1 + nettoRendite, 1.0 / 12).toDouble() - 1;
-    final months = auszahlungsDauer * 12;
-    final monatlichBrutto = annuityPayment(depot, monthlyRate, months);
-    final lifetimeGross = monatlichBrutto * months;
-    final lifetimeGain = lifetimeGross - eigenBeitraege;
-    final gewinn = depot - eigenBeitraege; // gain at retirement (display field)
-    final lifetimeSaleTaxVorAnrechnung =
-        lifetimeGain * (1 - CalcConstants.teilfreistellung) * costs.abgeltungssteuersatz;
-    final lifetimeSaleTaxNachAnrechnung = lifetimeSaleTaxVorAnrechnung > vorabpauschaleGesamt
-        ? lifetimeSaleTaxVorAnrechnung - vorabpauschaleGesamt
-        : 0.0;
-    // Effective per-month tax rate on the gross monthly payout. Constant by
-    // construction because Abgeltungssteuer is flat. Parallel to AV's
-    // `avPayoutTaxRate × kirchensteuerFaktor` for the gef bucket.
-    final etfTaxRatePayout = lifetimeGross > 0
-        ? lifetimeSaleTaxNachAnrechnung / lifetimeGross
-        : 0.0;
-    final monatlich = monatlichBrutto * (1 - etfTaxRatePayout);
-    // Reported lifetime tax burden: VP paid during accumulation + sale tax during payout.
-    final steuer = vorabpauschaleGesamt + lifetimeSaleTaxNachAnrechnung;
-    // nachSteuer = lifetime cash-in-hand to the user (= net monthly × n_months).
-    final nachSteuer = monatlich * months;
-
-    return ETFResult(
+    return ETFAccumulation(
       endkapital: depot,
       endkapitalReal: depot / pow(1 + macro.inflation, person.spardauer),
       eigenBeitraege: eigenBeitraege,
-      gewinn: gewinn,
       vorabpauschaleGesamt: vorabpauschaleGesamt,
-      steuerAufGewinn: steuer,
-      nachSteuer: nachSteuer,
-      bruttoMonatlich: monatlichBrutto,
-      monatlicheAuszahlung: monatlich,
-      effectiveTaxRatePayout: etfTaxRatePayout,
       jahresWerte: jahresWerte,
+    );
+  }
+
+  // ─── COMBINED (accumulation + payout) ────────────────────────
+
+  /// Full AV-Depot simulation: accumulation phase + payout phase.
+  /// The payout module is `avPayout` (default: [AnnuityAVPayout]).
+  AVResult simulateAV({
+    required PersonalScenario person,
+    required MacroScenario macro,
+    required CostSettings costs,
+    IncomeDevSettings incomeDev = const IncomeDevSettings(),
+  }) {
+    final acc = simulateAVAccumulation(
+        person: person, macro: macro, costs: costs, incomeDev: incomeDev);
+    final pay = avPayout.compute(
+      accumulation: acc,
+      person: person,
+      macro: macro,
+      costs: costs,
+      tax: tax,
+      pension: pension,
+      incomeDev: incomeDev,
+    );
+    return AVResult(
+      endkapital: acc.endkapital,
+      endkapitalReal: acc.endkapitalReal,
+      eigenBeitraege: acc.eigenBeitraege,
+      zulagenGesamt: acc.zulagenGesamt,
+      steuererstattungGesamt: acc.steuererstattungGesamt,
+      monatlicheAuszahlung: pay.monatlicheAuszahlung,
+      nettoMonatlich: pay.nettoMonatlich,
+      grenzsteuersatz: acc.grenzsteuersatz,
+      grenzsteuersatzRente: pay.grenzsteuersatzRente,
+      wertzuwachs: acc.wertzuwachs,
+      jahresWerte: acc.jahresWerte,
+    );
+  }
+
+  /// Full ETF-Depot simulation: accumulation phase + payout phase.
+  /// The payout module is `etfPayout` (default: [AnnuityETFPayout]).
+  ETFResult simulateETF({
+    required PersonalScenario person,
+    required MacroScenario macro,
+    required CostSettings costs,
+  }) {
+    final acc = simulateETFAccumulation(person: person, macro: macro, costs: costs);
+    final pay = etfPayout.compute(
+        accumulation: acc, person: person, macro: macro, costs: costs);
+    return ETFResult(
+      endkapital: acc.endkapital,
+      endkapitalReal: acc.endkapitalReal,
+      eigenBeitraege: acc.eigenBeitraege,
+      gewinn: acc.gewinn,
+      vorabpauschaleGesamt: acc.vorabpauschaleGesamt,
+      // Total lifetime tax = VP paid during accumulation + sale tax during payout.
+      steuerAufGewinn: acc.vorabpauschaleGesamt + pay.lifetimeSaleTax,
+      nachSteuer: pay.nachSteuer,
+      bruttoMonatlich: pay.bruttoMonatlich,
+      monatlicheAuszahlung: pay.monatlicheAuszahlung,
+      effectiveTaxRatePayout: pay.effectiveTaxRatePayout,
+      jahresWerte: acc.jahresWerte,
     );
   }
 

@@ -226,12 +226,20 @@ lib/
 │       ├── calculator_service.dart    # SimulationEngine + CalcConstants
 │       │   ├── SimulationEngine       # Orchestrator with injectable modules
 │       │   │   ├── calcSubsidyBreakdown() / calcSubsidyPhases()
-│       │   │   ├── simulateAV()       # Gefördert/ungefördert split
-│       │   │   ├── simulateETF()      # Vorabpauschale + Teilfreistellung
+│       │   │   ├── simulateAVAccumulation()  # Savings phase only → AVAccumulation
+│       │   │   ├── simulateETFAccumulation() # Savings phase only → ETFAccumulation
+│       │   │   ├── simulateAV()       # Accumulation + AV payout module
+│       │   │   ├── simulateETF()      # Accumulation + ETF payout module
 │       │   │   ├── simulateCombined() # AV + ETF paired
 │       │   │   └── simulateAllMacros() # Cross-product: person × all macros
 │       │   ├── SimulationEngine.standard # Const default instance used by the cubit
 │       │   └── CalcConstants          # All legislative parameters with § references
+│       ├── payout_module.dart         # Payout-phase modules (replaceable)
+│       │   ├── AVPayoutModule         # Interface; default: AnnuityAVPayout
+│       │   ├── ETFPayoutModule        # Interface; default: AnnuityETFPayout
+│       │   ├── AVPayout / ETFPayout   # Payout result types
+│       │   ├── AnnuityAVPayout        # Auszahlplan + §32a incremental tax + KiSt
+│       │   └── AnnuityETFPayout       # Auszahlplan + lifetime sale tax (rate form)
 │       ├── tax_module.dart            # TaxModule interface + GermanTax2026
 │       │   ├── getGrenzsteuersatz()   # Piecewise marginal §32a
 │       │   ├── calcEinkommensteuer()  # Exact §32a polynomial formulas
@@ -420,21 +428,60 @@ Sources for historical returns:
 
 ## Customization Guide
 
-### Adding a New Tax Regime
+### Integrating Just the Savings Phase
 
-1. Create a new static method in `lib/services/domain/calculator_service.dart`:
+The simulation is split into two phases so a calling app can integrate them in
+sequence. Phase 1 — accumulation only — gives the gross capital at retirement
+plus the year-by-year savings curve, with **no payout-phase dependency**:
+
 ```dart
-static double getGrenzsteuersatzV2(double brutto) {
-  // New brackets for 2027 or beyond
-}
+final engine = SimulationEngine.standard;
+final av  = engine.simulateAVAccumulation(person: ..., macro: ..., costs: ...);
+final etf = engine.simulateETFAccumulation(person: ..., macro: ..., costs: ...);
+
+// av.endkapital, av.depotGefoerdert, av.depotUngefoerdert, av.jahresWerte, ...
+// etf.endkapital, etf.eigenBeitraege, etf.vorabpauschaleGesamt, etf.jahresWerte, ...
 ```
 
-2. Update `simulateAV()` and `simulateETF()` to use the new method.
+When ready, Phase 2 — payout — runs through pluggable modules:
+
+```dart
+final pay = engine.avPayout.compute(
+  accumulation: av, person: ..., macro: ..., costs: ...,
+  tax: engine.tax, pension: engine.pension,
+);
+// pay.monatlicheAuszahlung, pay.nettoMonatlich, pay.grenzsteuersatzRente
+```
+
+Or use `engine.simulateAV(...)` / `simulateETF(...)` to chain both phases and get
+a combined `AVResult` / `ETFResult`.
+
+### Adding a New Tax Regime
+
+1. Implement `TaxModule` in `lib/services/domain/tax_module.dart` (or a new file).
+2. Inject it into `SimulationEngine`:
+```dart
+final engine = SimulationEngine(tax: GermanTax2027()); // your impl
+```
+The cubit normally uses `SimulationEngine.standard`; swap that constant or add
+a constructor parameter to the cubit if you need to switch at runtime.
+
+### Adding a New Payout Regime
+
+1. Implement `AVPayoutModule` or `ETFPayoutModule` in `lib/services/domain/payout_module.dart`.
+2. Inject it into `SimulationEngine`:
+```dart
+final engine = SimulationEngine(avPayout: LebenslangeRente()); // your impl
+```
+Examples of regimes you might plug in: lifelong annuity (Versicherer-based),
+strict Riester reading via Unterschiedsbetrag, partial-year sale model with
+year-by-year tax computation.
 
 ### Adding a New Subsidy Type
 
 1. Add field to `SubsidyBreakdown` in `lib/models/scenario.dart`
-2. Add calculation in `lib/services/domain/calculator_service.dart` → `calcSubsidyBreakdown()`
+2. Add calculation in `lib/services/domain/subsidy_module.dart` (or a new
+   `SubsidyModule` impl) and update `SimulationEngine.calcSubsidyBreakdown`
 3. Add display in `lib/features/calculator/pages/calculator_page.dart`
 
 ### Adding a New Chart Type

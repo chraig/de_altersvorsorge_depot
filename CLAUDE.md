@@ -155,13 +155,26 @@ Constants are centralized in `CalcConstants` — update this class when legislat
 - `getDurchschnittssteuersatz()` — average tax rate (tax / income, used for payout)
 - `calcGuenstigerpruefung()` — automatic tax optimization check
 
-**Simulation module**:
-- `simulateAV()` — AV-Depot accumulation + payout with deferred taxation + Kirchensteuer
-- `simulateETF()` — ETF-Depot accumulation + payout with Abgeltungssteuer + Kirchensteuer
-- `simulateCombined()` / `simulateAllMacros()` — cross-product for comparison
+**Simulation engine** (orchestrator with two-phase split):
+- `simulateAVAccumulation()` / `simulateETFAccumulation()` — savings phase only,
+  return `AVAccumulation` / `ETFAccumulation` (gross capital at retirement +
+  the supplementary state needed by payout: bucket split for AV, VP credit for ETF).
+  Web integrators wire these up first to drive the savings-phase UI.
+- `simulateAV()` / `simulateETF()` — chain accumulation + payout, return the full
+  `AVResult` / `ETFResult` consumed by the UI.
+- `simulateCombined()` / `simulateAllMacros()` — cross-product for comparison.
+
+**Payout modules** (replaceable for different payout regimes — Lebenslange Rente,
+strict Riester reading, lump-sum, etc.) — `lib/services/domain/payout_module.dart`:
+- `AVPayoutModule` interface, default `AnnuityAVPayout` (Auszahlplan: monthly
+  annuity + incremental §32a tax on combined retirement income + KiSt).
+- `ETFPayoutModule` interface, default `AnnuityETFPayout` (Auszahlplan: monthly
+  annuity + lifetime sale tax with §19 Abs. 1 InvStG VP credit, expressed as a
+  per-month rate).
 
 **Pension module**:
-- `_computeEffectiveRente()` — state pension estimation (override > income-dev EP > static)
+- `EntgeltpunkteEstimator.estimateMonthlyPension()` — state pension estimation
+  (override > income-dev EP accumulation > static `geschaetzteRente`).
 
 **Income development** (`lib/models/income_dev_settings.dart` → `IncomeDevSettings`):
 - Opt-in toggle, linear compound growth rate (0–8%)

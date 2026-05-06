@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:avdepot_rechner/models/scenario.dart';
 import 'package:avdepot_rechner/services/domain/calculator_service.dart';
+import 'package:avdepot_rechner/services/domain/payout_module.dart';
+import 'package:avdepot_rechner/services/domain/pension_module.dart';
+import 'package:avdepot_rechner/services/domain/tax_module.dart';
 
 void main() {
   const engine = SimulationEngine();
@@ -575,4 +578,74 @@ void main() {
       expect(avStudy.zulagenGesamt, greaterThan(av.zulagenGesamt));
     });
   });
+
+  group('Modular phase split (accumulation / payout)', () {
+    test('AV: standalone accumulation matches accumulation embedded in simulateAV', () {
+      final p = makePerson(sparrate: 100, spardauer: 30, alterStart: 37);
+      final m = makeMacro();
+      final costs = CostSettings();
+
+      final acc = engine.simulateAVAccumulation(person: p, macro: m, costs: costs);
+      final full = engine.simulateAV(person: p, macro: m, costs: costs);
+
+      expect(acc.endkapital, closeTo(full.endkapital, 0.01));
+      expect(acc.eigenBeitraege, closeTo(full.eigenBeitraege, 0.01));
+      expect(acc.zulagenGesamt, closeTo(full.zulagenGesamt, 0.01));
+      expect(acc.steuererstattungGesamt, closeTo(full.steuererstattungGesamt, 0.01));
+      expect(acc.wertzuwachs, closeTo(full.wertzuwachs, 0.01));
+      expect(acc.jahresWerte.length, full.jahresWerte.length);
+    });
+
+    test('ETF: standalone accumulation matches accumulation embedded in simulateETF', () {
+      final p = makePerson(sparrate: 100, spardauer: 30, alterStart: 37);
+      final m = makeMacro();
+      final costs = CostSettings();
+
+      final acc = engine.simulateETFAccumulation(person: p, macro: m, costs: costs);
+      final full = engine.simulateETF(person: p, macro: m, costs: costs);
+
+      expect(acc.endkapital, closeTo(full.endkapital, 0.01));
+      expect(acc.eigenBeitraege, closeTo(full.eigenBeitraege, 0.01));
+      expect(acc.vorabpauschaleGesamt, closeTo(full.vorabpauschaleGesamt, 0.01));
+      expect(acc.gewinn, closeTo(full.gewinn, 0.01));
+      expect(acc.jahresWerte.length, full.jahresWerte.length);
+    });
+
+    test('Custom payout module is honored by SimulationEngine', () {
+      // A trivial payout module that pays a constant net of 1234/month and
+      // zero tax. Used to confirm engine wiring routes through the module.
+      const customAvPayout = _ConstantAVPayout(1234);
+      const customEngine = SimulationEngine(avPayout: customAvPayout);
+
+      final p = makePerson();
+      final m = makeMacro();
+      final av = customEngine.simulateAV(person: p, macro: m, costs: CostSettings());
+
+      expect(av.monatlicheAuszahlung, 1234);
+      expect(av.nettoMonatlich, 1234);
+      expect(av.grenzsteuersatzRente, 0);
+      // Accumulation fields still computed by the engine.
+      expect(av.endkapital, greaterThan(0));
+    });
+  });
+}
+
+class _ConstantAVPayout implements AVPayoutModule {
+  final double monthly;
+  const _ConstantAVPayout(this.monthly);
+
+  @override
+  AVPayout compute({
+    required AVAccumulation accumulation,
+    required PersonalScenario person,
+    required MacroScenario macro,
+    required CostSettings costs,
+    required TaxModule tax,
+    required PensionModule pension,
+    IncomeDevSettings incomeDev = const IncomeDevSettings(),
+  }) =>
+      AVPayout(
+          monatlicheAuszahlung: monthly,
+          nettoMonatlich: monthly,
+          grenzsteuersatzRente: 0);
 }
