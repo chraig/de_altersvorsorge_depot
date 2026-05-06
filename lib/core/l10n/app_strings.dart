@@ -134,8 +134,9 @@ abstract class AppStrings {
   String get bdEffectiveTaxRateEtfFormula;
   String get bdTaxOnPayoutYr;
   String get bdUngefTreatment;
-  String bdAfterTaxTotal(int years);
+  String bdLifetimeTotal(int years);
   String get bdTotalTaxPaid;
+  String get bdDepotBeforeTax;
   String get bdDepotAfterTax;
   String get bdContribTaxFree;
   String get bdContribTaxFreeAV;
@@ -169,6 +170,7 @@ abstract class AppStrings {
   String get tipUngefoerdert;
   String get tipVorabpauschale;
   String get tipTeilfreistellung;
+  String get tipFinalCapital;
 
   // ─── COMPARISON ───────────────────────────────────────────────────
   String avYieldsMore(String amount);
@@ -484,9 +486,10 @@ class StringsEn extends AppStrings {
   String get bdEffectiveTaxRateEtfFormula => '25% KapESt + 5.5% Soli';
   String get bdTaxOnPayoutYr => 'Tax on depot payout/yr';
   String get bdUngefTreatment => 'Ungefördert treatment';
-  String bdAfterTaxTotal(int years) => 'After Tax (total over $years years)';
+  String bdLifetimeTotal(int years) => 'Total Payout (over $years years)';
   String get bdTotalTaxPaid => 'Total tax paid';
-  String get bdDepotAfterTax => 'Depot after all tax';
+  String get bdDepotBeforeTax => 'Depot before tax (total)';
+  String get bdDepotAfterTax => 'Depot after tax (total)';
   String get bdContribTaxFree => 'Contributions returned tax-free';
   String get bdContribTaxFreeAV => 'No';
   String get bdMonthlyNet => 'Monthly Net from Depot';
@@ -516,6 +519,7 @@ class StringsEn extends AppStrings {
   String get tipUngefoerdert => 'Unsubsidized contributions (above €1,800/yr): no subsidies, but still tax-free growth during savings. Payout taxed under Ertragsanteilbesteuerung (§22 Nr. 1 Satz 3a EStG): only 17% of each payout is taxed at your income rate (assumes age-67 entry).';
   String get tipVorabpauschale => 'Annual tax on unrealized ETF gains, calculated from the Basiszins (ECB reference rate). Simplified here as a fixed drag on returns. Does NOT apply inside the AV-Depot.';
   String get tipTeilfreistellung => '30% of your ETF gains are tax-exempt — but only for Aktienfonds (equity funds with >50% equity per §2 Abs. 6 InvStG). Mischfonds get 15%, Immobilienfonds 60–80%, and bond/money-market ETFs get 0%. The calculator assumes a pure equity ETF.';
+  String get tipFinalCapital => 'Capital at retirement (end of savings phase). The depot is fully paid out as a monthly Auszahlplan over the payout phase. During those years the depot keeps compounding at the same return, so the total amount you receive over the whole payout phase (Depot before tax, below) is HIGHER than this Endkapital.';
 
   String avYieldsMore(String amount) => 'AV-Depot yields $amount more.';
   String etfYieldsMore(String amount) => 'ETF Portfolio yields $amount more.';
@@ -887,9 +891,10 @@ class StringsDe extends AppStrings {
   String get bdEffectiveTaxRateEtfFormula => '25 % KapESt + 5,5 % Soli';
   String get bdTaxOnPayoutYr => 'Steuer auf Depotauszahlung/J';
   String get bdUngefTreatment => 'Besteuerung ungefördert';
-  String bdAfterTaxTotal(int years) => 'Nach Steuer (gesamt über $years Jahre)';
+  String bdLifetimeTotal(int years) => 'Gesamtauszahlung (über $years Jahre)';
   String get bdTotalTaxPaid => 'Steuer gesamt';
-  String get bdDepotAfterTax => 'Depot nach Steuer';
+  String get bdDepotBeforeTax => 'Depot vor Steuer (gesamt)';
+  String get bdDepotAfterTax => 'Depot nach Steuer (gesamt)';
   String get bdContribTaxFree => 'Beiträge steuerfrei zurück';
   String get bdContribTaxFreeAV => 'Nein';
   String get bdMonthlyNet => 'Monatlich netto aus Depot';
@@ -918,6 +923,7 @@ class StringsDe extends AppStrings {
   String get tipUngefoerdert => 'Ungeförderte Beiträge (über 1.800 €/J): Keine Zulagen, aber steuerfreies Wachstum in der Ansparphase. Auszahlung mit Ertragsanteilbesteuerung (§22 Nr. 1 Satz 3a EStG): nur 17 % der Auszahlung wird mit dem persönlichen Einkommensteuersatz versteuert (Annahme: Beginn mit 67).';
   String get tipVorabpauschale => 'Jährliche Steuer auf unrealisierte ETF-Gewinne, berechnet aus dem Basiszins (EZB-Referenzzins). Hier vereinfacht als fester Abzug. Gilt NICHT im AV-Depot.';
   String get tipTeilfreistellung => '30 % Ihrer ETF-Gewinne sind steuerfrei — aber nur bei Aktienfonds (>50 % Kapitalbeteiligungen gem. §2 Abs. 6 InvStG). Mischfonds: 15 %, Immobilienfonds: 60–80 %, Anleihe-/Geldmarkt-ETFs: 0 %. Der Rechner unterstellt einen reinen Aktien-ETF.';
+  String get tipFinalCapital => 'Kapital bei Renteneintritt (Ende Sparphase). Das Depot wird über die Auszahlphase als monatlicher Auszahlplan vollständig ausgezahlt. Während dieser Zeit wächst das Depot weiter mit derselben Rendite — die Gesamtsumme über die Auszahlphase (Depot vor Steuer, siehe unten) ist daher HÖHER als dieses Endkapital.';
 
   String avYieldsMore(String amount) => 'AV-Depot bringt $amount mehr.';
   String etfYieldsMore(String amount) => 'ETF-Depot bringt $amount mehr.';
