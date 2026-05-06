@@ -77,9 +77,7 @@ abstract class AppStrings {
   String get addChildBtn;
   String childArrivalLabel(int year);
   String get kirchensteuerLabel;
-  String get kirchensteuerNone;
-  String get kirchensteuerBayBw;
-  String get kirchensteuerOther;
+  String get hintKirchensteuer;
 
   // ─── SUBSIDY BOX ─────────────────────────────────────────────────
   String get baseGrant;
@@ -427,10 +425,8 @@ class StringsEn extends AppStrings {
   String get childTimingLabel => 'Child arrival';
   String get addChildBtn => '+ Child';
   String childArrivalLabel(int year) => 'Child arrives in savings year $year';
-  String get kirchensteuerLabel => 'Church Tax';
-  String get kirchensteuerNone => 'None';
-  String get kirchensteuerBayBw => '8% (Bavaria/BaWü)';
-  String get kirchensteuerOther => '9% (other states)';
+  String get kirchensteuerLabel => 'Liable for Church Tax';
+  String get hintKirchensteuer => 'Calculator uses 9%, the rate in 14 of 16 federal states (~71% of the population). Bayern and Baden-Württemberg use 8%, which the calculator slightly overstates as a simplification.';
 
   // Subsidy
   String get baseGrant => 'Base Grant';
@@ -834,10 +830,8 @@ class StringsDe extends AppStrings {
   String get childTimingLabel => 'Kindergeburten';
   String get addChildBtn => '+ Kind';
   String childArrivalLabel(int year) => 'Kind kommt im Sparjahr $year';
-  String get kirchensteuerLabel => 'Kirchensteuer';
-  String get kirchensteuerNone => 'Keine';
-  String get kirchensteuerBayBw => '8 % (Bayern/BaWü)';
-  String get kirchensteuerOther => '9 % (übrige Bundesländer)';
+  String get kirchensteuerLabel => 'Kirchensteuerpflichtig';
+  String get hintKirchensteuer => 'Der Rechner verwendet 9 % — der Satz in 14 von 16 Bundesländern (~71 % der Bevölkerung). Bayern und Baden-Württemberg verwenden 8 %; der Rechner überschätzt die Steuer dort vereinfachend leicht.';
 
   String get baseGrant => 'Grundzulage';
   String get childGrant => 'Kinderzulage';

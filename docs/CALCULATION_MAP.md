@@ -40,7 +40,7 @@ flowchart TD
 | Inflation p.a. | `MacroScenario.inflation` | ratio/year | real value calculation |
 | AV Cost | `CostSettings.kostenAV` | ratio/year | deducted from return |
 | ETF Cost | `CostSettings.kostenETF` | ratio/year | deducted from return |
-| Kirchensteuer | `CostSettings.kirchensteuer` | ratio (0/0.08/0.09) | `abgeltungssteuersatz` getter, AV payout tax |
+| Kirchensteuer | `CostSettings.kirchensteuerpflichtig` | bool (rate fixed at 9% via `CalcConstants.kirchensteuersatz`) | `abgeltungssteuersatz` getter, AV payout tax |
 | Income Growth | `IncomeDevSettings.*` | various | year-by-year brutto, dynamic kinder |
 
 ---

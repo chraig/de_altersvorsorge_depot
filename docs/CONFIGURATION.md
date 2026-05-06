@@ -46,7 +46,7 @@ Located in: `lib/services/domain/calculator_service.dart`
 | Reichensteuersatz start | €277,826 | §32a EStG | `getGrenzsteuersatz()` |
 | Reichensteuersatz | 45% | §32a EStG | `getGrenzsteuersatz()` |
 | Abgeltungssteuersatz | 26.3750% (default) | §43a + §4 SolZG | `CostSettings.abgeltungssteuersatz` |
-| Kirchensteuer | 0% / 8% / 9% | Toggle in Advanced Settings | `CostSettings.kirchensteuer` |
+| Kirchensteuer | Yes/No (rate fixed at 9% when on) | Yes/No toggle in Advanced Settings | `CostSettings.kirchensteuerpflichtig` + `CalcConstants.kirchensteuersatz` |
 | Teilfreistellung (Aktienfonds, >50% equity) | 30% | §20 InvStG, §2 Abs. 6 InvStG | `CalcConstants.teilfreistellung` |
 | Teilfreistellung — other fund types | 15% Mischfonds, 60–80% Immobilienfonds, 0% Anleihe-/Geldmarkt-ETFs | §20 InvStG | not modeled — calculator assumes Aktienfonds |
 | Vorabpauschale drag | 0.3% p.a. | Simplified (Basiszins ~2.3-3.2%) | `simulateETF()` |
@@ -72,12 +72,17 @@ prior versions remain available for historical comparison.
 
 ### Kirchensteuer
 
-Kirchensteuer is implemented as a toggle in Advanced Settings (None / 8% / 9%):
+Kirchensteuer is a **Yes/No toggle**. The rate is fixed at 9% (= the rate
+in 14 of 16 federal states, ~71% of the population). Bayern and Baden-
+Württemberg residents technically pay 8%, which the calculator slightly
+overstates as a deliberate simplification — the difference is ~18 bp on
+the Abgeltungssteuersatz, translating to roughly €100–200 over a 30-year
+ETF accumulation.
 
-- **ETF side**: Uses the reduced KapESt formula: `KapESt = 25% / (1 + 25% × KiSt_rate)` (§32d Abs. 1 Satz 3 EStG), then adds Soli and KiSt
-  - None: 26.3750% | 8%: 27.8186% | 9%: 27.9951%
-- **AV side**: Retirement payout tax multiplied by `(1 + KiSt_rate)`
-- Code: `CostSettings.abgeltungssteuersatz` (computed getter) and `CostSettings.kirchensteuer`
+- **ETF side**: Uses the reduced KapESt formula from §32d Abs. 1 Sätze 4–5 EStG: `KapESt = (e − 4q) / (4 + k)`, where e = Kapitalertrag, q = creditable foreign withholding tax, k = Kirchensteuersatz. Foreign withholding tax is not modeled (q = 0), so the formula simplifies to `KapESt = e × 1/(4+k)`. Soli (5.5%) and KiSt (k) are then added on top of KapESt.
+  - Off: 26.3750% | On: 27.9951%
+- **AV side**: Retirement payout tax multiplied by `(1 + kirchensteuerRate)`
+- Code: `CostSettings.kirchensteuerpflichtig` (bool), `CostSettings.kirchensteuerRate` (returns `CalcConstants.kirchensteuersatz` = 0.09 when on, 0 otherwise), `CostSettings.abgeltungssteuersatz` (computed getter).
 
 ---
 
@@ -226,7 +231,7 @@ Located in: `lib/config/theme.dart`
 
 ### Already Implemented
 
-- Kirchensteuer toggle (None / 8% Bayern-BaWü / 9% other states)
+- Kirchensteuer Yes/No toggle, rate fixed at 9% (dominant German rate; Bayern/BaWü's 8% is a deliberate simplification)
 - Income development toggle with 3 growth curves (linear, step-wise, logarithmic)
 - Part-time phases (start year, duration, percentage)
 - Child arrival timing (dynamic children added at specific savings years)

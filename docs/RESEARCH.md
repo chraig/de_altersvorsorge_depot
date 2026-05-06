@@ -258,8 +258,8 @@ NachSteuer = Endkapital − Steuer_nach_Anrechnung    // VP was already debited 
 Where:
   Teilfreistellung = 30%   // calculator assumes Aktienfonds — see table below
   Abgeltungssteuersatz = 26.3750% without Kirchensteuer (25.0000% + 1.3750% Soli)
-  With Kirchensteuer: KapESt = 25% / (1 + 25% × KiSt_rate)  // §32d Abs. 1 Satz 3 EStG, plus Soli + KiSt
-    → 8% KiSt (Bayern/BaWü): 27.8186%  |  9% KiSt (other): 27.9951%
+  With Kirchensteuer: KapESt = 1 / (4 + k)  // §32d Abs. 1 Satz 4 EStG with q=0, plus Soli + KiSt
+    → calculator uses k = 0.09 (dominant rate, see §3.4): 27.9951%
 ```
 
 #### Teilfreistellung by fund type (§20 InvStG)
@@ -303,21 +303,46 @@ This creates a crossover point depending on returns, duration, tax rates, and fu
 ## 3.4 Kirchensteuer (Church Tax)
 
 Kirchensteuer applies to both AV-Depot (on income tax) and ETF-Depot (on Abgeltungssteuer).
-Configurable in the calculator as None / 8% (Bayern/BaWü) / 9% (other states).
+The actual rate is **8%** in Bayern and Baden-Württemberg, **9%** in the other 14
+federal states. About 71% of the population lives in 9%-states.
+
+The calculator simplifies this to a **Yes/No toggle**, with the rate fixed at
+**9%** when on (the dominant German rate, defined as `CalcConstants.kirchensteuersatz`).
+Bayern/BaWü residents who pay Kirchensteuer will see a marginally overstated tax
+burden — about 18 bp on the Abgeltungssteuersatz, translating to roughly €100–200
+over a 30-year ETF accumulation. This was deemed acceptable for UI simplicity.
 
 **ETF side — reduced KapESt formula:**
 
+§32d Abs. 1 Sätze 4–5 EStG specifies the KapESt formula when Kirchensteuer
+applies. The law writes it literally as:
+
 ```
-KapESt = 25% / (1 + 25% × KiSt_rate)  // §32d Abs. 1 Satz 3 EStG
-Soli = KapESt × 5.5%
-KiSt = KapESt × KiSt_rate
-Abgeltungssteuersatz = KapESt + Soli + KiSt
+                e − 4q
+KapESt(e) = ──────────             // §32d Abs. 1 Satz 4 EStG
+              4 + k
+```
+
+where `e` = Kapitalertrag (capital income), `q` = anrechenbare ausländische
+Quellensteuer (creditable foreign withholding tax), `k` = Kirchensteuersatz.
+
+Foreign withholding tax `q` is **not modeled** — we cannot meaningfully
+estimate it without per-fund data — so we set `q = 0`, leaving:
+
+```
+KapESt(e)            = e × 1 / (4 + k)            // = e × 0.25 when k = 0
+Soli                 = KapESt × 5.5%
+KiSt                 = KapESt × k
+Abgeltungssteuersatz = (KapESt + Soli + KiSt) / e = (1 + 0.055 + k) / (4 + k)
 
 Results:
-  None:  26.3750%
-  8%:    27.8186%
-  9%:    27.9951%
+  k = 0.00 (toggle Off):              26.3750%
+  k = 0.09 (toggle On, dominant rate): 27.9951%
+  // The k = 0.08 case (Bayern/Baden-Württemberg) is not selectable; calculator
+  // assumes 9% as a simplification. See note above.
 ```
+
+The 1/(4+k) form is what tax advisors recognize from §32d directly.
 
 **AV side — retirement payout taxation:**
 
@@ -537,7 +562,7 @@ Teilfreistellung          = 30%                          // §20 InvStG, Aktienf
 Steuerpflichtiger_Gewinn  = Gewinn × (1 − Teilfreistellung)
 Steuer_vor_Anrechnung     = Steuerpflichtiger_Gewinn × Abgeltungssteuersatz
   // Abgeltungssteuersatz: 26.3750% without KiSt, 27.8186% with 8%, 27.9951% with 9%
-  // Formula: KapESt = 25% / (1 + 25% × KiSt_rate), then + Soli + KiSt (see §3.4)
+  // Formula: KapESt = 1 / (4 + k) per §32d Abs. 1 Satz 4 EStG (q=0); + Soli + KiSt (see §3.4)
 
 // Vorabpauschale already paid is credited against the sale tax (§19 Abs. 1 InvStG):
 Steuer_nach_Anrechnung    = max(0, Steuer_vor_Anrechnung − VorabpauschaleGesamt)

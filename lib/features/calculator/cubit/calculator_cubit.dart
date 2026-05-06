@@ -122,8 +122,8 @@ class CalculatorCubit extends Cubit<CalculatorState> {
     emit(state.copyWith(currentPerson: state.currentPerson.copyWith(sonstigeEinkuenfte: v), clearSelectedPersonal: true));
   }
 
-  void setKirchensteuer(double v) {
-    emit(state.copyWith(costs: state.costs.copyWith(kirchensteuer: v)));
+  void setKirchensteuerpflichtig(bool v) {
+    emit(state.copyWith(costs: state.costs.copyWith(kirchensteuerpflichtig: v)));
   }
 
   void toggleIncomeDev() {

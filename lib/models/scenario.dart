@@ -160,31 +160,51 @@ class MacroScenario {
 class CostSettings {
   double kostenAV;
   double kostenETF;
-  double kirchensteuer; // 0.0 = none, 0.08 = Bayern/BaWü, 0.09 = other states
+  /// Whether the user is liable for Kirchensteuer. The rate is fixed at
+  /// `CalcConstants.kirchensteuersatz` (9%, the dominant rate in Germany).
+  bool kirchensteuerpflichtig;
 
   CostSettings({
     this.kostenAV = 0.005,
     this.kostenETF = 0.002,
-    this.kirchensteuer = 0.0,
+    this.kirchensteuerpflichtig = false,
   });
 
+  /// Effective Kirchensteuersatz: 9% if liable, 0 otherwise.
+  double get kirchensteuerRate =>
+      kirchensteuerpflichtig ? CalcConstants.kirchensteuersatz : 0.0;
+
   /// Abgeltungssteuer + Soli + optional Kirchensteuer.
-  /// Formula per §32d Abs. 1 Satz 3 EStG: KapESt is reduced because
-  /// Kirchensteuer is deductible from the tax base.
-  /// KapESt = 25% / (1 + 25% × KiSt_rate)
+  ///
+  /// Formula per §32d Abs. 1 Sätze 4–5 EStG: when Kirchensteuer applies, the
+  /// KapESt itself is reduced because the KiSt paid on the Kapitalertrag is
+  /// deductible from the KapESt base. The law states:
+  ///
+  ///     Steuer = (e − 4q) / (4 + k)        // §32d Abs. 1 Satz 4 EStG
+  ///
+  /// where e = Einnahmen (capital income), q = anrechenbare ausländische
+  /// Quellensteuer, k = Kirchensteuersatz. Foreign withholding tax (q) is
+  /// not modeled by this calculator — we cannot meaningfully estimate it
+  /// without per-fund detail — so the formula reduces to KapESt = e × 1/(4+k).
+  /// Soli (5.5% of KapESt) and KiSt (k × KapESt) are then added on top.
+  ///
+  /// Total Abgeltungssteuersatz = 1/(4+k) × (1 + 0.055 + k)
+  ///   k = 0.00:  0.25      × 1.055 = 26.3750%
+  ///   k = 0.09:  0.244499… × 1.145 = 27.9951%
   double get abgeltungssteuersatz {
-    if (kirchensteuer == 0) return 0.26375;
-    final kapEst = 0.25 / (1 + 0.25 * kirchensteuer);
+    if (!kirchensteuerpflichtig) return 0.26375;
+    final k = CalcConstants.kirchensteuersatz;
+    final kapEst = 1 / (4 + k);                    // §32d Abs. 1 Satz 4 EStG (q=0)
     final soli = kapEst * 0.055;
-    final kiSt = kapEst * kirchensteuer;
+    final kiSt = kapEst * k;
     return kapEst + soli + kiSt;
   }
 
-  CostSettings copyWith({double? kostenAV, double? kostenETF, double? kirchensteuer}) =>
+  CostSettings copyWith({double? kostenAV, double? kostenETF, bool? kirchensteuerpflichtig}) =>
     CostSettings(
       kostenAV: kostenAV ?? this.kostenAV,
       kostenETF: kostenETF ?? this.kostenETF,
-      kirchensteuer: kirchensteuer ?? this.kirchensteuer,
+      kirchensteuerpflichtig: kirchensteuerpflichtig ?? this.kirchensteuerpflichtig,
     );
 }
 

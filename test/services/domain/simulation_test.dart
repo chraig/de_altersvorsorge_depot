@@ -89,15 +89,15 @@ void main() {
     test('Kirchensteuer increases payout tax', () {
       final p = makePerson(sparrate: 150, alterStart: 30, spardauer: 37);
       final m = makeMacro();
-      final noKi = CostSettings(kirchensteuer: 0);
-      final ki8 = CostSettings(kirchensteuer: 0.08);
+      final noKi = CostSettings(kirchensteuerpflichtig: false);
+      final withKi = CostSettings(kirchensteuerpflichtig: true);
 
       final avNoKi = engine.simulateAV(person: p, macro: m, costs: noKi);
-      final avKi8 = engine.simulateAV(person: p, macro: m, costs: ki8);
+      final avWithKi = engine.simulateAV(person: p, macro: m, costs: withKi);
 
       // Same depot, but higher tax → lower net payout
-      expect(avNoKi.endkapital, closeTo(avKi8.endkapital, 0.01));
-      expect(avKi8.nettoMonatlich, lessThan(avNoKi.nettoMonatlich));
+      expect(avNoKi.endkapital, closeTo(avWithKi.endkapital, 0.01));
+      expect(avWithKi.nettoMonatlich, lessThan(avNoKi.nettoMonatlich));
     });
 
     test('inflation-adjusted capital is lower than nominal', () {
@@ -174,14 +174,14 @@ void main() {
     test('Kirchensteuer increases ETF tax', () {
       final p = makePerson(sparrate: 100, spardauer: 30, alterStart: 37);
       final m = makeMacro();
-      final noKi = CostSettings(kirchensteuer: 0);
-      final ki9 = CostSettings(kirchensteuer: 0.09);
+      final noKi = CostSettings(kirchensteuerpflichtig: false);
+      final withKi = CostSettings(kirchensteuerpflichtig: true);
 
       final etfNoKi = engine.simulateETF(person: p, macro: m, costs: noKi);
-      final etfKi9 = engine.simulateETF(person: p, macro: m, costs: ki9);
+      final etfWithKi = engine.simulateETF(person: p, macro: m, costs: withKi);
 
-      expect(etfKi9.steuerAufGewinn, greaterThan(etfNoKi.steuerAufGewinn));
-      expect(etfKi9.monatlicheAuszahlung, lessThan(etfNoKi.monatlicheAuszahlung));
+      expect(etfWithKi.steuerAufGewinn, greaterThan(etfNoKi.steuerAufGewinn));
+      expect(etfWithKi.monatlicheAuszahlung, lessThan(etfNoKi.monatlicheAuszahlung));
     });
 
     test('no subsidies in ETF result', () {
@@ -286,29 +286,29 @@ void main() {
   });
 
   group('CostSettings / Kirchensteuer', () {
-    test('default Abgeltungssteuersatz is 26.3750%', () {
+    test('default (not kirchensteuerpflichtig): Abgeltungssteuersatz is 26.3750%', () {
       final c = CostSettings();
+      expect(c.kirchensteuerpflichtig, isFalse);
+      expect(c.kirchensteuerRate, 0.0);
       expect(c.abgeltungssteuersatz, closeTo(0.26375, 0.00001));
     });
 
-    test('8% Kirchensteuer gives 27.8186%', () {
-      final c = CostSettings(kirchensteuer: 0.08);
-      expect(c.abgeltungssteuersatz, closeTo(0.278186, 0.0001));
-    });
-
-    test('9% Kirchensteuer gives 27.9951%', () {
-      final c = CostSettings(kirchensteuer: 0.09);
+    test('kirchensteuerpflichtig: rate is 9% (dominant German rate), Abgeltungssteuersatz 27.9951%', () {
+      final c = CostSettings(kirchensteuerpflichtig: true);
+      expect(c.kirchensteuerRate, CalcConstants.kirchensteuersatz);
+      expect(c.kirchensteuerRate, 0.09);
       expect(c.abgeltungssteuersatz, closeTo(0.279951, 0.0001));
     });
 
-    test('KapESt formula per §32d: 25% / (1 + 25% × KiSt)', () {
-      for (final k in [0.08, 0.09]) {
-        final c = CostSettings(kirchensteuer: k);
-        final kapEst = 0.25 / (1 + 0.25 * k);
-        final soli = kapEst * 0.055;
-        final kiSt = kapEst * k;
-        expect(c.abgeltungssteuersatz, closeTo(kapEst + soli + kiSt, 0.00001));
-      }
+    test('KapESt formula per §32d Abs. 1 Satz 4 EStG: 1 / (4 + k)', () {
+      // §32d formula (with q=0, since foreign Quellensteuer is not modeled):
+      //   KapESt = 1 / (4 + k); then add Soli + KiSt on top.
+      final c = CostSettings(kirchensteuerpflichtig: true);
+      final k = c.kirchensteuerRate;
+      final kapEst = 1 / (4 + k);
+      final soli = kapEst * 0.055;
+      final kiSt = kapEst * k;
+      expect(c.abgeltungssteuersatz, closeTo(kapEst + soli + kiSt, 0.00001));
     });
   });
 

@@ -154,8 +154,9 @@ Payout period: 20 years (age 65–85)
 ```dart
 // Abgeltungssteuer (default, without Kirchensteuer)
 Rate: 26.3750% (25% + 5.5% Soli)
-With 8% Kirchensteuer (Bayern/BaWü): 27.8186%
-With 9% Kirchensteuer (other states):  27.9951%
+With Kirchensteuer (calculator uses 9% — the rate in 14 of 16 states): 27.9951%
+// Bayern/BaWü residents technically pay 8% (→ 27.8186%); calculator simplifies
+// to 9% as the dominant rate, slightly overstating tax for Bay/BaWü members.
 Teilfreistellung: 30% for Aktienfonds (equity ETFs with >50% equity per §2 Abs. 6 InvStG).
                   Mischfonds: 15%, Immobilienfonds: 60–80%, Anleihe-/Geldmarkt-ETFs: 0%.
                   Calculator assumes a pure equity ETF (typical World/MSCI/S&P-500 product).
@@ -349,7 +350,7 @@ Payout phase:
 | Returns | Constant annual rate | Volatile, sequence-of-returns risk |
 | Inflation | Constant annual rate | Variable |
 | Tax brackets | Static (2026 values per Steuerfortentwicklungsgesetz) | Adjusted ~annually |
-| Kirchensteuer | Optional toggle (0%/8%/9%) | Affects both AV payout tax and Abgeltungssteuer |
+| Kirchensteuer | Yes/No toggle, rate fixed at 9% (dominant German rate) | Bayern/BaWü actually pay 8% — slightly overstated. Affects both AV payout tax and Abgeltungssteuer. |
 | Soli | Included in base rate | May change |
 | Vorabpauschale | Fixed 0.3% drag | Depends on Basiszins (2.3-3.2% in 2024-2026) |
 | Retirement tax rate | Progressive §32a average rate on combined income | Brutto used as proxy for zvE; actual zvE lower |

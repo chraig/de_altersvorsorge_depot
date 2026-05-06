@@ -11,7 +11,7 @@ All notable user-facing changes to the Altersvorsorgedepot-Rechner.
 - Adjustable Arbeitsbeginn (14–35 years) for pension point estimation
 - Facts-only principle: only verified legislation implemented, uncertainties documented
 - Tooltips and docs now make explicit that the 30% Teilfreistellung applies only to Aktienfonds (§20 InvStG); bond/mixed/real-estate ETFs receive different (or no) Teilfreistellung
-- Kirchensteuer toggle (None / 8% Bayern-BaWü / 9% other states) in Advanced Settings
+- Kirchensteuer Yes/No toggle in Advanced Settings, rate fixed at 9% (dominant German rate; Bay/BaWü 8% is a simplification)
 - Dynamic pros/cons section in comparison results, adapting to the current scenario
 - "Included in This Calculator" section in footer listing all implemented features
 - Simplifications and "Not Yet Included" sections in footer

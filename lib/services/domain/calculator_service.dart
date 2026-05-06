@@ -112,6 +112,14 @@ class CalcConstants {
   /// At Basiszins 2.29% (2024): effective ~0.30%. At 3.20% (2026): ~0.41%.
   /// Using 0.30% as a reasonable mid-range approximation.
   static const double vorabpauschaleDrag = 0.003;
+  /// Kirchensteuersatz applied when the user is kirchensteuerpflichtig.
+  /// 9% applies in 14 of 16 federal states (~71% of the population) — Bayern
+  /// and Baden-Württemberg use 8%, but for simplicity the calculator uses the
+  /// dominant rate. Bay/BaWü residents who are church members will see a
+  /// slightly overstated tax burden (the 18-bp difference on the Abgeltungs­
+  /// steuersatz translates to roughly €100–200 over a 30-year ETF accumulation).
+  static const double kirchensteuersatz = 0.09;
+
   /// Average partial-year factor for new contributions in the Vorabpauschale
   /// computation (§18 InvStG: VP is reduced by 1/12 for each full month
   /// preceding the acquisition month). For monthly contributions distributed
@@ -328,7 +336,7 @@ class SimulationEngine {
     final baseIncome = effectiveRente * 12 + person.sonstigeEinkuenfte; // pension + other
     final avTaxableTotal = jahresGefoerdert + jahresUngefoerdert * CalcConstants.ertragsanteil67;
     final combinedIncome = baseIncome + avTaxableTotal;
-    final kirchensteuerFaktor = 1 + costs.kirchensteuer;
+    final kirchensteuerFaktor = 1 + costs.kirchensteuerRate;
     // Incremental income tax attributable to the AV-derived taxable income.
     final taxOnBase = tax.calcEinkommensteuer(baseIncome);
     final taxOnCombined = tax.calcEinkommensteuer(combinedIncome);

@@ -277,8 +277,8 @@ class _InputPanelState extends State<InputPanel> with TickerProviderStateMixin {
         onChanged: cubit.setCustomInflation, hint: s.hintInflation),
       const Divider(height: AppSpacing.xxxl),
       _KirchensteuerToggle(
-        value: state.costs.kirchensteuer,
-        onChanged: cubit.setKirchensteuer,
+        value: state.costs.kirchensteuerpflichtig,
+        onChanged: cubit.setKirchensteuerpflichtig,
       ),
     ]);
   }
@@ -455,8 +455,8 @@ class _PersonScenarioDialogState extends State<PersonScenarioDialog> {
 // ═══════════════════════════════════════════════════════════════════
 
 class _KirchensteuerToggle extends StatelessWidget {
-  final double value;
-  final ValueChanged<double> onChanged;
+  final bool value;
+  final ValueChanged<bool> onChanged;
 
   const _KirchensteuerToggle({required this.value, required this.onChanged});
 
@@ -466,14 +466,18 @@ class _KirchensteuerToggle extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(s.kirchensteuerLabel.toUpperCase(),
-          style: AppTheme.labelUppercase),
-        const SizedBox(height: AppSpacing.sm),
-        AppChipGroup<double>(value: value, onChanged: onChanged, options: [
-          (0.0, s.kirchensteuerNone),
-          (0.08, s.kirchensteuerBayBw),
-          (0.09, s.kirchensteuerOther),
+        Row(children: [
+          Transform.scale(scale: AppDimensions.switchScale, child: Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: AppColors.accent,
+            activeTrackColor: AppColors.accentLight,
+          )),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(child: Text(s.kirchensteuerLabel.toUpperCase(),
+            style: AppTheme.labelUppercase)),
         ]),
+        Text(s.hintKirchensteuer, style: AppTheme.hint),
       ],
     );
   }

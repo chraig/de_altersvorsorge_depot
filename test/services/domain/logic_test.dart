@@ -199,28 +199,28 @@ void main() {
     test('Kirchensteuer affects both AV and ETF', () {
       final p = makePerson(sparrate: 150, brutto: 55000);
       final m = makeMacro();
-      final noKi = CostSettings(kirchensteuer: 0);
-      final ki9 = CostSettings(kirchensteuer: 0.09);
+      final noKi = CostSettings(kirchensteuerpflichtig: false);
+      final withKi = CostSettings(kirchensteuerpflichtig: true);
 
       final rNoKi = engine.simulateCombined(person: p, macro: m, costs: noKi);
-      final rKi9 = engine.simulateCombined(person: p, macro: m, costs: ki9);
+      final rWithKi = engine.simulateCombined(person: p, macro: m, costs: withKi);
 
       // Both AV and ETF should have lower net payouts with Kirchensteuer
-      expect(rKi9.av.nettoMonatlich, lessThan(rNoKi.av.nettoMonatlich));
-      expect(rKi9.etf.monatlicheAuszahlung, lessThan(rNoKi.etf.monatlicheAuszahlung));
+      expect(rWithKi.av.nettoMonatlich, lessThan(rNoKi.av.nettoMonatlich));
+      expect(rWithKi.etf.monatlicheAuszahlung, lessThan(rNoKi.etf.monatlicheAuszahlung));
     });
 
     test('Kirchensteuer does not affect AV gross depot', () {
       final p = makePerson(sparrate: 150, brutto: 55000);
       final m = makeMacro();
-      final noKi = CostSettings(kirchensteuer: 0);
-      final ki9 = CostSettings(kirchensteuer: 0.09);
+      final noKi = CostSettings(kirchensteuerpflichtig: false);
+      final withKi = CostSettings(kirchensteuerpflichtig: true);
 
       final avNoKi = engine.simulateAV(person: p, macro: m, costs: noKi);
-      final avKi9 = engine.simulateAV(person: p, macro: m, costs: ki9);
+      final avWithKi = engine.simulateAV(person: p, macro: m, costs: withKi);
 
       // Kirchensteuer only affects payout tax, not accumulation
-      expect(avKi9.endkapital, avNoKi.endkapital);
+      expect(avWithKi.endkapital, avNoKi.endkapital);
     });
   });
 
