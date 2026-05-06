@@ -154,6 +154,32 @@ class CalcConstants {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// PAYOUT-PHASE ANNUITY HELPER
+// ═══════════════════════════════════════════════════════════════════
+
+/// Constant per-period annuity payment that exactly depletes `presentValue` to
+/// zero over `periods` periods, while the remaining balance continues to
+/// compound at `periodRate` per period.
+///
+/// Formula (ordinary-annuity, end-of-period payments):
+///   PMT = PV × r / (1 − (1 + r)⁻ⁿ)
+///
+/// The caller chooses the period: pass yearly rate + years for an annual
+/// annuity, monthly rate + months for a monthly annuity. The payout phase of
+/// this calculator uses monthly periods so the displayed monthly figure is
+/// realistic (a real Auszahlplan pays monthly, with monthly compounding on
+/// the remaining balance).
+///
+/// Edge cases:
+/// - `periodRate ≈ 0`: limit is PV/periods (no growth → equal split each period).
+/// - `periods ≤ 0` or `presentValue ≤ 0`: returns 0.
+double annuityPayment(double presentValue, double periodRate, int periods) {
+  if (periods <= 0 || presentValue <= 0) return 0;
+  if (periodRate.abs() < 1e-9) return presentValue / periods;
+  return presentValue * periodRate / (1 - pow(1 + periodRate, -periods));
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // SIMULATION ENGINE
 // ═══════════════════════════════════════════════════════════════════
 
@@ -328,11 +354,20 @@ class SimulationEngine {
     // Both sit on top of pension + sonstige in the §32a progression, so the marginal
     // rate must be computed against the FULL AV taxable amount (gefördert +
     // 17% × ungefördert), not against the gefördert portion alone.
+    //
+    // Each bucket continues to compound at `nettoRendite` during the payout phase
+    // (no new contributions, no new Zulagen, but the depot stays invested). The
+    // gross monthly payout per bucket is the constant annuity payment that depletes
+    // the bucket exactly at the end of `auszahlungsDauer` years. Monthly periods
+    // are used so the displayed monthly figure reflects real-world monthly
+    // compounding during retirement.
     final effectiveRente = pension.estimateMonthlyPension(person, incomeDev);
-    final monatlichGefoerdert = depotGefoerdert / (auszahlungsDauer * 12);
-    final jahresGefoerdert = depotGefoerdert / auszahlungsDauer;
-    final jahresUngefoerdert = depotUngefoerdert / auszahlungsDauer;
-    final monatlichUngefoerdert = depotUngefoerdert / (auszahlungsDauer * 12);
+    final monthlyRate = pow(1 + nettoRendite, 1.0 / 12).toDouble() - 1;
+    final months = auszahlungsDauer * 12;
+    final monatlichGefoerdert   = annuityPayment(depotGefoerdert,   monthlyRate, months);
+    final monatlichUngefoerdert = annuityPayment(depotUngefoerdert, monthlyRate, months);
+    final jahresGefoerdert   = monatlichGefoerdert   * 12;
+    final jahresUngefoerdert = monatlichUngefoerdert * 12;
     final baseIncome = effectiveRente * 12 + person.sonstigeEinkuenfte; // pension + other
     final avTaxableTotal = jahresGefoerdert + jahresUngefoerdert * CalcConstants.ertragsanteil67;
     final combinedIncome = baseIncome + avTaxableTotal;
@@ -417,21 +452,59 @@ class SimulationEngine {
       ));
     }
 
-    // ── Payout phase: tax on gains, with VP credit ─────────────
-    // Final Abgeltungssteuer on the realized gain, with the cumulative
-    // Vorabpauschale already paid credited against it (§19 Abs. 1 InvStG).
-    final gewinn = depot - eigenBeitraege;
-    final steuerpflichtigerGewinn = gewinn * (1 - CalcConstants.teilfreistellung);
-    final steuerVorAnrechnung = steuerpflichtigerGewinn * costs.abgeltungssteuersatz;
-    final steuerNachAnrechnung = steuerVorAnrechnung > vorabpauschaleGesamt
-        ? steuerVorAnrechnung - vorabpauschaleGesamt
-        : 0.0;
-    // For reporting: total tax burden over the lifetime (VP already paid + sale tax).
-    final steuer = vorabpauschaleGesamt + steuerNachAnrechnung;
-    final nachSteuer = depot - steuerNachAnrechnung;
-
+    // ── Payout phase ─────────────────────────────────────────────
+    // The depot continues to compound at `nettoRendite` during retirement (no
+    // new contributions). Monthly compounding is used so the displayed monthly
+    // payout matches a real Auszahlplan.
+    //
+    // Gross monthly payout = constant annuity payment that depletes the depot
+    // exactly at the end of `auszahlungsDauer` years.
+    //
+    // Tax is applied per month via an effective tax rate `etfTaxRatePayout`
+    // (analogous to AV's `avPayoutTaxRate`). Each month the user pays
+    //   tax_per_month = monatlichBrutto × etfTaxRatePayout
+    // and receives
+    //   monatlich = monatlichBrutto × (1 − etfTaxRatePayout)
+    //
+    // The rate is calibrated so the cumulative tax across all payout months
+    // matches the legally-correct lifetime sale tax (Abgeltungssteuer on the
+    // total taxable gain extracted, with Vorabpauschale credit per §19 Abs. 1
+    // InvStG). Because Abgeltungssteuer is FLAT (not progressive) and total
+    // gain extracted = total gross − cost basis (conservation of money), the
+    // per-month rate equals the lifetime-average rate exactly:
+    //
+    //   etfTaxRatePayout = lifetimeSaleTax / lifetimeGross
+    //
+    // i.e. computing month-by-month or via the lifetime totals produces the
+    // same monthly tax. We use the closed-form path because it's simpler and
+    // gives the user a constant monthly net (UX-friendly).
+    //
+    // This replaces the earlier "lump-sum tax at retirement" model, which
+    // implicitly assumed the user sold everything at retirement and parked
+    // the post-tax amount tax-free — unrealistic for an 18-year payout.
     final auszahlungsDauer = person.auszahlungsDauer;
-    final monatlich = nachSteuer / (auszahlungsDauer * 12);
+    final monthlyRate = pow(1 + nettoRendite, 1.0 / 12).toDouble() - 1;
+    final months = auszahlungsDauer * 12;
+    final monatlichBrutto = annuityPayment(depot, monthlyRate, months);
+    final lifetimeGross = monatlichBrutto * months;
+    final lifetimeGain = lifetimeGross - eigenBeitraege;
+    final gewinn = depot - eigenBeitraege; // gain at retirement (display field)
+    final lifetimeSaleTaxVorAnrechnung =
+        lifetimeGain * (1 - CalcConstants.teilfreistellung) * costs.abgeltungssteuersatz;
+    final lifetimeSaleTaxNachAnrechnung = lifetimeSaleTaxVorAnrechnung > vorabpauschaleGesamt
+        ? lifetimeSaleTaxVorAnrechnung - vorabpauschaleGesamt
+        : 0.0;
+    // Effective per-month tax rate on the gross monthly payout. Constant by
+    // construction because Abgeltungssteuer is flat. Parallel to AV's
+    // `avPayoutTaxRate × kirchensteuerFaktor` for the gef bucket.
+    final etfTaxRatePayout = lifetimeGross > 0
+        ? lifetimeSaleTaxNachAnrechnung / lifetimeGross
+        : 0.0;
+    final monatlich = monatlichBrutto * (1 - etfTaxRatePayout);
+    // Reported lifetime tax burden: VP paid during accumulation + sale tax during payout.
+    final steuer = vorabpauschaleGesamt + lifetimeSaleTaxNachAnrechnung;
+    // nachSteuer = lifetime cash-in-hand to the user (= net monthly × n_months).
+    final nachSteuer = monatlich * months;
 
     return ETFResult(
       endkapital: depot,
@@ -441,7 +514,9 @@ class SimulationEngine {
       vorabpauschaleGesamt: vorabpauschaleGesamt,
       steuerAufGewinn: steuer,
       nachSteuer: nachSteuer,
+      bruttoMonatlich: monatlichBrutto,
       monatlicheAuszahlung: monatlich,
+      effectiveTaxRatePayout: etfTaxRatePayout,
       jahresWerte: jahresWerte,
     );
   }

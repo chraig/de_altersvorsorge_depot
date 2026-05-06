@@ -314,16 +314,18 @@ class AVResult {
 }
 
 /// ETF-Depot simulation result.
-/// Accumulation in yearly steps; payout converted to monthly at output boundary.
+/// Accumulation in yearly steps; payout uses monthly annuity compounding.
 class ETFResult {
   final double endkapital;            // [EUR] depot value at retirement (after Vorabpauschale debits during accumulation)
   final double endkapitalReal;        // [EUR] inflation-adjusted depot value
   final double eigenBeitraege;        // [EUR] cumulative own contributions
-  final double gewinn;                // [EUR] total gains (endkapital - eigenBeitraege)
+  final double gewinn;                // [EUR] gain accumulated up to retirement (endkapital - eigenBeitraege)
   final double vorabpauschaleGesamt;  // [EUR] cumulative Vorabpauschale paid during accumulation
-  final double steuerAufGewinn;       // [EUR] total lifetime tax burden = vorabpauschaleGesamt + sale-tax-after-credit
-  final double nachSteuer;            // [EUR] depot - sale-tax-after-credit (= endkapital - (steuerAufGewinn - vorabpauschaleGesamt))
-  final double monatlicheAuszahlung;  // [EUR/month] net monthly payout (core→output conversion)
+  final double steuerAufGewinn;       // [EUR] total lifetime tax burden = vorabpauschaleGesamt + sale tax during payout
+  final double nachSteuer;            // [EUR] lifetime cash-in-hand to user (= monatlicheAuszahlung × n_months)
+  final double bruttoMonatlich;       // [EUR/month] gross monthly payout from annuity formula (before lifetime sale tax)
+  final double monatlicheAuszahlung;  // [EUR/month] net monthly payout (after lifetime sale tax spread evenly)
+  final double effectiveTaxRatePayout; // [ratio] per-month tax rate on gross payout (= lifetimeSaleTax / lifetimeGross). Constant under flat Abgeltungssteuer.
   final List<YearlyDataPoint> jahresWerte;
 
   const ETFResult({
@@ -334,7 +336,9 @@ class ETFResult {
     required this.vorabpauschaleGesamt,
     required this.steuerAufGewinn,
     required this.nachSteuer,
+    required this.bruttoMonatlich,
     required this.monatlicheAuszahlung,
+    required this.effectiveTaxRatePayout,
     required this.jahresWerte,
   });
 }

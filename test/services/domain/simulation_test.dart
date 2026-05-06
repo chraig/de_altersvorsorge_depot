@@ -61,13 +61,27 @@ void main() {
       expect(p60.auszahlungsDauer, 25); // 85 - 60
     });
 
-    test('monthly payout is depot / (auszahlungsDauer × 12)', () {
+    test('monthly payout uses monthly annuity formula (depot keeps compounding during payout)', () {
+      // Both buckets continue to compound at (rendite − kostenAV) during payout.
+      // Monthly annuity formula: PMT_m = PV × r_m / (1 − (1+r_m)^-n_m)
+      // where r_m = (1 + yearlyRate)^(1/12) − 1 and n_m = years × 12.
       final p = makePerson(sparrate: 100, alterStart: 30, spardauer: 37);
-      final m = makeMacro();
-      final costs = CostSettings();
+      final m = makeMacro();           // rendite 0.07
+      final costs = CostSettings();    // kostenAV 0.005 default
       final av = engine.simulateAV(person: p, macro: m, costs: costs);
-      final expectedMonthly = av.endkapital / (p.auszahlungsDauer * 12);
-      expect(av.monatlicheAuszahlung, closeTo(expectedMonthly, 0.01));
+
+      // sparrate 100 → 1200/yr → all gefördert (≤€1,800), no ungefördert.
+      const r = 0.07 - 0.005;            // 0.065 yearly
+      const n = 18;                       // years (auszahlungsDauer for retirement at 67)
+      final rM = pow(1 + r, 1 / 12) - 1;
+      const months = n * 12;              // 216
+      final expectedMonthly = av.endkapital * rM / (1 - 1 / pow(1 + rM, months));
+      expect(av.monatlicheAuszahlung, closeTo(expectedMonthly, 1));
+
+      // Sanity: must be greater than the naive depot/n model would give.
+      final naive = av.endkapital / months;
+      expect(av.monatlicheAuszahlung, greaterThan(naive),
+        reason: 'Monthly annuity payout must exceed naive depot/months (compounding during payout)');
     });
 
     test('retirement tax uses combined income', () {
@@ -77,8 +91,15 @@ void main() {
       final costs = CostSettings();
       final av = engine.simulateAV(person: p, macro: m, costs: costs);
 
-      // Incremental tax: tax(base + AV) - tax(base), divided by AV payout
-      final avAnnual = av.endkapital / p.auszahlungsDauer;
+      // Annual gross AV payout = monthly annuity × 12. Sparrate 150 → all
+      // gefördert, no ungefördert bucket, so AV taxable = annual gross.
+      const r = 0.07 - 0.005;
+      const n = 18;
+      final rM = pow(1 + r, 1 / 12) - 1;
+      const months = n * 12;
+      final monthlyGross = av.endkapital * rM / (1 - 1 / pow(1 + rM, months));
+      final avAnnual = monthlyGross * 12;
+      // Incremental tax: tax(base + AV) - tax(base), divided by AV taxable
       final baseIncome = 1500.0 * 12 + 5000;
       final taxOnBase = engine.tax.calcEinkommensteuer(baseIncome);
       final taxOnCombined = engine.tax.calcEinkommensteuer(baseIncome + avAnnual);
@@ -155,17 +176,23 @@ void main() {
       final costs = CostSettings();
       final etf = engine.simulateETF(person: p, macro: m, costs: costs);
 
-      // Lifetime tax = sale-tax-vor-Anrechnung when Vorabpauschale is fully credited
-      // (which is the typical case for long savings phases). steuerAufGewinn = lifetime
-      // total = vorabpauschaleGesamt + sale-tax-after-credit.
-      final expectedLifetimeTax = (etf.gewinn * 0.70) * 0.26375;
+      // New ETF payout model: depot continues to compound during the 18 years of
+      // payout. Total gross extracted over lifetime = bruttoMonatlich × n_months,
+      // of which (n × bruttoMonatlich − eigenBeitraege) is the lifetime taxable
+      // gain. Lifetime tax (when VP credit is fully utilized) = lifetime gain ×
+      // 0.7 × abgSt; lifetime burden = vpGesamt + sale-tax-after-credit.
+      final months = p.auszahlungsDauer * 12;
+      final lifetimeGross = etf.bruttoMonatlich * months;
+      final lifetimeGain = lifetimeGross - etf.eigenBeitraege;
+      final expectedLifetimeTax = lifetimeGain * 0.70 * 0.26375;
       expect(etf.steuerAufGewinn, closeTo(expectedLifetimeTax, 1),
-        reason: 'When VP credit is fully utilized, lifetime tax equals gain × 0.7 × abgSt');
+        reason: 'Lifetime tax = lifetime-gain × 0.7 × abgSt when VP credit is fully utilized');
 
-      // Vorabpauschale was already debited from the depot during accumulation, so
-      // nachSteuer = endkapital − (only the remaining sale-tax after credit).
+      // nachSteuer = lifetime cash-in-hand to user = monatlicheAuszahlung × n_months.
+      expect(etf.nachSteuer, closeTo(etf.monatlicheAuszahlung * months, 0.5));
+      // Equivalently: lifetime gross − sale tax after credit.
       final saleTaxAfterCredit = etf.steuerAufGewinn - etf.vorabpauschaleGesamt;
-      expect(etf.nachSteuer, closeTo(etf.endkapital - saleTaxAfterCredit, 0.01));
+      expect(etf.nachSteuer, closeTo(lifetimeGross - saleTaxAfterCredit, 0.5));
 
       // Cumulative VP must be positive over a 30-year accumulation.
       expect(etf.vorabpauschaleGesamt, greaterThan(0));
@@ -194,12 +221,48 @@ void main() {
       }
     });
 
-    test('monthly payout correct', () {
+    test('monthly payout: annuity on full depot, lifetime tax spread evenly', () {
+      // The depot itself continues to compound at (rendite − kostenETF) during
+      // the payout phase. Gross monthly payout depletes the depot exactly.
+      // Sale tax is computed against the lifetime gain and spread evenly over
+      // all payout months → constant net monthly payout.
       final p = makePerson(sparrate: 100, spardauer: 37, alterStart: 30);
+      final m = makeMacro();           // rendite 0.07
+      final etf = engine.simulateETF(person: p, macro: m, costs: CostSettings());
+
+      const r = 0.07 - 0.002;          // kostenETF default 0.002
+      final months = p.auszahlungsDauer * 12;  // 216 months
+      final rM = pow(1 + r, 1 / 12) - 1;
+      // Gross monthly: monthly annuity on depot (post-VP from accumulation).
+      final expectedBrutto = etf.endkapital * rM / (1 - 1 / pow(1 + rM, months));
+      expect(etf.bruttoMonatlich, closeTo(expectedBrutto, 1));
+
+      // Net monthly: gross minus per-month share of lifetime sale tax.
+      final saleTax = etf.steuerAufGewinn - etf.vorabpauschaleGesamt;
+      final expectedNet = expectedBrutto - saleTax / months;
+      expect(etf.monatlicheAuszahlung, closeTo(expectedNet, 1));
+
+      // Sanity: gross must exceed naive depot/months (compounding during payout).
+      final naive = etf.endkapital / months;
+      expect(etf.bruttoMonatlich, greaterThan(naive));
+    });
+
+    test('effectiveTaxRatePayout = lifetimeSaleTax / lifetimeGross', () {
+      // Under flat Abgeltungssteuer, the per-month rate equals the
+      // lifetime-average rate exactly. This test documents the invariant.
+      final p = makePerson(sparrate: 100, spardauer: 30, alterStart: 37);
       final m = makeMacro();
       final etf = engine.simulateETF(person: p, macro: m, costs: CostSettings());
-      final expectedMonthly = etf.nachSteuer / (p.auszahlungsDauer * 12);
-      expect(etf.monatlicheAuszahlung, closeTo(expectedMonthly, 0.01));
+
+      final months = p.auszahlungsDauer * 12;
+      final lifetimeGross = etf.bruttoMonatlich * months;
+      final saleTax = etf.steuerAufGewinn - etf.vorabpauschaleGesamt;
+      final expectedRate = saleTax / lifetimeGross;
+      expect(etf.effectiveTaxRatePayout, closeTo(expectedRate, 1e-9));
+
+      // And rate-based net = gross × (1 − rate) = subtractive net.
+      final netByRate = etf.bruttoMonatlich * (1 - etf.effectiveTaxRatePayout);
+      expect(etf.monatlicheAuszahlung, closeTo(netByRate, 0.01));
     });
   });
 

@@ -810,7 +810,8 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
 
   Widget _payoutPhase(AppStrings s, PersonalScenario p, AVResult av, ETFResult etf, CostSettings costs, double jbGef, double jbUngef, bool compact) {
     final auszDauer = p.auszahlungsDauer;
-    final etfMonthlyGross = etf.endkapital / (auszDauer * 12);
+    final months = auszDauer * 12;
+    final etfMonthlyGross = etf.bruttoMonatlich;
 
     // ETF side: pension + other income is taxed via §32a regardless of depot type
     // This is the SAME for both — but AV payout is part of that income, ETF payout is not
@@ -820,7 +821,9 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
     // The depot-specific tax is what differs and is shown below.
 
     final avTaxPerMonth = av.monatlicheAuszahlung - av.nettoMonatlich;
-    final etfTaxPerMonth = etf.steuerAufGewinn / (auszDauer * 12);
+    // ETF sale tax is spread evenly over the payout months (VP was paid during accumulation).
+    final etfSaleTaxLifetime = etf.steuerAufGewinn - etf.vorabpauschaleGesamt;
+    final etfTaxPerMonth = etfSaleTaxLifetime / months;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       PayoutPhaseBarChart(
@@ -847,8 +850,8 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
       _pair(s.bdPayoutPeriod, '$auszDauer yr (${p.rentenalter}–${CalcConstants.payoutEndAge})',
         '$auszDauer yr (${s.bdSamePeriod})'),
       _pairFormula(s.bdGrossPayoutYr, Fmt.eur(av.monatlicheAuszahlung * 12), Fmt.eur(etfMonthlyGross * 12),
-        avFormula: '= ${Fmt.eur(av.endkapital)} ÷ $auszDauer',
-        etfFormula: '= ${Fmt.eur(etf.endkapital)} ÷ $auszDauer'),
+        avFormula: '= annuity(${Fmt.eur(av.endkapital)}, $auszDauer yr)',
+        etfFormula: '= annuity(${Fmt.eur(etf.endkapital)}, $auszDauer yr)'),
       _pair(s.bdStatePensionYr, Fmt.eur(p.gesetzlicheRente * 12), Fmt.eur(p.gesetzlicheRente * 12)),
       if (p.sonstigeEinkuenfte > 0) _pair(s.bdOtherIncomeYr, Fmt.eur(p.sonstigeEinkuenfte), Fmt.eur(p.sonstigeEinkuenfte)),
       _pair(s.bdTotalGrossYr, Fmt.eur(avCombinedIncome),
@@ -862,14 +865,14 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
         avFormula: s.bdWhatTaxedAvFormula, etfFormula: s.bdWhatTaxedEtfFormula,
         tip: s.tipTeilfreistellung),
       _pairFormula(s.bdEffectiveTaxRate,
-        Fmt.pct(av.grenzsteuersatzRente), Fmt.pct(costs.abgeltungssteuersatz),
+        Fmt.pct(av.grenzsteuersatzRente), Fmt.pct(etf.effectiveTaxRatePayout),
         avFormula: s.bdEffectiveTaxRateAvFormula(Fmt.eur(avCombinedIncome)),
-        etfFormula: '${s.bdEffectiveTaxRateEtfFormula}${costs.kirchensteuerpflichtig ? ' + KiSt' : ''}'),
+        etfFormula: '= lifetime tax ${Fmt.eur(etfSaleTaxLifetime)} ÷ gross ${Fmt.eur(etf.bruttoMonatlich * months)} (Abgelt. ${Fmt.pct(costs.abgeltungssteuersatz)} on gain only)${costs.kirchensteuerpflichtig ? ' + KiSt' : ''}'),
       if (costs.kirchensteuerpflichtig) _pair(s.kirchensteuerLabel, '${(costs.kirchensteuerRate * 100).toStringAsFixed(0)}%', 'In rate'),
       _pairFormula(s.bdTaxOnPayoutYr,
-        Fmt.eur(avTaxPerMonth * 12), Fmt.eur(etf.steuerAufGewinn / auszDauer),
+        Fmt.eur(avTaxPerMonth * 12), Fmt.eur(etfSaleTaxLifetime / auszDauer),
         avFormula: '= payout ${Fmt.eur(av.monatlicheAuszahlung * 12)} × rate ${Fmt.pct(av.grenzsteuersatzRente)}',
-        etfFormula: '= total tax ${Fmt.eur(etf.steuerAufGewinn)} ÷ $auszDauer yr'),
+        etfFormula: '= sale tax ${Fmt.eur(etfSaleTaxLifetime)} ÷ $auszDauer yr'),
       if (jbUngef > 0) _pair(s.bdUngefTreatment, 'Ertragsanteil 17%', '—', tip: s.tipUngefoerdert),
       _dv(),
 
@@ -880,8 +883,8 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
         etfFormula: '= ${Fmt.eur(etf.gewinn)} × 70% × ${Fmt.pct(costs.abgeltungssteuersatz)}'),
       _pairFormula(s.bdDepotAfterTax,
         Fmt.eur(av.nettoMonatlich * auszDauer * 12), Fmt.eur(etf.nachSteuer), bold: true,
-        avFormula: '= ${Fmt.eur(av.endkapital)} − ${Fmt.eur(avTaxPerMonth * auszDauer * 12)}',
-        etfFormula: '= ${Fmt.eur(etf.endkapital)} − ${Fmt.eur(etf.steuerAufGewinn - etf.vorabpauschaleGesamt)}'),
+        avFormula: '= ${Fmt.eur(av.monatlicheAuszahlung * months)} − ${Fmt.eur(avTaxPerMonth * months)}',
+        etfFormula: '= ${Fmt.eur(etf.bruttoMonatlich * months)} − ${Fmt.eur(etfSaleTaxLifetime)}'),
       _pair(s.bdContribTaxFree, s.bdContribTaxFreeAV, Fmt.eur(etf.eigenBeitraege)),
       _dv(),
 
@@ -889,7 +892,7 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
       _pair(s.bdGrossPerMonth, Fmt.eur(av.monatlicheAuszahlung), Fmt.eur(etfMonthlyGross)),
       _pairFormula(s.bdTaxPerMonth, Fmt.eur(avTaxPerMonth), Fmt.eur(etfTaxPerMonth),
         avFormula: '= ${Fmt.eur(av.monatlicheAuszahlung)}/mo × ${Fmt.pct(av.grenzsteuersatzRente)}',
-        etfFormula: '= ${Fmt.eur(etf.steuerAufGewinn)} ÷ ${auszDauer * 12} mo'),
+        etfFormula: '= ${Fmt.eur(etfMonthlyGross)}/mo × ${Fmt.pct(etf.effectiveTaxRatePayout)}'),
       _pair(s.bdNetPerMonth, Fmt.eur(av.nettoMonatlich), Fmt.eur(etf.monatlicheAuszahlung), bold: true),
     ]);
   }

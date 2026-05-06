@@ -348,6 +348,8 @@ Payout phase:
 | Aspect | Simplification | Reality |
 |---|---|---|
 | Returns | Constant annual rate | Volatile, sequence-of-returns risk |
+| Payout phase | Ordinary-annuity formula on **monthly** periods `PMT_m = PV × r_m / (1 − (1+r_m)⁻ⁿᵐ)`; depot keeps compounding at the same rendite during retirement | Real-world allocations typically shift toward bonds at retirement (lower r); calculator uses the savings-phase rendite throughout |
+| ETF payout taxation | Sale tax computed on the lifetime gain (`n_m × monthly_gross − cost_basis`) and spread evenly across all payout months for a constant net | Real-life partial sales would have a year-by-year-varying tax burden as cost basis is gradually returned; only the lifetime total matches |
 | Inflation | Constant annual rate | Variable |
 | Tax brackets | Static (2026 values per Steuerfortentwicklungsgesetz) | Adjusted ~annually |
 | Kirchensteuer | Yes/No toggle, rate fixed at 9% (dominant German rate) | Bayern/BaWü actually pay 8% — slightly overstated. Affects both AV payout tax and Abgeltungssteuer. |

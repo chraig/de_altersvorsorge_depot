@@ -5,6 +5,9 @@ All notable user-facing changes to the Altersvorsorgedepot-Rechner.
 ## [1.1.0] — 2026-03-27
 
 ### Added
+- Payout phase now uses the ordinary-annuity formula on **monthly** periods for both AV and ETF: depot continues to compound during retirement and the constant monthly payout depletes it exactly at age 85
+- ETF payout taxation: previously a "lump-sum tax at retirement" was applied, with the post-tax remainder compounding tax-free during payout — unrealistic. Now the sale tax is computed on the **lifetime gain** (total gross over payout − cost basis) and spread evenly across all payout months for a constant net monthly figure.
+- ETF payout tax expressed as an effective per-month rate (`effectiveTaxRatePayout = lifetimeSaleTax / lifetimeGross`), so AV and ETF now use the same `gross × (1 − rate) = net` shape in code and in displayed formulas. Mathematically identical to the previous subtractive form because Abgeltungssteuer is flat.
 - §32a EStG income tax brackets updated to 2026 values per Steuerfortentwicklungsgesetz (Grundfreibetrag €12,348, Spitzensteuersatz threshold €69,878, Reichensteuer threshold €277,825)
 - Progressive §32a tax calculation (exact polynomial formulas replacing marginal rate approximation)
 - Ungefördert payout: Ertragsanteilbesteuerung (17%, age-67 entry) per §22 Nr. 1 Satz 3a EStG

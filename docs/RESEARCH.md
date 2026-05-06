@@ -144,6 +144,26 @@ into a separate ETF depot.
 **Legal basis**: §22 Nr. 5 EStG-E. The taxation depends on whether the underlying
 contributions were subsidized (gefördert) or not (ungefördert).
 
+#### Payout mechanics
+
+During the payout phase (Auszahlplan, ending at age 85 per §89 Abs. 8 EStG-E),
+no new contributions or Zulagen flow in, but the depot remains invested and
+continues to compound at `Rendite − KostenAV`. The user receives a **constant
+monthly gross payout** computed via the ordinary-annuity formula on monthly
+periods:
+
+```
+PMT_monthly = PV × r_m / (1 − (1 + r_m)⁻ⁿᵐ)
+
+where r_m = (1 + NettoRendite)^(1/12) − 1
+      n_m = Auszahlungsdauer × 12
+```
+
+with `PV` = bucket value at retirement. This payment depletes each bucket
+exactly to zero at the end of the payout window. Each bucket is annuitized
+separately so the gefördert/ungefördert tax split applies cleanly. See §3.5
+for the full formula context.
+
 #### Geförderte Beiträge — full nachgelagerte Besteuerung
 
 - **100% of the payout is taxed** at the recipient's personal Einkommensteuersatz
@@ -249,11 +269,27 @@ forderungen and does not apply to Investmentfonds.
 
 **At payout/sale**:
 ```
-Gewinn = Endkapital - Eigenbeiträge      // Endkapital is post-VP-deductions
-Steuerpflichtiger_Gewinn = Gewinn × (1 - Teilfreistellung)
-Steuer_vor_Anrechnung = Steuerpflichtiger_Gewinn × Abgeltungssteuersatz
-Steuer_nach_Anrechnung = max(0, Steuer_vor_Anrechnung − VorabpauschaleGesamt)
-NachSteuer = Endkapital − Steuer_nach_Anrechnung    // VP was already debited from the depot
+// Payout phase: depot compounds at NettoRendite during Auszahlungsdauer.
+// Monthly compounding for realistic monthly payout amounts.
+r_m  = (1 + NettoRendite)^(1/12) − 1
+n_m  = Auszahlungsdauer × 12
+
+// Gross monthly payout = ordinary-annuity payment that depletes the depot:
+Monatlich_Brutto       = Endkapital × r_m / (1 − (1 + r_m)⁻ⁿᵐ)
+LifetimeGross          = Monatlich_Brutto × n_m
+
+// Lifetime taxable gain = total gross extracted − cost basis (bigger than the
+// at-retirement gain because the depot keeps growing during payout). Tax with
+// Teilfreistellung; VP already paid is credited (§19 Abs. 1 InvStG).
+LifetimeGain                   = LifetimeGross − Eigenbeiträge
+Steuerpflichtiger_LifetimeGain = LifetimeGain × (1 − Teilfreistellung)
+LifetimeSaleTax_vor_Anr.       = Steuerpflichtiger_LifetimeGain × Abgeltungssteuersatz
+LifetimeSaleTax_nach_Anr.      = max(0, LifetimeSaleTax_vor_Anr. − VorabpauschaleGesamt)
+
+// Net monthly payout: lifetime sale tax spread evenly across all payout months
+// so the user sees a constant net (simplification — see §3.5).
+Monatlich      = Monatlich_Brutto − LifetimeSaleTax_nach_Anr. / n_m
+NachSteuer     = Monatlich × n_m         // total cash-in-hand to user
 
 Where:
   Teilfreistellung = 30%   // calculator assumes Aktienfonds — see table below
@@ -347,14 +383,25 @@ The 1/(4+k) form is what tax advisors recognize from §32d directly.
 **AV side — retirement payout taxation:**
 
 ```
+// Both buckets continue to compound at NettoRendite during the payout phase.
+// Monthly annuity (so the displayed monthly figure reflects real-world monthly
+// compounding during retirement):
+r_m                    = (1 + NettoRendite)^(1/12) − 1
+n_m                    = Auszahlungsdauer × 12
+Monatlich_Gefördert    = Depot_Gefördert   × r_m / (1 − (1 + r_m)⁻ⁿᵐ)
+Monatlich_Ungefördert  = Depot_Ungefördert × r_m / (1 − (1 + r_m)⁻ⁿᵐ)
+Jahres_Gefördert       = Monatlich_Gefördert   × 12
+Jahres_Ungefördert     = Monatlich_Ungefördert × 12
+
+// Incremental income tax on the AV-derived taxable income:
 BaseIncome      = Pension × 12 + SonstigeEinkünfte
-AV_Taxable      = Jahres_Gefördert + Jahres_Ungefördert × 0.17    // 100% gef + 17% Ertragsanteil ungef
+AV_Taxable      = Jahres_Gefördert + Jahres_Ungefördert × 0.17     // 100% gef + 17% Ertragsanteil ungef
 TaxOnAV         = calcEinkommensteuer(BaseIncome + AV_Taxable) − calcEinkommensteuer(BaseIncome)
 AvPayoutTaxRate = TaxOnAV / AV_Taxable                             // rate per euro of AV taxable income
 
 // Per-bucket net (Kirchensteuer added on top of the income tax in both cases):
-Netto_Gefördert   = Monatlich_Gefördert   × (1 − AvPayoutTaxRate × (1 + KiSt_rate))
-Netto_Ungefördert = Monatlich_Ungefördert × (1 − 0.17 × AvPayoutTaxRate × (1 + KiSt_rate))
+Netto_Gefördert       = Monatlich_Gefördert   × (1 − AvPayoutTaxRate × (1 + KiSt_rate))
+Netto_Ungefördert     = Monatlich_Ungefördert × (1 − 0.17 × AvPayoutTaxRate × (1 + KiSt_rate))
 ```
 
 The tax on the AV payout is computed via the exact §32a polynomial (not the
@@ -500,11 +547,23 @@ Else if income development enabled:
 Else:
   EffectiveRente = geschaetzteRente                    // static estimate
 
-// ── Annual + monthly payouts per bucket ──
-Jahres_Gefördert      = Depot_Gefördert   / Auszahlungsdauer        // [EUR/year]
-Jahres_Ungefördert    = Depot_Ungefördert / Auszahlungsdauer        // [EUR/year]
-Monatlich_Gefördert   = Jahres_Gefördert   / 12                     // [EUR/month]
-Monatlich_Ungefördert = Jahres_Ungefördert / 12                     // [EUR/month]
+// ── Monthly payouts per bucket ──
+// Each bucket continues to compound at NettoRendite during the payout phase
+// (no new contributions, no new Zulagen). Monthly periods are used so the
+// displayed monthly figure reflects real-world monthly compounding during
+// retirement. The gross monthly payout per bucket is the constant ordinary-
+// annuity payment that depletes the bucket exactly at the end of n_months:
+//
+//     PMT = PV × r_m / (1 − (1 + r_m)⁻ⁿᵐ)
+//
+// where r_m = (1 + NettoRendite)^(1/12) − 1 and n_m = Auszahlungsdauer × 12.
+NettoRendite           = Rendite − KostenAV                         // same as accumulation
+r_m                    = (1 + NettoRendite)^(1/12) − 1
+n_m                    = Auszahlungsdauer × 12
+Monatlich_Gefördert    = Depot_Gefördert   × r_m / (1 − (1 + r_m)⁻ⁿᵐ)
+Monatlich_Ungefördert  = Depot_Ungefördert × r_m / (1 − (1 + r_m)⁻ⁿᵐ)
+Jahres_Gefördert       = Monatlich_Gefördert   × 12                 // for tax calc below
+Jahres_Ungefördert     = Monatlich_Ungefördert × 12
 
 // ── Incremental tax rate computed against the FULL AV taxable income ──
 // Gefördert: 100% of payout is taxable.
@@ -557,22 +616,78 @@ For j = 0 to Spardauer - 1:
 ### ETF-Depot Payout
 
 ```
-Gewinn                    = Depot − Eigenbeiträge       // Depot already net of VP debits
-Teilfreistellung          = 30%                          // §20 InvStG, Aktienfonds (>50% equity per §2 Abs. 6)
-Steuerpflichtiger_Gewinn  = Gewinn × (1 − Teilfreistellung)
-Steuer_vor_Anrechnung     = Steuerpflichtiger_Gewinn × Abgeltungssteuersatz
-  // Abgeltungssteuersatz: 26.3750% without KiSt, 27.8186% with 8%, 27.9951% with 9%
+// Payout phase: depot continues to compound at NettoRendite during the
+// Auszahlungsdauer (no new contributions). Monthly compounding so the
+// displayed monthly figure reflects real-world payout-phase mechanics.
+NettoRendite              = Rendite − KostenETF
+r_m                       = (1 + NettoRendite)^(1/12) − 1
+n_m                       = Auszahlungsdauer × 12
+
+// Gross monthly payout = constant ordinary-annuity payment that depletes
+// the depot exactly at the end of n_m months:
+Monatlich_Brutto          = Depot × r_m / (1 − (1 + r_m)⁻ⁿᵐ)
+LifetimeGross             = Monatlich_Brutto × n_m
+
+// Lifetime taxable gain = total gross extracted over payout − cost basis.
+// Bigger than the at-retirement gain because the depot compounds during payout.
+Teilfreistellung               = 30%      // §20 InvStG, Aktienfonds (>50% equity per §2 Abs. 6)
+LifetimeGain                   = LifetimeGross − Eigenbeiträge
+Steuerpflichtiger_LifetimeGain = LifetimeGain × (1 − Teilfreistellung)
+LifetimeSaleTax_vor_Anr.       = Steuerpflichtiger_LifetimeGain × Abgeltungssteuersatz
+LifetimeSaleTax_nach_Anr.      = max(0, LifetimeSaleTax_vor_Anr. − VorabpauschaleGesamt)
+  // Abgeltungssteuersatz: 26.3750% without KiSt, 27.9951% with KiSt (calculator uses 9%)
   // Formula: KapESt = 1 / (4 + k) per §32d Abs. 1 Satz 4 EStG (q=0); + Soli + KiSt (see §3.4)
+  // VP credit per §19 Abs. 1 InvStG.
 
-// Vorabpauschale already paid is credited against the sale tax (§19 Abs. 1 InvStG):
-Steuer_nach_Anrechnung    = max(0, Steuer_vor_Anrechnung − VorabpauschaleGesamt)
-Netto                     = Depot − Steuer_nach_Anrechnung   // VP was already debited from Depot
-Monatlich                 = Netto / (Auszahlungsdauer × 12)  // [EUR → EUR/month] output
+// Net monthly payout: lifetime sale tax is converted into an effective per-
+// month tax rate, so the user's net is `Monatlich_Brutto × (1 − rate)`. This
+// matches the AV side, which also expresses tax as `payout × AvPayoutTaxRate`.
+EffectiveTaxRatePayout    = LifetimeSaleTax_nach_Anr. / LifetimeGross
+Monatlich                 = Monatlich_Brutto × (1 − EffectiveTaxRatePayout)
+NachSteuer                = Monatlich × n_m  // total cash-in-hand to user over payout
 
-// Lifetime tax burden (for reporting):
-Steuer_Lifetime           = VorabpauschaleGesamt + Steuer_nach_Anrechnung
-                          ≈ Steuer_vor_Anrechnung   (when VP is fully credited, i.e. typical)
+// Reported lifetime tax burden (for UI display):
+SteuerAufGewinn           = VorabpauschaleGesamt + LifetimeSaleTax_nach_Anr.
+Gewinn                    = Depot − Eigenbeiträge           // gain at retirement (display field)
 ```
+
+#### Why the rate-based form is exact under flat Abgeltungssteuer
+
+The rate-based form is not a simplification — it is mathematically identical to
+computing tax month-by-month, because Abgeltungssteuer is **flat** (a single
+percentage, not a progression). Two ingredients make this work:
+
+1. **Conservation of money.** With the annuity formula, the depot is depleted
+   exactly at month `n_m`, so the total gross extracted is `LifetimeGross =
+   Monatlich_Brutto × n_m`. The total taxable gain extracted over the payout
+   is therefore `LifetimeGross − Eigenbeiträge`, regardless of how the gain
+   is distributed across individual months (compounding-heavy early, principal-
+   heavy late).
+
+2. **Linearity of a flat rate.** Under a flat rate `s`, the lifetime sale tax is
+   `s × (LifetimeGross − Eigenbeiträge) × (1 − Teilfreistellung) − VP_credit`.
+   Whether one computes the tax once on the lifetime gain or per-month on each
+   month's gain portion, the sum is the same number.
+
+Combining the two: the effective per-month rate on the **gross** monthly payout
+is
+
+```
+EffectiveTaxRatePayout = LifetimeSaleTax_nach_Anr. / LifetimeGross
+```
+
+and `Monatlich_Brutto × EffectiveTaxRatePayout` is the (constant) tax per month
+whose lifetime sum equals the legally-correct lifetime sale tax. The reasoning
+holds only because Abgeltungssteuer is flat — it would not generalize to a
+progressive payout tax.
+
+**Why this matters for AV/ETF parallelism.** AV's `AvPayoutTaxRate` is computed
+incrementally on the user's full retirement income (pension + AV taxable),
+producing a constant per-month rate applied to `Monatlich_AV`. By expressing
+ETF tax via `EffectiveTaxRatePayout`, both sides of the comparison now use the
+same shape — `gross × (1 − rate) = net` — which keeps the displayed formulas
+parallel and avoids spurious differences caused by mixing per-month subtractive
+arithmetic on one side with rate arithmetic on the other.
 
 ### Inflation Adjustment
 
@@ -593,7 +708,7 @@ rounding errors without improving accuracy.
 - Input boundary: `sparrate` (EUR/month) and `gesetzlicheRente` (EUR/month) are converted
   to yearly via `jahresbeitrag = sparrate × 12` and `rente × 12` at the simulation boundary.
 - Core: All subsidy, tax, and accumulation calculations use yearly amounts.
-- Output boundary: `monatlicheAuszahlung = depot / (auszahlungsDauer × 12)` converts back.
+- Output boundary: `monatlicheAuszahlung = annuityFactor × depot / 12` converts back, where `annuityFactor = r / (1 − (1+r)⁻ⁿ)` keeps the depot compounding during the payout window.
 
 **Progressive §32a tax for retirement payout — incremental, not average**: The
 calculator uses the exact §32a polynomial (`calcEinkommensteuer`) twice — once on
