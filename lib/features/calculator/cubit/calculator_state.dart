@@ -49,22 +49,19 @@ class CalculatorState {
       : currentMacro;
 
   SubsidyBreakdown get subsidyBreakdown =>
-      CalculatorService.calcSubsidyBreakdown(currentPerson);
+      SimulationEngine.standard.calcSubsidyBreakdown(currentPerson);
 
   List<SubsidyPhase> get subsidyPhases =>
-      CalculatorService.calcSubsidyPhases(currentPerson, incomeDev: incomeDev);
+      SimulationEngine.standard.calcSubsidyPhases(currentPerson, incomeDev: incomeDev);
 
-  AVResult avResult(AppStrings s) => CalculatorService.simulateAV(
+  AVResult avResult(AppStrings s) => SimulationEngine.standard.simulateAV(
       person: currentPerson, macro: effectiveMacro(s), costs: costs, incomeDev: incomeDev);
 
-  ETFResult etfResult(AppStrings s) => CalculatorService.simulateETF(
+  ETFResult etfResult(AppStrings s) => SimulationEngine.standard.simulateETF(
       person: currentPerson, macro: effectiveMacro(s), costs: costs);
 
-  CombinedResult currentResult(AppStrings s) =>
-      CombinedResult(macro: effectiveMacro(s), av: avResult(s), etf: etfResult(s));
-
   List<CombinedResult> get allMacroResults {
-    final results = CalculatorService.simulateAllMacros(
+    final results = SimulationEngine.standard.simulateAllMacros(
         person: currentPerson, macros: macroScenarios, costs: costs, incomeDev: incomeDev);
     results.sort((a, b) =>
       b.macro.realRendite.compareTo(a.macro.realRendite));

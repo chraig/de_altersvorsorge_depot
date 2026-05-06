@@ -179,6 +179,14 @@ double annuityPayment(double presentValue, double periodRate, int periods) {
   return presentValue * periodRate / (1 - pow(1 + periodRate, -periods));
 }
 
+/// Number of kindergeldberechtigt children for [person] at savings year [j],
+/// applying [incomeDev] for any dynamic child arrivals plus the existing-
+/// child age-out logic. Centralizes the parameter unpacking that all simulation
+/// loops would otherwise repeat.
+int _kinderAt(PersonalScenario person, IncomeDevSettings incomeDev, int j) =>
+    incomeDev.kinderAtYear(person.kinder, j,
+        kinderAlter: person.kinderAlter, maxAge: person.maxKindergeldAlter);
+
 // ═══════════════════════════════════════════════════════════════════
 // SIMULATION ENGINE
 // ═══════════════════════════════════════════════════════════════════
@@ -214,9 +222,8 @@ class SimulationEngine {
   /// Full subsidy breakdown for year 1.
   SubsidyBreakdown calcSubsidyBreakdown(PersonalScenario person) {
     final jb = person.jahresbeitrag;
-    // Year 0: use kinderAtYear for consistency (accounts for children already near age-out)
-    final kinderY0 = const IncomeDevSettings().kinderAtYear(person.kinder, 0,
-      kinderAlter: person.kinderAlter, maxAge: person.kinderStudieren ? 25 : 18);
+    // Year 0: use kinderAtYear for consistency (accounts for children already near age-out).
+    final kinderY0 = _kinderAt(person, const IncomeDevSettings(), 0);
     final z = subsidy.calcZulage(jb, kinderY0, person.alterStart, 0, person.brutto);
     final gst = tax.getGrenzsteuersatz(person.brutto);
     final gp = tax.calcGuenstigerpruefung(jb, z.total, gst);
@@ -235,8 +242,7 @@ class SimulationEngine {
   /// Compute subsidy phases: groups of consecutive years with identical subsidies.
   /// Accounts for child age-out and Berufseinsteigerbonus (year 1 only).
   List<SubsidyPhase> calcSubsidyPhases(PersonalScenario person, {IncomeDevSettings incomeDev = const IncomeDevSettings()}) {
-    final jb = person.jahresbeitrag;
-    final jbGef = jb < CalcConstants.grundzulageMaxBeitrag ? jb : CalcConstants.grundzulageMaxBeitrag;
+    final jbGef = person.jahresbeitragGefoerdert;
     final phases = <SubsidyPhase>[];
 
     int phaseStart = 0;
@@ -246,8 +252,7 @@ class SimulationEngine {
     for (int j = 0; j < person.spardauer; j++) {
       final alter = person.alterStart + j;
       final bruttoJ = incomeDev.bruttoForYear(person.brutto, j);
-      final kinderJ = incomeDev.kinderAtYear(person.kinder, j,
-        kinderAlter: person.kinderAlter, maxAge: person.kinderStudieren ? 25 : 18);
+      final kinderJ = _kinderAt(person, incomeDev, j);
       final z = subsidy.calcZulage(jbGef, kinderJ, alter, j, bruttoJ);
       final gstJ = tax.getGrenzsteuersatz(bruttoJ);
       final gp = tax.calcGuenstigerpruefung(jbGef, z.total, gstJ);
@@ -294,12 +299,9 @@ class SimulationEngine {
     required CostSettings costs,
     IncomeDevSettings incomeDev = const IncomeDevSettings(),
   }) {
-    final jb = person.jahresbeitrag;
-    // Cap total contribution at max per contract (€6,840/yr)
-    final jbCapped = jb < CalcConstants.maxBeitragProVertrag ? jb : CalcConstants.maxBeitragProVertrag;
-    // Split into gefördert (up to €1,800) and ungefördert (above)
-    final jbGefoerdert = jbCapped < CalcConstants.grundzulageMaxBeitrag ? jbCapped : CalcConstants.grundzulageMaxBeitrag;
-    final jbUngefoerdert = jbCapped - jbGefoerdert;
+    final jbCapped = person.jahresbeitragCapped;
+    final jbGefoerdert = person.jahresbeitragGefoerdert;
+    final jbUngefoerdert = person.jahresbeitragUngefoerdert;
     final nettoRendite = macro.rendite - costs.kostenAV;
 
     // ── Accumulation phase ──────────────────────────────────────
@@ -314,8 +316,7 @@ class SimulationEngine {
     for (int j = 0; j < person.spardauer; j++) {
       final alter = person.alterStart + j;
       final bruttoJ = incomeDev.bruttoForYear(person.brutto, j);
-      final kinderJ = incomeDev.kinderAtYear(person.kinder, j,
-        kinderAlter: person.kinderAlter, maxAge: person.kinderStudieren ? 25 : 18);
+      final kinderJ = _kinderAt(person, incomeDev, j);
       final gstJ = tax.getGrenzsteuersatz(bruttoJ);
       final z = subsidy.calcZulage(jbGefoerdert, kinderJ, alter, j, bruttoJ);
       final gp = tax.calcGuenstigerpruefung(jbGefoerdert, z.total, gstJ);
@@ -544,52 +545,4 @@ class SimulationEngine {
   }) {
     return macros.map((m) => simulateCombined(person: person, macro: m, costs: costs, incomeDev: incomeDev)).toList();
   }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// BACKWARD COMPATIBILITY — static access via CalculatorService
-// ═══════════════════════════════════════════════════════════════════
-
-/// Static facade over [SimulationEngine.standard] for backward compatibility.
-/// Existing code using `CalculatorService.simulateAV(...)` continues to work.
-class CalculatorService {
-  CalculatorService._();
-
-  static final _engine = SimulationEngine.standard;
-
-  static SubsidyBreakdown calcSubsidyBreakdown(PersonalScenario person) =>
-      _engine.calcSubsidyBreakdown(person);
-
-  static List<SubsidyPhase> calcSubsidyPhases(PersonalScenario person, {IncomeDevSettings incomeDev = const IncomeDevSettings()}) =>
-      _engine.calcSubsidyPhases(person, incomeDev: incomeDev);
-
-  static AVResult simulateAV({
-    required PersonalScenario person,
-    required MacroScenario macro,
-    required CostSettings costs,
-    IncomeDevSettings incomeDev = const IncomeDevSettings(),
-  }) => _engine.simulateAV(person: person, macro: macro, costs: costs, incomeDev: incomeDev);
-
-  static ETFResult simulateETF({
-    required PersonalScenario person,
-    required MacroScenario macro,
-    required CostSettings costs,
-  }) => _engine.simulateETF(person: person, macro: macro, costs: costs);
-
-  static CombinedResult simulateCombined({
-    required PersonalScenario person,
-    required MacroScenario macro,
-    required CostSettings costs,
-    IncomeDevSettings incomeDev = const IncomeDevSettings(),
-  }) => _engine.simulateCombined(person: person, macro: macro, costs: costs, incomeDev: incomeDev);
-
-  static List<CombinedResult> simulateAllMacros({
-    required PersonalScenario person,
-    required List<MacroScenario> macros,
-    required CostSettings costs,
-    IncomeDevSettings incomeDev = const IncomeDevSettings(),
-  }) => _engine.simulateAllMacros(person: person, macros: macros, costs: costs, incomeDev: incomeDev);
-
-  /// Direct access to the tax module (for UI display of Grenzsteuersatz).
-  static double getGrenzsteuersatz(double brutto) => _engine.tax.getGrenzsteuersatz(brutto);
 }

@@ -223,13 +223,14 @@ lib/
 │       └── CombinedResult             # AV + ETF paired for comparison (+ delta getters)
 ├── services/
 │   └── domain/                        # Modular calculation engine
-│       ├── calculator_service.dart    # SimulationEngine + static facade + CalcConstants
+│       ├── calculator_service.dart    # SimulationEngine + CalcConstants
 │       │   ├── SimulationEngine       # Orchestrator with injectable modules
 │       │   │   ├── calcSubsidyBreakdown() / calcSubsidyPhases()
 │       │   │   ├── simulateAV()       # Gefördert/ungefördert split
 │       │   │   ├── simulateETF()      # Vorabpauschale + Teilfreistellung
 │       │   │   ├── simulateCombined() # AV + ETF paired
 │       │   │   └── simulateAllMacros() # Cross-product: person × all macros
+│       │   ├── SimulationEngine.standard # Const default instance used by the cubit
 │       │   └── CalcConstants          # All legislative parameters with § references
 │       ├── tax_module.dart            # TaxModule interface + GermanTax2026
 │       │   ├── getGrenzsteuersatz()   # Piecewise marginal §32a
@@ -251,8 +252,8 @@ lib/
 │       │   │   └── resetToDefaults()
 │       │   └── calculator_state.dart  # Immutable state + computed getters
 │       │       ├── effectiveRendite/Inflation
-│       │       ├── subsidyBreakdown   # Calls CalculatorService
-│       │       ├── avResult / etfResult / currentResult
+│       │       ├── subsidyBreakdown   # Delegates to SimulationEngine.standard
+│       │       ├── avResult / etfResult
 │       │       └── allMacroResults    # All macros sorted by real return
 │       ├── pages/
 │       │   └── calculator_page.dart   # Main UI layout with tabs
@@ -280,8 +281,7 @@ CalculatorCubit (flutter_bloc Cubit)
     ↓  setter methods → emit(state.copyWith(...))
     ↓
 CalculatorState (immutable, with computed getters)
-    ↓  getters delegate to CalculatorService.*
-    ↓  CalculatorService is a static facade over SimulationEngine
+    ↓  getters delegate to SimulationEngine.standard
     ↓  SimulationEngine composes TaxModule + SubsidyModule + PensionModule
     ↓
 Widget rebuild via context.watch<CalculatorCubit>()

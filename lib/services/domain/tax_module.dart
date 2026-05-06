@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:avdepot_rechner/services/domain/calculator_service.dart';
 
 /// Interface for income tax calculation.
@@ -88,8 +89,7 @@ class GermanTax2026 implements TaxModule {
   calcGuenstigerpruefung(double jahresbeitrag, double zulageTotal, double grenzsteuersatz) {
     // Sonderausgabenabzug is capped at min(Jahresbeitrag, 1800) + Zulagen
     // per §10a EStG-E and BMF FAQ. Contributions above €1,800 are not deductible.
-    final cappedBeitrag = jahresbeitrag < CalcConstants.grundzulageMaxBeitrag
-        ? jahresbeitrag : CalcConstants.grundzulageMaxBeitrag;
+    final cappedBeitrag = min(jahresbeitrag, CalcConstants.grundzulageMaxBeitrag);
     final gesamtBeitrag = cappedBeitrag + zulageTotal;
     // Günstigerprüfung uses the marginal rate for the comparison (correct per §10a)
     final steuerersparnis = gesamtBeitrag * grenzsteuersatz;

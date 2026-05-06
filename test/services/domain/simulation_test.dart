@@ -402,15 +402,6 @@ void main() {
       expect(avHigh.endkapital, greaterThan(avLow.endkapital));
     });
 
-    test('CalculatorService static facade matches engine', () {
-      final p = makePerson();
-      final m = makeMacro();
-      final costs = CostSettings();
-      final fromEngine = engine.simulateAV(person: p, macro: m, costs: costs);
-      final fromFacade = CalculatorService.simulateAV(person: p, macro: m, costs: costs);
-      expect(fromFacade.endkapital, fromEngine.endkapital);
-      expect(fromFacade.nettoMonatlich, fromEngine.nettoMonatlich);
-    });
   });
 
   group('SubsidyBreakdown', () {

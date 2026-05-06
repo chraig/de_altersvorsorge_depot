@@ -622,10 +622,8 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
     final etf = widget.etf;
     final sub = widget.sub;
     final costs = widget.state.costs;
-    final jb = p.jahresbeitrag;
-    final jbCapped = jb < CalcConstants.maxBeitragProVertrag ? jb : CalcConstants.maxBeitragProVertrag;
-    final jbGef = jbCapped < CalcConstants.grundzulageMaxBeitrag ? jbCapped : CalcConstants.grundzulageMaxBeitrag;
-    final jbUngef = jbCapped - jbGef;
+    final jbGef = p.jahresbeitragGefoerdert;
+    final jbUngef = p.jahresbeitragUngefoerdert;
     final compact = context.isCompact;
 
     return Container(

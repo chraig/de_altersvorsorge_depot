@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:avdepot_rechner/core/l10n/app_strings.dart';
@@ -65,13 +66,28 @@ class PersonalScenario {
   int get rentenalter => alterStart + spardauer;           // [years] retirement age
   double get jahresbeitrag => sparrate * 12;                // [EUR/year] annual contribution (input→core conversion)
   int get auszahlungsDauer => (CalcConstants.payoutEndAge - rentenalter).clamp(5, 30); // [years] payout phase
+  /// Kindergeld eligibility ends at age 18 normally, or 25 if the child is
+  /// in education / vocational training (§32 Abs. 4 EStG).
+  int get maxKindergeldAlter => kinderStudieren ? 25 : 18;
+
+  /// Annual contribution capped at the per-contract maximum (€6,840/yr).
+  /// Contributions above this aren't allowed in the AV-Depot.
+  double get jahresbeitragCapped => min(jahresbeitrag, CalcConstants.maxBeitragProVertrag);
+
+  /// Subsidized portion of the annual contribution (≤ €1,800/yr).
+  double get jahresbeitragGefoerdert =>
+      min(jahresbeitragCapped, CalcConstants.grundzulageMaxBeitrag);
+
+  /// Unsubsidized portion: the slice between €1,800 and the per-contract cap.
+  double get jahresbeitragUngefoerdert =>
+      jahresbeitragCapped - jahresbeitragGefoerdert;
 
   /// Estimated monthly state pension derived from gross income.
   /// Formula: min(Brutto, BBG) / Durchschnittsentgelt × Beitragsjahre × Rentenwert
   /// BBG caps pensionable income.
   double get geschaetzteRente {
     final beitragsjahre = (rentenalter - arbeitsbeginn).clamp(0, 45);
-    final cappedBrutto = brutto < CalcConstants.bbg ? brutto : CalcConstants.bbg;
+    final cappedBrutto = min(brutto, CalcConstants.bbg);
     final entgeltpunkteProJahr = cappedBrutto / CalcConstants.durchschnittsentgelt;
     return entgeltpunkteProJahr * beitragsjahre * CalcConstants.rentenwert;
   }
