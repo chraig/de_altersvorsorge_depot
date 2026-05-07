@@ -348,13 +348,46 @@ forderungen and does not apply to Investmentfonds.
   contributions distributed evenly across the year, the **average partial-year
   factor** is `(1/12) × Σ_{k=0..11} (1 − k/12) = 6.5/12 ≈ 0.5417`. Pre-existing
   depot value (held the full year) gets factor 1.0.
-- Calculator simplifies the rate as a fixed `vorabpauschaleDrag = 0.3%`
-  (≈ Basiszins 2.3–3.2% × 0.7 × 0.70 × 0.26375) and applies the partial-year
-  factor to new contributions: `vp_year = (depotStart + jb × 0.5417) × 0.003`,
-  paid out of the depot.
+- Calculator splits the rate explicitly: `vorabpauschaleBasisertragsRate =
+  0.7 × Basiszins ≈ 1.603 %` (using Basiszins 2.29 % from 2024) and applies
+  `(1 − Teilfreistellung) × Abgeltungssteuersatz` dynamically — so the VP rate
+  is **KiSt-aware** (≈ 0.296 % drag without KiSt, ≈ 0.314 % with 9 % KiSt).
+  Per-year formula: `vp_year = (depotStart + jb × 0.5417) × vpRate`, paid
+  out of the depot.
 - Crucially, the cumulative Vorabpauschale paid is **credited against the
   Abgeltungssteuer at sale** (§19 Abs. 1 InvStG, Anrechnung) — the same tax
   is not collected twice.
+
+#### Vorabpauschale simplifications
+
+What is implemented, what is not:
+
+- **Constant Basiszins ≈ 2.29 %.** The Basiszins is published yearly by BMF
+  per §203 Abs. 2 BGB and varies dramatically — e.g. 0.87 % (2018), **0 %** (2022,
+  no VP at all that year), 2.29 % (2024), ~3.20 % (2026 preliminary). The
+  calculator uses a single mid-range value across the full savings horizon.
+  The order of magnitude is preserved, but year-to-year VP fluctuation is not.
+- **No Wertsteigerung cap (§18 Abs. 3 InvStG).** The law caps VP at the actual
+  price increase of the fund in the year: `VP ≤ Endwert − Anfangswert`. In a
+  year with negative or near-zero return, VP is correspondingly reduced or
+  zero. The calculator does not check this cap. Under the default macro
+  scenarios (rendite ≥ 3 %) the cap never binds. It would matter for custom
+  rendite settings below ~1.6 % p.a. (where Basisertrag exceeds the actual
+  gain) or for any year-by-year volatility model with negative returns.
+- **Distributions (Ausschüttungen) assumed = 0** — the calculator implicitly
+  models a **thesaurierender** (accumulating) ETF. For distributing ETFs, the
+  law has `VP = max(0, Basisertrag − Distributions)` and the distributions are
+  themselves taxed at Abgeltungssteuer. For broad accumulating products
+  (iShares Core *Acc* series, Xtrackers *1C*) the calculator's model is
+  correct; for distributing products it is wrong (it under-taxes the
+  distribution stream and over-taxes via VP).
+- **Soli held at 5.5 %** of KapESt (already inside `abgeltungssteuersatz`).
+  No Soli phase-out / abolition modeled.
+
+If any of these matter for the user's actual ETF, the right place to lift the
+simplification is `simulateETFAccumulation` in `lib/services/domain/calculator_service.dart`
+— a year-by-year `Basiszins[j]`, the cap on Wertsteigerung, and a non-zero
+distribution stream are all localized to that loop.
 
 **At payout/sale**:
 ```
@@ -683,9 +716,12 @@ to the AV is allocated to the AV buckets.
 ### ETF-Depot Year-by-Year Accumulation
 
 ```
-VorabpauschaleDrag       = 0.003       // simplified per-year VP rate (CalcConstants)
-  // Approximates Basiszins × 0.7 × (1 − Teilfreistellung) × Abgeltungssteuersatz
-  // at Basiszins 2.3–3.2% with Teilfreistellung 30% and abgSt 26.375%.
+BasisertragsRate         = 0.01603     // §18 Abs. 1 InvStG: 0.7 × Basiszins (Basiszins ≈ 2.29 %, 2024)
+Teilfreistellung         = 0.30        // §20 InvStG, Aktienfonds (>50 % Kapitalbeteiligungen, §2 Abs. 6)
+Abgeltungssteuersatz     = 0.26375     // 26.3750 % default; ~27.9951 % with 9 % KiSt (§32d)
+                                       //   → KiSt-aware via CostSettings.abgeltungssteuersatz
+VPRate                   = BasisertragsRate × (1 − Teilfreistellung) × Abgeltungssteuersatz
+                                       // ≈ 0.296 % (no KiSt) or 0.314 % (9 % KiSt) drag
 NeuerBeitragFaktor       = 6.5 / 12    // §18 InvStG partial-year reduction
   // Average factor for new monthly contributions: VP is reduced by 1/12 for
   // each full month preceding the acquisition month, averaged across Jan–Dec.
@@ -697,7 +733,10 @@ For j = 0 to Spardauer - 1:
   Depot             = (Depot + Jahresbeitrag) × (1 + Rendite − KostenETF)         // grow at full rate
   // VP base: full-year for prior holdings + partial-year for new contribution.
   VP_Base_j         = Depot_StartOfYear + Jahresbeitrag × NeuerBeitragFaktor
-  VP_j              = VP_Base_j × VorabpauschaleDrag                              // tax paid out of depot
+  VP_j              = VP_Base_j × VPRate                                          // tax paid out of depot
+  // NOT modeled: §18 Abs. 3 cap — VP_j ≤ depot Wertsteigerung this year. Under
+  // constant positive rendite ≥ ~1.6 % the cap never binds. Distributions
+  // assumed 0 (thesaurierender ETF).
   Depot             = Depot − VP_j
   VorabpauschaleGesamt += VP_j
 ```

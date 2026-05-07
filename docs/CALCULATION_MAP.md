@@ -92,7 +92,7 @@ flowchart TD
 flowchart TD
     subgraph ACC["Accumulation phase — simulateETFAccumulation"]
         direction TB
-        GROW["Depot Growth + Vorabpauschale (§18 InvStG)<br/>depot = depot + jb x 1 + r - kostenETF<br/>vp_base = depot_start_of_year + jb x 6.5/12<br/>vp = vp_base x 0.003 (simplified drag), paid out of depot<br/>vorabpauschaleGesamt += vp"]
+        GROW["Depot Growth + Vorabpauschale (§18 InvStG)<br/>depot = depot + jb x 1 + r - kostenETF<br/>vp_base = depot_start_of_year + jb x 6.5/12<br/>vpRate = 0.01603 x 1 - 0.30 x abgeltungssteuersatz (KiSt-aware)<br/>vp = vp_base x vpRate, paid out of depot<br/>vorabpauschaleGesamt += vp<br/>(simplification: no §18 Abs. 3 Wertsteigerung cap, no distributions)"]
     end
     GROW --> PAY
     subgraph PAY["Payout phase — AnnuityETFPayout (default ETFPayoutModule)"]

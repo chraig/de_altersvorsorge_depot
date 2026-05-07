@@ -362,7 +362,9 @@ Payout phase:
 | Tax brackets | Static (2026 values per Steuerfortentwicklungsgesetz) | Adjusted ~annually |
 | Kirchensteuer | Yes/No toggle, rate fixed at 9% (dominant German rate) | Bayern/BaWü actually pay 8% — slightly overstated. Affects both AV payout tax and Abgeltungssteuer. |
 | Soli | Included in base rate | May change |
-| Vorabpauschale | Fixed 0.3% drag | Depends on Basiszins (2.3-3.2% in 2024-2026) |
+| Vorabpauschale rate | Constant Basiszins ~2.29 % (2024); KiSt-aware via Abgeltungssteuersatz, gives ~0.296 % drag (no KiSt) / ~0.314 % (9 % KiSt) | Basiszins set yearly by BMF, varies dramatically (0 % in 2022, ~3.20 % in 2026 prelim) |
+| Vorabpauschale cap | §18 Abs. 3 InvStG cap on Wertsteigerung not enforced — VP charged at full rate every year | In years with negative or near-zero return, VP must be reduced or zero. Doesn't bind under default macros (rendite ≥ 3 %) but matters for custom low-rendite scenarios. |
+| ETF distributions | Assumed = 0 (thesaurierender / accumulating ETF) | Distributing ETFs: distributions taxed separately; VP correspondingly reduced. Calculator wrong for distributing products. |
 | Retirement tax rate | Progressive §32a average rate on combined income | Brutto used as proxy for zvE; actual zvE lower |
 | Günstigerprüfung refund | Not reinvested | Could be reinvested manually |
 | Ungefördert payout taxation | Ertragsanteilbesteuerung 17% (Lebenslange-Rente rule) | The strict Riester reading of §22 Nr. 5 EStG would tax an Auszahlplan via Unterschiedsbetrag (full gains taxed). Calculator uses the more favorable Lebenslange-Rente rule for the AV-Depot's 18-year Auszahlplan. |

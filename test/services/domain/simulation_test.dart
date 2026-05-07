@@ -163,14 +163,37 @@ void main() {
       // New ETF model (§18 + §19 InvStG):
       //   1. depot grows at full rate: jb × (1 + rendite − kostenETF)
       //   2. VP_base = depotStart (0) + jb × partialYearFactor (~0.5417)
-      //   3. VP_year = VP_base × vorabpauschaleDrag, debited from depot
+      //   3. VP_year = VP_base × vpRate, where vpRate is the after-tax drag
+      //      = Basisertrag × (1 − Teilfreistellung) × Abgeltungssteuersatz
+      //      (KiSt-aware via CostSettings.abgeltungssteuersatz)
       const grown = jb * (1 + 0.07 - 0.002);
+      final vpRate = CalcConstants.vorabpauschaleBasisertragsRate
+          * (1 - CalcConstants.teilfreistellung)
+          * costs.abgeltungssteuersatz;
       final vpBase = jb * CalcConstants.vorabpauschaleNeuerBeitragFaktor;
-      final vpYear = vpBase * CalcConstants.vorabpauschaleDrag;
+      final vpYear = vpBase * vpRate;
       final expected = grown - vpYear;
       expect(etf.endkapital, closeTo(expected, 0.01));
       expect(etf.eigenBeitraege, closeTo(jb, 0.01));
       expect(etf.vorabpauschaleGesamt, closeTo(vpYear, 0.01));
+    });
+
+    test('VP rate is higher for kirchensteuerpflichtige users', () {
+      final p = makePerson(sparrate: 100, spardauer: 30, alterStart: 37);
+      final m = makeMacro();
+      final noKi = CostSettings(kirchensteuerpflichtig: false);
+      final withKi = CostSettings(kirchensteuerpflichtig: true);
+
+      final etfNoKi = engine.simulateETF(person: p, macro: m, costs: noKi);
+      final etfWithKi = engine.simulateETF(person: p, macro: m, costs: withKi);
+
+      // KiSt raises the Abgeltungssteuersatz from 26.375 % to ~27.995 % per
+      // §32d Abs. 1 Satz 4 EStG (1/(4+k)). VP rate is proportional, so a
+      // KiSt-pflichtige user pays slightly more VP each year.
+      expect(etfWithKi.vorabpauschaleGesamt, greaterThan(etfNoKi.vorabpauschaleGesamt));
+      // Magnitude: ratio should equal the abgSt ratio (~1.061×).
+      final ratio = etfWithKi.vorabpauschaleGesamt / etfNoKi.vorabpauschaleGesamt;
+      expect(ratio, closeTo(0.27995 / 0.26375, 0.005));
     });
 
     test('gains taxed with Teilfreistellung (Vorabpauschale credited)', () {

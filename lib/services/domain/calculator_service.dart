@@ -108,11 +108,17 @@ class CalcConstants {
   /// comparison overstates the tax advantage — most strikingly for bond ETFs which
   /// receive no Teilfreistellung at all.
   static const double teilfreistellung = 0.30;
-  /// Simplified annual Vorabpauschale drag on ETF returns.
-  /// Formula: Basiszins × 0.7 × 0.70 (Teilfreistellung) × 0.26375 (AbgSt+Soli).
-  /// At Basiszins 2.29% (2024): effective ~0.30%. At 3.20% (2026): ~0.41%.
-  /// Using 0.30% as a reasonable mid-range approximation.
-  static const double vorabpauschaleDrag = 0.003;
+  /// Pre-tax Vorabpauschale rate per §18 Abs. 1 InvStG: 0.7 × Basiszins.
+  /// Multiply by `(1 − Teilfreistellung) × Abgeltungssteuersatz` to get the
+  /// after-tax drag on the depot — KiSt-aware via `CostSettings.abgeltungssteuersatz`.
+  ///
+  /// Basiszins is set yearly by BMF (§203 Abs. 2 BGB) and varies significantly
+  /// (2018: 0.87 %, 2022: 0 %, 2024: 2.29 %, 2026 preliminary: 3.20 %). The
+  /// calculator uses ≈ 2.29 % (2024) → 0.7 × 2.29 % = 1.603 %; combined with
+  /// 30 % Teilfreistellung the effective drag is ≈ 0.296 % (no KiSt) or
+  /// ≈ 0.314 % (9 % KiSt). Constant Basiszins is a simplification — real-world
+  /// VP varies substantially year-to-year as Basiszins moves.
+  static const double vorabpauschaleBasisertragsRate = 0.01603;
   /// Kirchensteuersatz applied when the user is kirchensteuerpflichtig.
   /// 9% applies in 14 of 16 federal states (~71% of the population) — Bayern
   /// and Baden-Württemberg use 8%, but for simplicity the calculator uses the
@@ -400,6 +406,12 @@ class SimulationEngine {
   }) {
     final jb = person.jahresbeitrag;
     final nettoRendite = macro.rendite - costs.kostenETF;
+    // After-tax VP drag rate per §18 InvStG: pre-tax Basisertrag rate × taxable
+    // share (Teilfreistellung) × Abgeltungssteuersatz. Pulled from CostSettings
+    // so the rate is KiSt-aware (church-tax members pay slightly more).
+    final vpRate = CalcConstants.vorabpauschaleBasisertragsRate
+        * (1 - CalcConstants.teilfreistellung)
+        * costs.abgeltungssteuersatz;
 
     double depot = 0;
     double eigenBeitraege = 0;
@@ -411,7 +423,7 @@ class SimulationEngine {
       depot = (depot + jb) * (1 + nettoRendite);                 // grow at full rate
       final vpBase = depotStartOfYear
           + jb * CalcConstants.vorabpauschaleNeuerBeitragFaktor;
-      final vpJahr = vpBase * CalcConstants.vorabpauschaleDrag;
+      final vpJahr = vpBase * vpRate;
       depot -= vpJahr;
       vorabpauschaleGesamt += vpJahr;
       eigenBeitraege += jb;

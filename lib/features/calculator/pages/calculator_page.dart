@@ -788,7 +788,11 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
 
       _h(s.bdTaxCostsSavings),
       _pair(s.costAvPa.split(' p.')[0], Fmt.pct(costs.kostenAV), Fmt.pct(costs.kostenETF)),
-      _pairFormula('Vorabpauschale', '—', Fmt.pct(CalcConstants.vorabpauschaleDrag), tip: s.tipVorabpauschale,
+      _pairFormula('Vorabpauschale', '—',
+        Fmt.pct(CalcConstants.vorabpauschaleBasisertragsRate
+            * (1 - CalcConstants.teilfreistellung)
+            * costs.abgeltungssteuersatz),
+        tip: s.tipVorabpauschale,
         avFormula: s.bdCapGainsSavingsAV, etfFormula: s.bdCapGainsSavingsETF),
       _pair(s.bdCapGainsSavings, s.bdCapGainsSavingsAV, s.bdCapGainsSavingsETF),
       _dv(),

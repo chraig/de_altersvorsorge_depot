@@ -49,7 +49,8 @@ Located in: `lib/services/domain/calculator_service.dart`
 | Kirchensteuer | Yes/No (rate fixed at 9% when on) | Yes/No toggle in Advanced Settings | `CostSettings.kirchensteuerpflichtig` + `CalcConstants.kirchensteuersatz` |
 | Teilfreistellung (Aktienfonds, >50% equity) | 30% | §20 InvStG, §2 Abs. 6 InvStG | `CalcConstants.teilfreistellung` |
 | Teilfreistellung — other fund types | 15% Mischfonds, 60–80% Immobilienfonds, 0% Anleihe-/Geldmarkt-ETFs | §20 InvStG | not modeled — calculator assumes Aktienfonds |
-| Vorabpauschale drag | 0.3% p.a. | Simplified (Basiszins ~2.3-3.2%) | `simulateETF()` |
+| Vorabpauschale Basisertrag rate | 1.603% p.a. (= 0.7 × 2.29% Basiszins, 2024) | §18 Abs. 1 InvStG; Basiszins per §203 Abs. 2 BGB (BMF, varies yearly) | `CalcConstants.vorabpauschaleBasisertragsRate` |
+| → effective VP drag (after Teilfreistellung × Abgeltungssteuersatz) | ~0.296% (no KiSt) / ~0.314% (9% KiSt) | Computed dynamically per user | `simulateETFAccumulation()` |
 | Retirement tax | Incremental §32a on combined income | Progressive formula | `simulateAV()` |
 
 ### To update tax brackets:
