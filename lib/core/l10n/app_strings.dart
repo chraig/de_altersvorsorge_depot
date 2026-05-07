@@ -136,6 +136,8 @@ abstract class AppStrings {
   String get bdUngefTreatment;
   String bdLifetimeTotal(int fromAge, int toAge);
   String get bdTotalTaxPaid;
+  String get bdTaxSavingsPhase;
+  String get bdTaxPayoutPhase;
   String get bdGrossPayoutTotal;
   String get bdNetPayoutTotal;
   String get bdContribTaxFree;
@@ -488,6 +490,8 @@ class StringsEn extends AppStrings {
   String get bdUngefTreatment => 'Ungefördert treatment';
   String bdLifetimeTotal(int fromAge, int toAge) => 'Total Payout (age $fromAge–$toAge)';
   String get bdTotalTaxPaid => 'Total tax paid';
+  String get bdTaxSavingsPhase => '↳ during savings phase';
+  String get bdTaxPayoutPhase => '↳ during payout phase';
   String get bdGrossPayoutTotal => 'Total gross payout';
   String get bdNetPayoutTotal => 'Total net payout';
   String get bdContribTaxFree => 'Contributions returned tax-free';
@@ -893,6 +897,8 @@ class StringsDe extends AppStrings {
   String get bdUngefTreatment => 'Besteuerung ungefördert';
   String bdLifetimeTotal(int fromAge, int toAge) => 'Gesamtauszahlung (Alter $fromAge–$toAge)';
   String get bdTotalTaxPaid => 'Steuer gesamt';
+  String get bdTaxSavingsPhase => '↳ in Sparphase';
+  String get bdTaxPayoutPhase => '↳ in Auszahlphase';
   String get bdGrossPayoutTotal => 'Bruttoauszahlung gesamt';
   String get bdNetPayoutTotal => 'Nettoauszahlung gesamt';
   String get bdContribTaxFree => 'Beiträge steuerfrei zurück';
