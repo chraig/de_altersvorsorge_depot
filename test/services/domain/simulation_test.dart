@@ -374,6 +374,64 @@ void main() {
     });
   });
 
+  group('AV payout: Solidaritätszuschlag with Freigrenze', () {
+    test('typical retiree (low-mid pension + AV) → Soli rate is 0', () {
+      // Pension €18k + small AV payout → ESt well below €19,950 Freigrenze.
+      final p = makePerson(
+          sparrate: 100, brutto: 45000, alterStart: 30, spardauer: 37,
+          renteOverride: 1500); // €18k/yr pension
+      final m = makeMacro();
+      final av = engine.simulateAV(person: p, macro: m, costs: CostSettings());
+
+      expect(av.soliRatePayout, 0.0,
+          reason: 'Soli should be 0 — combined retirement zvE keeps ESt below Freigrenze');
+    });
+
+    test('high-income retiree (large pension + sonstige + AV) → Soli applies', () {
+      // €4.5k/mo pension + €30k other income + AV payout → ESt well above
+      // €19,950 Freigrenze. Soli rate per euro of AV taxable should be > 0
+      // and bounded above by 0.119 × estRate (Milderungszone cap) and below
+      // by 0.055 × estRate (full-rate floor when both base and combined ESt
+      // sit above the Milderungszone).
+      final p = makePerson(
+          sparrate: 1000, brutto: 200000, alterStart: 30, spardauer: 37,
+          renteOverride: 4500, sonstigeEinkuenfte: 30000);
+      final m = makeMacro();
+      final av = engine.simulateAV(person: p, macro: m, costs: CostSettings());
+
+      expect(av.soliRatePayout, greaterThan(0),
+          reason: 'High retirement zvE pushes ESt above Soli Freigrenze');
+      final ratio = av.soliRatePayout / av.grenzsteuersatzRente;
+      expect(ratio, lessThanOrEqualTo(0.119 + 1e-9),
+          reason: 'Cap by Milderungszone ratio 11.9 %');
+      expect(ratio, greaterThan(0.05),
+          reason: 'Should be at least the full-rate floor (5.5 % × estRate)');
+    });
+
+    test('Soli pushes net monthly payout below the no-Soli baseline', () {
+      // Compare two retirees with identical AV depot but different other-income:
+      //   - low: pension only → ESt below Freigrenze → Soli = 0
+      //   - high: large pension + sonstige → ESt above Freigrenze → Soli > 0
+      // For the same gross monthly payout, the high earner should net less
+      // (incremental Soli on top of incremental §32a tax).
+      final low = makePerson(
+          sparrate: 1000, brutto: 200000, alterStart: 30, spardauer: 37,
+          renteOverride: 1500); // small pension → ESt likely < Freigrenze
+      final high = makePerson(
+          sparrate: 1000, brutto: 200000, alterStart: 30, spardauer: 37,
+          renteOverride: 4500, sonstigeEinkuenfte: 30000);
+      final m = makeMacro();
+      final avLow = engine.simulateAV(person: low, macro: m, costs: CostSettings());
+      final avHigh = engine.simulateAV(person: high, macro: m, costs: CostSettings());
+
+      // Same depot trajectory → same gross payout. Net differs only via tax rate.
+      expect(avLow.monatlicheAuszahlung, closeTo(avHigh.monatlicheAuszahlung, 0.01));
+      // Soli rate is 0 for low earner, > 0 for high earner.
+      expect(avLow.soliRatePayout, 0.0);
+      expect(avHigh.soliRatePayout, greaterThan(0));
+    });
+  });
+
   group('CostSettings / Kirchensteuer', () {
     test('default (not kirchensteuerpflichtig): Abgeltungssteuersatz is 26.3750%', () {
       final c = CostSettings();
@@ -670,5 +728,6 @@ class _ConstantAVPayout implements AVPayoutModule {
       AVPayout(
           monatlicheAuszahlung: monthly,
           nettoMonatlich: monthly,
-          grenzsteuersatzRente: 0);
+          grenzsteuersatzRente: 0,
+          soliRatePayout: 0);
 }

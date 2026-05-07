@@ -16,6 +16,12 @@ abstract class TaxModule {
   /// This is the effective rate on the total income.
   double getDurchschnittssteuersatz(double brutto);
 
+  /// Solidaritätszuschlag on a given assessed Einkommensteuer amount.
+  /// Applies the Freigrenze + Milderungszone rules per §3 Abs. 3 / §4 SolzG.
+  /// Soli on KapESt is governed separately (§3 Abs. 1 Nr. 5 SolzG, no
+  /// Freigrenze) and is already baked into `CostSettings.abgeltungssteuersatz`.
+  double calcSoli(double einkommensteuer);
+
   /// Günstigerprüfung: compare Sonderausgabenabzug vs. keeping Zulagen.
   /// Uses marginal rate for the comparison (correct per §10a).
   ({double steuerersparnis, double zusaetzlich, bool vorteil})
@@ -47,6 +53,19 @@ class GermanTax2026 implements TaxModule {
   double getDurchschnittssteuersatz(double brutto) {
     if (brutto <= 0) return 0;
     return calcEinkommensteuer(brutto) / brutto;
+  }
+
+  /// Solidaritätszuschlag per §3 Abs. 3 + §4 SolzG (post-2021 reform):
+  /// - ESt ≤ Freigrenze         → Soli = 0
+  /// - Milderungszone           → Soli = min(Vollsatz × ESt, Milderungssatz × (ESt − Freigrenze))
+  ///   (binds until ESt ≈ 1.859 × Freigrenze)
+  /// - Above Milderungszone     → Soli = Vollsatz × ESt (5.5 %)
+  @override
+  double calcSoli(double einkommensteuer) {
+    if (einkommensteuer <= CalcConstants.soliFreigrenze) return 0;
+    final voll = einkommensteuer * CalcConstants.soliVollSatz;
+    final milderung = (einkommensteuer - CalcConstants.soliFreigrenze) * CalcConstants.soliMilderungsSatz;
+    return voll < milderung ? voll : milderung;
   }
 
   /// Exact §32a EStG 2026 formula.

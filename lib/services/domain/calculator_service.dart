@@ -89,6 +89,31 @@ class CalcConstants {
   /// Zone 5 continuity offset (so zone 5 connects smoothly to end of zone 4)
   static const double zone5Offset = 19470.38;
 
+  // ─── SOLIDARITÄTSZUSCHLAG (SolzG, post-2021 reform) ─────────────
+  // Soli on the assessed Einkommensteuer is governed by §3 Abs. 1 Nr. 1 +
+  // §3 Abs. 3 + §4 SolzG. The 2021 reform (Gesetz zur Rückführung des
+  // Solidaritätszuschlags 1995) introduced a Freigrenze and a Milderungszone:
+  //   • Soli is 0 if festgesetzte Einkommensteuer ≤ Freigrenze.
+  //   • Above Freigrenze, Soli is capped at `Milderungsrate × (ESt − Freigrenze)`
+  //     (§4 Satz 2 SolzG). The cap binds until ESt ≈ 1.859 × Freigrenze, then
+  //     the full Soli rate applies.
+  //   • Above the Milderungszone, Soli = `Vollsatz × ESt`.
+  //
+  // Note: Soli on KapESt (Vorabpauschale + sale tax) is collected at source
+  // per §3 Abs. 1 Nr. 5 SolzG and the Freigrenze does NOT apply there — those
+  // are always charged 5.5 %. This is reflected in `CostSettings.abgeltungssteuersatz`.
+
+  /// Single-filer Soli Freigrenze on assessed Einkommensteuer. €19,950 is the
+  /// 2025 value per Steuerfortentwicklungsgesetz; the 2026 figure is expected
+  /// to index slightly upward (~€20,350) but has not been confirmed at time of
+  /// implementation. Joint filers (Zusammenveranlagung) get 2× this — not
+  /// modeled (calculator assumes single filing).
+  static const double soliFreigrenze = 19950;
+  /// Standard Soli rate above the Milderungszone (§4 Satz 1 SolzG): 5.5 % × ESt.
+  static const double soliVollSatz = 0.055;
+  /// Milderungszone cap (§4 Satz 2 SolzG): Soli ≤ 11.9 % × (ESt − Freigrenze).
+  static const double soliMilderungsSatz = 0.119;
+
   // ─── ETF TAXATION (§20 InvStG, §43a EStG) ─────────────────────
   /// Teilfreistellung rate. The calculator assumes the user holds an **Aktienfonds**
   /// (an equity fund / equity ETF). Per §20 Abs. 1 InvStG: 30% of distributions and
@@ -479,6 +504,7 @@ class SimulationEngine {
       nettoMonatlich: pay.nettoMonatlich,
       grenzsteuersatz: acc.grenzsteuersatz,
       grenzsteuersatzRente: pay.grenzsteuersatzRente,
+      soliRatePayout: pay.soliRatePayout,
       wertzuwachs: acc.wertzuwachs,
       jahresWerte: acc.jahresWerte,
     );

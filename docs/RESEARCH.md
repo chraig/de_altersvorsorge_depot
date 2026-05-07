@@ -515,21 +515,69 @@ Monatlich_Ungefördert  = Depot_Ungefördert × r_m / (1 − (1 + r_m)⁻ⁿᵐ)
 Jahres_Gefördert       = Monatlich_Gefördert   × 12
 Jahres_Ungefördert     = Monatlich_Ungefördert × 12
 
-// Incremental income tax on the AV-derived taxable income:
+// Incremental income tax + Soli on the AV-derived taxable income:
 BaseIncome      = Pension × 12 + SonstigeEinkünfte
 AV_Taxable      = Jahres_Gefördert + Jahres_Ungefördert × 0.17     // 100% gef + 17% Ertragsanteil ungef
 TaxOnAV         = calcEinkommensteuer(BaseIncome + AV_Taxable) − calcEinkommensteuer(BaseIncome)
-AvPayoutTaxRate = TaxOnAV / AV_Taxable                             // rate per euro of AV taxable income
+SoliOnAV        = calcSoli(estBaseIncome + AV_Taxable) − calcSoli(estBaseIncome)
+                  // calcSoli implements §3 Abs. 3 / §4 SolzG Freigrenze + Milderungszone — see §3.4.1.
+                  // For typical retiree zvE (ESt < €19,950) SoliOnAV is 0; for high earners it phases in.
+EstRate         = TaxOnAV / AV_Taxable                             // ESt rate per euro of AV taxable income
+SoliRate        = SoliOnAV / AV_Taxable                            // Soli rate per euro of AV taxable income
+TaxRateOnTaxable = EstRate × (1 + KiSt_rate) + SoliRate            // KiSt is on ESt only; Soli adds on top
 
-// Per-bucket net (Kirchensteuer added on top of the income tax in both cases):
-Netto_Gefördert       = Monatlich_Gefördert   × (1 − AvPayoutTaxRate × (1 + KiSt_rate))
-Netto_Ungefördert     = Monatlich_Ungefördert × (1 − 0.17 × AvPayoutTaxRate × (1 + KiSt_rate))
+// Per-bucket net:
+Netto_Gefördert       = Monatlich_Gefördert   × (1 − TaxRateOnTaxable)
+Netto_Ungefördert     = Monatlich_Ungefördert × (1 − 0.17 × TaxRateOnTaxable)
 ```
 
 The tax on the AV payout is computed via the exact §32a polynomial (not the
 marginal rate on the last euro), and is incremental — only the additional tax
 attributable to the AV-derived taxable income is allocated to the AV buckets.
 The user's pension and other income retain their own implicit tax burden.
+
+### 3.4.1 Solidaritätszuschlag (post-2021 reform)
+
+Soli is governed by §3 + §4 SolzG. The 2021 *Gesetz zur Rückführung des Solidaritätszuschlags
+1995* introduced a Freigrenze and a Milderungszone for Soli on **assessed Einkommensteuer**;
+Soli on **Kapitalertragsteuer** (collected at source) was left unchanged.
+
+```
+                                       Soli on assessed ESt          Soli on KapESt
+                                       (§3 Abs. 1 Nr. 1 SolzG)        (§3 Abs. 1 Nr. 5 SolzG)
+ESt ≤ Freigrenze (€19,950 single):     0                              5.5 % × KapESt   ← always
+ESt in Milderungszone:                 min(0.055 × ESt,               5.5 % × KapESt
+                                           0.119 × (ESt − Freigrenze))
+ESt above Milderungszone:              0.055 × ESt                    5.5 % × KapESt
+```
+
+**Why the asymmetry**: Soli on KapESt is withheld at the bank/broker (Zinsabschlag); they
+have no view of the saver's overall ESt and therefore cannot apply the Freigrenze. The
+saver can reclaim it at year-end if their total ESt sits below the Freigrenze, but that
+reclaim path is not modeled. Soli on KapESt is therefore always charged at the full 5.5 %
+rate, which is what `CostSettings.abgeltungssteuersatz` reflects.
+
+**Calculator implementation**:
+
+- **AV-Depot** (assessed ESt): `tax.calcSoli(est)` applies the Freigrenze + Milderungszone,
+  used incrementally in the payout-phase computation. For the calculator's default presets
+  (combined retirement zvE €20–55k, ESt €2–13k) Soli is 0. For custom-rendite or custom-
+  brutto scenarios that push retirement zvE above ~€60–70k (single filer, ESt > Freigrenze),
+  Soli phases in — first via the Milderungszone, then linearly at 5.5 %.
+- **ETF-Depot** (KapESt): Soli is always 5.5 % × KapESt and is bundled into
+  `CostSettings.abgeltungssteuersatz` (1.375 % of taxable gain without KiSt; 1.345 %
+  with 9 % KiSt).
+
+**Simplifications**:
+
+- **Single-filer Freigrenze only** — Zusammenveranlagung (joint filing, 2× Freigrenze)
+  is not modeled. A married high-earner with a non-earning spouse would have a much
+  higher Freigrenze.
+- **Soli Freigrenze 2025 value (€19,950) used for the 2026 horizon** — the 2026 figure
+  is expected to index slightly upward (~€20,350 per Inflationsausgleichsgesetz patterns)
+  but had not been confirmed at the time of implementation.
+- **No KapESt Soli reclaim** — high-Freigrenze users with ETF KapESt-Soli withheld at
+  source could reclaim it via Veranlagung. The calculator charges KapESt-Soli always.
 
 ---
 

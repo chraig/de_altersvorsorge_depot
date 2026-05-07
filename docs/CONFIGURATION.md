@@ -52,6 +52,9 @@ Located in: `lib/services/domain/calculator_service.dart`
 | Vorabpauschale Basisertrag rate | 1.603% p.a. (= 0.7 × 2.29% Basiszins, 2024) | §18 Abs. 1 InvStG; Basiszins per §203 Abs. 2 BGB (BMF, varies yearly) | `CalcConstants.vorabpauschaleBasisertragsRate` |
 | → effective VP drag (after Teilfreistellung × Abgeltungssteuersatz) | ~0.296% (no KiSt) / ~0.314% (9% KiSt) | Computed dynamically per user | `simulateETFAccumulation()` |
 | Retirement tax | Incremental §32a on combined income | Progressive formula | `simulateAV()` |
+| Soli Freigrenze (single filer, on assessed ESt) | €19,950 | §3 Abs. 3 SolzG (2025 value per Steuerfortentwicklungsgesetz) | `CalcConstants.soliFreigrenze` |
+| Soli full rate | 5.5% × ESt | §4 Satz 1 SolzG | `CalcConstants.soliVollSatz` |
+| Soli Milderungszone cap | 11.9% × (ESt − Freigrenze) | §4 Satz 2 SolzG | `CalcConstants.soliMilderungsSatz` |
 
 ### To update tax brackets:
 

@@ -12,13 +12,15 @@ import 'package:avdepot_rechner/services/domain/tax_module.dart';
 /// All monetary amounts are EUR/month.
 class AVPayout {
   final double monatlicheAuszahlung;   // gross monthly payout (gef + ungef summed)
-  final double nettoMonatlich;         // net monthly payout after retirement income tax + KiSt
-  final double grenzsteuersatzRente;   // [ratio] incremental rate on AV taxable income
+  final double nettoMonatlich;         // net monthly payout after ESt + Soli + KiSt
+  final double grenzsteuersatzRente;   // [ratio] incremental ESt rate per euro of AV taxable income
+  final double soliRatePayout;         // [ratio] incremental Soli rate per euro of AV taxable income (0 if ESt ≤ §3 Abs. 3 SolzG Freigrenze)
 
   const AVPayout({
     required this.monatlicheAuszahlung,
     required this.nettoMonatlich,
     required this.grenzsteuersatzRente,
+    required this.soliRatePayout,
   });
 }
 
@@ -115,8 +117,8 @@ class AnnuityAVPayout implements AVPayoutModule {
     final jahresGefoerdert = monatlichGefoerdert * 12;
     final jahresUngefoerdert = monatlichUngefoerdert * 12;
 
-    // Incremental tax on AV-derived taxable income, computed against the
-    // user's full retirement income (pension + other + AV taxable).
+    // Incremental ESt + Soli on AV-derived taxable income, computed against
+    // the user's full retirement income (pension + other + AV taxable).
     final effectiveRente = pension.estimateMonthlyPension(person, incomeDev);
     final baseIncome = effectiveRente * 12 + person.sonstigeEinkuenfte;
     final avTaxableTotal =
@@ -125,23 +127,32 @@ class AnnuityAVPayout implements AVPayoutModule {
     final taxOnBase = tax.calcEinkommensteuer(baseIncome);
     final taxOnCombined = tax.calcEinkommensteuer(combinedIncome);
     final taxOnAvPayout = taxOnCombined - taxOnBase;
-    final avPayoutTaxRate =
-        avTaxableTotal > 0 ? taxOnAvPayout / avTaxableTotal : 0.0;
+    // Soli is incremental too, applied through the §3 Abs. 3 / §4 SolzG
+    // Freigrenze + Milderungszone — so for typical retiree zvE (ESt below
+    // €19,950) Soli stays 0; for high-income retirees it phases in.
+    final soliOnBase = tax.calcSoli(taxOnBase);
+    final soliOnCombined = tax.calcSoli(taxOnCombined);
+    final soliOnAvPayout = soliOnCombined - soliOnBase;
+    final estRate = avTaxableTotal > 0 ? taxOnAvPayout / avTaxableTotal : 0.0;
+    final soliRate = avTaxableTotal > 0 ? soliOnAvPayout / avTaxableTotal : 0.0;
 
-    // Apply the rate per bucket (gef = full payout, ungef = 17% of payout)
-    // and add KiSt on top.
+    // Apply per bucket (gef = 100 % taxable, ungef = 17 % Ertragsanteil).
+    // KiSt is 9 % surcharge on ESt only (§ 51a EStG); Soli is added on top
+    // (Soli is not a base for KiSt). Combined rate per euro of taxable income:
+    //   estRate × (1 + KiSt) + soliRate
     final kirchensteuerFaktor = 1 + costs.kirchensteuerRate;
-    final nettoGefoerdert =
-        monatlichGefoerdert * (1 - avPayoutTaxRate * kirchensteuerFaktor);
+    final taxRateOnTaxable = estRate * kirchensteuerFaktor + soliRate;
+    final nettoGefoerdert = monatlichGefoerdert * (1 - taxRateOnTaxable);
     final nettoUngefoerdert = accumulation.depotUngefoerdert > 0
         ? monatlichUngefoerdert *
-            (1 - CalcConstants.ertragsanteil67 * avPayoutTaxRate * kirchensteuerFaktor)
+            (1 - CalcConstants.ertragsanteil67 * taxRateOnTaxable)
         : 0.0;
 
     return AVPayout(
       monatlicheAuszahlung: monatlichGefoerdert + monatlichUngefoerdert,
       nettoMonatlich: nettoGefoerdert + nettoUngefoerdert,
-      grenzsteuersatzRente: avPayoutTaxRate,
+      grenzsteuersatzRente: estRate,
+      soliRatePayout: soliRate,
     );
   }
 }

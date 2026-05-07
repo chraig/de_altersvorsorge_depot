@@ -905,16 +905,22 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
         etfFormula: '= lifetime gain × (1 − 30% TF) × ${Fmt.pct(costs.abgeltungssteuersatz)} − ${Fmt.eur(etf.vorabpauschaleGesamt)} VP credit (§19 Abs. 1 InvStG)'),
 
       // ── Tax-type breakdown (sums across savings + payout phases) ──
-      // AV: §32a Einkommensteuer (with optional KiSt surcharge).
-      // ETF: Abgeltungssteuer (KapESt 25 %) + Soli (5.5 % × KapESt) + optional KiSt
-      //      — components derived from costs.abgeltungssteuersatz per §32d Abs. 1
-      //      Satz 4 EStG. Soli is NOT modeled on AV's §32a payout tax (Freigrenze
-      //      typically clears retirees with mid-income).
+      // AV: §32a Einkommensteuer + Soli (with §3 Abs. 3 / §4 SolzG Freigrenze
+      //     + Milderungszone — typically 0 for retiree zvE) + optional KiSt.
+      // ETF: Abgeltungssteuer (KapESt) + Soli (always, no Freigrenze on KapESt
+      //      per §3 Abs. 1 Nr. 5 SolzG) + optional KiSt — components derived
+      //      from costs.abgeltungssteuersatz per §32d Abs. 1 Satz 4 EStG.
       () {
         final kistRate = costs.kirchensteuerRate;
         final avTotal = avTaxPerMonth * auszDauer * 12;
-        final avEStPart = avTotal / (1 + kistRate);
-        final avKiStPart = avTotal - avEStPart;
+        // AV: split avTotal into ESt + Soli + KiSt by their per-euro rates.
+        // Combined rate per euro of taxable income = estRate × (1 + KiSt) + soliRate.
+        final estRate = av.grenzsteuersatzRente;
+        final soliRateAv = av.soliRatePayout;
+        final avTotalRate = estRate * (1 + kistRate) + soliRateAv;
+        final avEStPart = avTotalRate > 0 ? avTotal * estRate / avTotalRate : 0.0;
+        final avSoliPart = avTotalRate > 0 ? avTotal * soliRateAv / avTotalRate : 0.0;
+        final avKiStPart = avTotalRate > 0 ? avTotal * estRate * kistRate / avTotalRate : 0.0;
 
         final kapEstRate = 1 / (4 + kistRate);
         final etfTotal = etf.steuerAufGewinn;
@@ -933,9 +939,11 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
             avFormula: 'ETF-only — AV gains are taxed via §32a (Einkommensteuer)',
             etfFormula: '= 1/(4+k) × taxable gains, applied to VP + sale tax (§32d)'),
           _pairFormula(s.bdTaxSoli,
-            '—', Fmt.eur(etfSoli),
-            avFormula: 'Not modeled on AV — Soli-Freigrenze typically clears retiree zvE',
-            etfFormula: '= 5.5 % × KapESt (§4 SolZG)'),
+            Fmt.eur(avSoliPart), Fmt.eur(etfSoli),
+            avFormula: avSoliPart > 0
+                ? '= 5.5 % × ESt (§4 SolzG, Milderungszone may apply)'
+                : '0 — assessed ESt below Freigrenze (§3 Abs. 3 SolzG, ≈ €19,950 single)',
+            etfFormula: '= 5.5 % × KapESt (always — no Freigrenze on KapESt at source)'),
           if (costs.kirchensteuerpflichtig)
             _pairFormula(s.bdTaxKiSt,
               Fmt.eur(avKiStPart), Fmt.eur(etfKiSt),

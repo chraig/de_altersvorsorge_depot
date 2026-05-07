@@ -89,6 +89,38 @@ void main() {
     });
   });
 
+  group('Soli (§3 Abs. 3 + §4 SolzG)', () {
+    test('ESt at or below Freigrenze (€19,950) → Soli is 0', () {
+      expect(tax.calcSoli(0), 0);
+      expect(tax.calcSoli(10000), 0);
+      expect(tax.calcSoli(19950), 0);
+    });
+
+    test('Just above Freigrenze → Milderungszone caps Soli well below 5.5 %', () {
+      // ESt = €20,000 → Δ = 50; cap = 0.119 × 50 = €5.95
+      // Voll Soli = 0.055 × 20,000 = €1,100. So actual Soli = €5.95.
+      expect(tax.calcSoli(20000), closeTo(5.95, 0.01));
+      // ESt = €25,000 → Δ = 5,050; cap = 0.119 × 5,050 = €600.95
+      // Voll Soli = 0.055 × 25,000 = €1,375. So actual Soli = €600.95.
+      expect(tax.calcSoli(25000), closeTo(600.95, 0.01));
+    });
+
+    test('Milderungszone ends at ESt ≈ 1.859 × Freigrenze (€37,087)', () {
+      // At the transition point: Voll = Milderung.
+      // Voll = 0.055 × 37,086.9 = 2,039.78
+      // Milderung = 0.119 × (37,086.9 − 19,950) = 0.119 × 17,136.9 = 2,039.29
+      // → returns the smaller (≈ 2,039.29 from Milderung clause)
+      final transition = tax.calcSoli(37086.9);
+      expect(transition, closeTo(2039.29, 1));
+    });
+
+    test('Above Milderungszone → full 5.5 % Soli', () {
+      expect(tax.calcSoli(50000), closeTo(2750, 0.01));   // 0.055 × 50,000
+      expect(tax.calcSoli(100000), closeTo(5500, 0.01));  // 0.055 × 100,000
+      expect(tax.calcSoli(200000), closeTo(11000, 0.01));
+    });
+  });
+
   group('Günstigerprüfung', () {
     test('high income benefits from Sonderausgabenabzug', () {
       // €1800 contribution + €540 subsidy, 42% rate

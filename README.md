@@ -361,7 +361,8 @@ Payout phase:
 | Inflation | Constant annual rate | Variable |
 | Tax brackets | Static (2026 values per Steuerfortentwicklungsgesetz) | Adjusted ~annually |
 | Kirchensteuer | Yes/No toggle, rate fixed at 9% (dominant German rate) | Bayern/BaWü actually pay 8% — slightly overstated. Affects both AV payout tax and Abgeltungssteuer. |
-| Soli | Included in base rate | May change |
+| Soli on AV (§32a payout) | §3 Abs. 3 / §4 SolzG Freigrenze + Milderungszone modeled (Freigrenze €19,950 single, 2025 value); 0 for typical retiree zvE | 2026 Freigrenze likely ≈ €20,350 (proportional indexation) — pending official BMF confirmation. Joint filing (2× Freigrenze) not modeled. |
+| Soli on ETF (KapESt) | Always 5.5 % × KapESt (no Freigrenze on KapESt at source per §3 Abs. 1 Nr. 5 SolzG), bundled in `abgeltungssteuersatz` | Saver can reclaim at year-end if their assessed ESt is below the Freigrenze — reclaim path not modeled |
 | Vorabpauschale rate | Constant Basiszins ~2.29 % (2024); KiSt-aware via Abgeltungssteuersatz, gives ~0.296 % drag (no KiSt) / ~0.314 % (9 % KiSt) | Basiszins set yearly by BMF, varies dramatically (0 % in 2022, ~3.20 % in 2026 prelim) |
 | Vorabpauschale cap | §18 Abs. 3 InvStG cap on Wertsteigerung not enforced — VP charged at full rate every year | In years with negative or near-zero return, VP must be reduced or zero. Doesn't bind under default macros (rendite ≥ 3 %) but matters for custom low-rendite scenarios. |
 | ETF distributions | Assumed = 0 (thesaurierender / accumulating ETF) | Distributing ETFs: distributions taxed separately; VP correspondingly reduced. Calculator wrong for distributing products. |

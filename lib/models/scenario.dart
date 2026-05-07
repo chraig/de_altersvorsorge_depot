@@ -372,7 +372,8 @@ class AVResult {
   final double monatlicheAuszahlung;  // [EUR/month] gross monthly payout (core→output conversion)
   final double nettoMonatlich;        // [EUR/month] net monthly payout after retirement tax
   final double grenzsteuersatz;       // [ratio] marginal tax rate during working life
-  final double grenzsteuersatzRente;  // [ratio] marginal tax rate on combined retirement income
+  final double grenzsteuersatzRente;  // [ratio] marginal ESt rate on AV taxable income at retirement
+  final double soliRatePayout;        // [ratio] incremental Soli rate on AV taxable income (0 if ESt ≤ §3 Abs. 3 SolzG Freigrenze)
   final double wertzuwachs;           // [EUR] capital gains (endkapital - eigen - zulagen)
   final List<YearlyDataPoint> jahresWerte;
 
@@ -386,6 +387,7 @@ class AVResult {
     required this.nettoMonatlich,
     required this.grenzsteuersatz,
     required this.grenzsteuersatzRente,
+    required this.soliRatePayout,
     required this.wertzuwachs,
     required this.jahresWerte,
   });
