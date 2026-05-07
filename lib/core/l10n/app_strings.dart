@@ -533,8 +533,8 @@ class StringsEn extends AppStrings {
   String get tipTeilfreistellung => '30% of your ETF gains are tax-exempt — but only for Aktienfonds (equity funds with >50% equity per §2 Abs. 6 InvStG). Mischfonds get 15%, Immobilienfonds 60–80%, and bond/money-market ETFs get 0%. The calculator assumes a pure equity ETF.';
   String get tipFinalCapital => 'Capital at retirement (end of savings phase). The depot is fully paid out as a monthly Auszahlplan over the payout phase. During those years the depot keeps compounding at the same return, so the total amount you receive over the whole payout phase (Total gross payout, below) is HIGHER than this capital.';
 
-  String avYieldsMore(String amount) => 'AV-Depot yields $amount more.';
-  String etfYieldsMore(String amount) => 'ETF Portfolio yields $amount more.';
+  String avYieldsMore(String amount) => 'AV-Depot yields $amount more (total net payout).';
+  String etfYieldsMore(String amount) => 'ETF Portfolio yields $amount more (total net payout).';
   String get etfWinsExplanation =>
     'Why? The AV-Depot subsidies are capped at €1,800/yr contributions. '
     'Above that, additional savings receive no subsidy but the entire payout is '
@@ -943,8 +943,8 @@ class StringsDe extends AppStrings {
   String get tipTeilfreistellung => '30 % Ihrer ETF-Gewinne sind steuerfrei — aber nur bei Aktienfonds (>50 % Kapitalbeteiligungen gem. §2 Abs. 6 InvStG). Mischfonds: 15 %, Immobilienfonds: 60–80 %, Anleihe-/Geldmarkt-ETFs: 0 %. Der Rechner unterstellt einen reinen Aktien-ETF.';
   String get tipFinalCapital => 'Kapital bei Renteneintritt (Ende Sparphase). Das Depot wird über die Auszahlphase als monatlicher Auszahlplan vollständig ausgezahlt. Während dieser Zeit wächst das Depot weiter mit derselben Rendite — die Gesamtsumme über die Auszahlphase (Bruttoauszahlung gesamt, siehe unten) ist daher HÖHER als dieses Kapital.';
 
-  String avYieldsMore(String amount) => 'AV-Depot bringt $amount mehr.';
-  String etfYieldsMore(String amount) => 'ETF-Depot bringt $amount mehr.';
+  String avYieldsMore(String amount) => 'AV-Depot bringt $amount mehr (Nettoauszahlung gesamt).';
+  String etfYieldsMore(String amount) => 'ETF-Depot bringt $amount mehr (Nettoauszahlung gesamt).';
   String get etfWinsExplanation =>
     'Warum? Die AV-Depot-Zulagen sind auf max. 1.800 €/Jahr Eigenbeitrag begrenzt. '
     'Darüber hinaus gibt es keine Förderung, aber die gesamte Auszahlung wird '

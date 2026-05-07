@@ -54,7 +54,14 @@ class _CalculatorPageState extends State<CalculatorPage> with TickerProviderStat
         final etf = state.etfResult(s);
         final sub = state.subsidyBreakdown;
         final macro = state.effectiveMacro(s);
-        final diff = av.endkapital - etf.endkapital;
+        // Headline comparison uses LIFETIME NET PAYOUT (cash actually reaching
+        // the user across the full Auszahlphase) rather than gross capital at
+        // retirement: endkapital is pre-tax for AV and post-VP-pre-sale-tax for
+        // ETF, so it isn't apples-to-apples. Lifetime net is the apples-to-apples
+        // economic comparison and matches the "Total net payout" row in the
+        // breakdown.
+        final auszMonths = state.currentPerson.auszahlungsDauer * 12;
+        final diff = av.nettoMonatlich * auszMonths - etf.nachSteuer;
 
         final compact = context.isCompact;
 
