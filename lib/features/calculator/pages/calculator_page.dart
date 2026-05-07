@@ -896,6 +896,46 @@ class _CalculationBreakdownState extends State<_CalculationBreakdown> with Ticke
         Fmt.eur(avTaxPerMonth * auszDauer * 12), Fmt.eur(etfSaleTaxLifetime),
         avFormula: '= ${Fmt.eur(av.monatlicheAuszahlung)}/mo × ${Fmt.pct(av.grenzsteuersatzRente)} × $months mo (§32a + KiSt)',
         etfFormula: '= lifetime gain × (1 − 30% TF) × ${Fmt.pct(costs.abgeltungssteuersatz)} − ${Fmt.eur(etf.vorabpauschaleGesamt)} VP credit (§19 Abs. 1 InvStG)'),
+
+      // ── Tax-type breakdown (sums across savings + payout phases) ──
+      // AV: §32a Einkommensteuer (with optional KiSt surcharge).
+      // ETF: Abgeltungssteuer (KapESt 25 %) + Soli (5.5 % × KapESt) + optional KiSt
+      //      — components derived from costs.abgeltungssteuersatz per §32d Abs. 1
+      //      Satz 4 EStG. Soli is NOT modeled on AV's §32a payout tax (Freigrenze
+      //      typically clears retirees with mid-income).
+      () {
+        final kistRate = costs.kirchensteuerRate;
+        final avTotal = avTaxPerMonth * auszDauer * 12;
+        final avEStPart = avTotal / (1 + kistRate);
+        final avKiStPart = avTotal - avEStPart;
+
+        final kapEstRate = 1 / (4 + kistRate);
+        final etfTotal = etf.steuerAufGewinn;
+        final abgSt = costs.abgeltungssteuersatz;
+        final etfKapEst = abgSt > 0 ? etfTotal * kapEstRate / abgSt : 0.0;
+        final etfSoli = etfKapEst * 0.055;
+        final etfKiSt = etfKapEst * kistRate;
+
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _pairFormula(s.bdTaxIncomeTax,
+            Fmt.eur(avEStPart), '—',
+            avFormula: '= AV taxable income × §32a marginal',
+            etfFormula: 'AV-only — ETF gains are taxed via Abgeltungssteuer'),
+          _pairFormula(s.bdTaxAbgSt,
+            '—', Fmt.eur(etfKapEst),
+            avFormula: 'ETF-only — AV gains are taxed via §32a (Einkommensteuer)',
+            etfFormula: '= 1/(4+k) × taxable gains, applied to VP + sale tax (§32d)'),
+          _pairFormula(s.bdTaxSoli,
+            '—', Fmt.eur(etfSoli),
+            avFormula: 'Not modeled on AV — Soli-Freigrenze typically clears retiree zvE',
+            etfFormula: '= 5.5 % × KapESt (§4 SolZG)'),
+          if (costs.kirchensteuerpflichtig)
+            _pairFormula(s.bdTaxKiSt,
+              Fmt.eur(avKiStPart), Fmt.eur(etfKiSt),
+              avFormula: '= 9 % × §32a tax on AV taxable income',
+              etfFormula: '= 9 % × KapESt'),
+        ]);
+      }(),
       _pairFormula(s.bdNetPayoutTotal,
         Fmt.eur(av.nettoMonatlich * auszDauer * 12), Fmt.eur(etf.nachSteuer), bold: true,
         avFormula: '= ${Fmt.eur(av.monatlicheAuszahlung * months)} − ${Fmt.eur(avTaxPerMonth * months)}',

@@ -138,6 +138,10 @@ abstract class AppStrings {
   String get bdTotalTaxPaid;
   String get bdTaxSavingsPhase;
   String get bdTaxPayoutPhase;
+  String get bdTaxIncomeTax;
+  String get bdTaxAbgSt;
+  String get bdTaxSoli;
+  String get bdTaxKiSt;
   String get bdGrossPayoutTotal;
   String get bdNetPayoutTotal;
   String get bdContribTaxFree;
@@ -492,6 +496,10 @@ class StringsEn extends AppStrings {
   String get bdTotalTaxPaid => 'Total tax paid';
   String get bdTaxSavingsPhase => '↳ during savings phase';
   String get bdTaxPayoutPhase => '↳ during payout phase';
+  String get bdTaxIncomeTax => '↳ Income tax (§32a)';
+  String get bdTaxAbgSt => '↳ Abgeltungssteuer (KapESt)';
+  String get bdTaxSoli => '↳ Solidarity surcharge';
+  String get bdTaxKiSt => '↳ Church tax';
   String get bdGrossPayoutTotal => 'Total gross payout';
   String get bdNetPayoutTotal => 'Total net payout';
   String get bdContribTaxFree => 'Contributions returned tax-free';
@@ -899,6 +907,10 @@ class StringsDe extends AppStrings {
   String get bdTotalTaxPaid => 'Steuer gesamt';
   String get bdTaxSavingsPhase => '↳ in Sparphase';
   String get bdTaxPayoutPhase => '↳ in Auszahlphase';
+  String get bdTaxIncomeTax => '↳ Einkommensteuer (§32a)';
+  String get bdTaxAbgSt => '↳ Abgeltungssteuer (KapESt)';
+  String get bdTaxSoli => '↳ Solidaritätszuschlag';
+  String get bdTaxKiSt => '↳ Kirchensteuer';
   String get bdGrossPayoutTotal => 'Bruttoauszahlung gesamt';
   String get bdNetPayoutTotal => 'Nettoauszahlung gesamt';
   String get bdContribTaxFree => 'Beiträge steuerfrei zurück';
