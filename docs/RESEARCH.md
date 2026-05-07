@@ -94,6 +94,44 @@ Kinderzulage = min(Eigenbeitrag, 300) × Anzahl_Kinder
 **Change from first draft**: Originally required €100/mo for full Kinderzulage;
 Koalitionseinigung lowered threshold to €25/mo.
 
+#### Single-claimant assumption (parent count)
+
+Each child generates exactly **one** Kinderzulage. The calculator implements
+this as `min(Eigenbeitrag, 300) × Anzahl_Kinder` — i.e. it assumes the user
+is the **sole** Kinderzulagen-recipient for the children entered.
+
+**Legal context.** The Altersvorsorgereformgesetz (Drucksache 21/4088,
+Koalitionseinigung CDU/CSU + SPD 25.03.2026) republishes the Kinderzulage
+amount (€300/child, €25/mo threshold) but does not — in the material on
+file for this calculator — explicitly republish the parent-allocation rule.
+The natural reading carries over the Riester precedent in **§85 EStG**:
+
+- Kinderzulage is awarded to **one** parent — the one who receives the
+  Kindergeld.
+- For married couples filing together with two contracts, the Zulage is
+  allocated to the mother by default, or to the father on joint request
+  (`Zulageantrag`).
+- It cannot be claimed twice for the same child between two contracts.
+
+The calculator's formula is therefore correct for:
+
+- Single-parent households, or
+- Two-parent households where only the user (modeled person) holds an
+  AV-Depot, or
+- Two-parent households where both partners hold an AV-Depot but the user
+  is the claiming parent for the children entered (the other partner
+  enters 0).
+
+It would **double-count** if both partners individually ran the calculator
+and each entered the full child count for their own contract. The UI
+hints (`hintChildren`, `tipKinderzulage`) make this explicit: enter only
+the children for whom YOU claim the Kinderzulage.
+
+If the final published §89 Abs. 2 EStG-E text deviates from the Riester
+precedent (e.g. allowing both partners to receive a partial Zulage per
+child), the formula is localized to `AVDepotSubsidy2027.calcKinderzulage`
+in `lib/services/domain/subsidy_module.dart` — a single-line change.
+
 ### 2.3 Berufseinsteigerbonus
 
 **Legal basis**: §89 Abs. 3 EStG-E

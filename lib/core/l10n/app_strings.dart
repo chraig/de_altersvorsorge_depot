@@ -134,10 +134,10 @@ abstract class AppStrings {
   String get bdEffectiveTaxRateEtfFormula;
   String get bdTaxOnPayoutYr;
   String get bdUngefTreatment;
-  String bdLifetimeTotal(int years);
+  String bdLifetimeTotal(int fromAge, int toAge);
   String get bdTotalTaxPaid;
-  String get bdDepotBeforeTax;
-  String get bdDepotAfterTax;
+  String get bdGrossPayoutTotal;
+  String get bdNetPayoutTotal;
   String get bdContribTaxFree;
   String get bdContribTaxFreeAV;
   String get bdMonthlyNet;
@@ -390,7 +390,7 @@ class StringsEn extends AppStrings {
   String payoutDurationHint(int years) => 'Payout duration: $years years (until age 85)';
   String get hintMonthlySavings => 'Your monthly contribution. Subsidized up to €150/mo (€1,800/yr). Max €570/mo (€6,840/yr) per contract. Above €150, no subsidy but preferential tax on payout.';
   String get hintGrossSalary => 'Your yearly gross income before taxes. Determines your tax rate and subsidy eligibility.';
-  String get hintChildren => 'Number of children eligible for Kindergeld. Each child adds up to €300/yr subsidy. Ends at age 25 (education) or 18.';
+  String get hintChildren => 'Number of children for whom YOU claim the Kinderzulage. Each child generates exactly one Kinderzulage (up to €300/yr); in two-parent households only one contract receives it. Ends at age 25 (education) or 18.';
   String childAgeLabel(int index) => 'Age of child ${index + 1}';
   String get hintChildAge => 'Current age. Kinderzulage ends when child turns 25 (in education) or 18.';
   String get childStudyYes => 'Education (until 25)';
@@ -458,7 +458,7 @@ class StringsEn extends AppStrings {
   String get bdTotalSubsidies => 'Total subsidies';
   String get bdTaxRefundTotal => 'Tax refund total (→ bank)';
   String get bdTotalIntoDepot => 'Total into depot';
-  String get bdFinalCapital => 'Final Capital (total)';
+  String get bdFinalCapital => 'Capital at Retirement';
   String get bdOwnContrib => 'thereof own contributions';
   String get bdSubsidiesReceived => 'thereof subsidies';
   String get bdCapGains => 'thereof capital gains';
@@ -486,10 +486,10 @@ class StringsEn extends AppStrings {
   String get bdEffectiveTaxRateEtfFormula => '25% KapESt + 5.5% Soli';
   String get bdTaxOnPayoutYr => 'Tax on depot payout/yr';
   String get bdUngefTreatment => 'Ungefördert treatment';
-  String bdLifetimeTotal(int years) => 'Total Payout (over $years years)';
+  String bdLifetimeTotal(int fromAge, int toAge) => 'Total Payout (age $fromAge–$toAge)';
   String get bdTotalTaxPaid => 'Total tax paid';
-  String get bdDepotBeforeTax => 'Depot before tax (total)';
-  String get bdDepotAfterTax => 'Depot after tax (total)';
+  String get bdGrossPayoutTotal => 'Total gross payout';
+  String get bdNetPayoutTotal => 'Total net payout';
   String get bdContribTaxFree => 'Contributions returned tax-free';
   String get bdContribTaxFreeAV => 'No';
   String get bdMonthlyNet => 'Monthly Net from Depot';
@@ -512,14 +512,14 @@ class StringsEn extends AppStrings {
 
   // Info Tooltips
   String get tipGrundzulage => 'Government matches your contributions: 50% on the first €360/yr and 25% on €361–1,800/yr. Maximum €540/yr. Goes directly into your depot.';
-  String get tipKinderzulage => 'Up to €300/child/year (1:1 match from €25/mo). Child must be kindergeldberechtigt — ends at age 25 (in education) or 18. Subsidy stops when the child ages out.';
+  String get tipKinderzulage => 'Up to €300/child/year (1:1 match from €25/mo). Child must be kindergeldberechtigt — ends at age 25 (in education) or 18. Each child generates exactly one Kinderzulage; in two-parent households, only one of the two contracts receives it (single-claimant assumption per Riester precedent §85 EStG; final allocation rule for the AV-Depot pending). Enter the number of children for whom YOU are the claiming parent.';
   String get tipBerufseinsteigerbonus => 'One-time €200 bonus in your first contract year if you are under 25. No ongoing payments — just the first year.';
   String get tipGuenstigerpruefung => 'The tax office automatically checks: is the tax deduction on your contributions worth more than the subsidies? If yes, you get the difference as a tax refund — but to your bank account, NOT into the depot.';
   String get tipGefoerdert => 'Subsidized contributions (up to €1,800/yr): grow tax-free, but the ENTIRE payout in retirement is taxed at your income tax rate (nachgelagerte Besteuerung).';
   String get tipUngefoerdert => 'Unsubsidized contributions (above €1,800/yr): no subsidies, but still tax-free growth during savings. Payout taxed under Ertragsanteilbesteuerung (§22 Nr. 1 Satz 3a EStG): only 17% of each payout is taxed at your income rate (assumes age-67 entry).';
   String get tipVorabpauschale => 'Annual tax on unrealized ETF gains, calculated from the Basiszins (ECB reference rate). Simplified here as a fixed drag on returns. Does NOT apply inside the AV-Depot.';
   String get tipTeilfreistellung => '30% of your ETF gains are tax-exempt — but only for Aktienfonds (equity funds with >50% equity per §2 Abs. 6 InvStG). Mischfonds get 15%, Immobilienfonds 60–80%, and bond/money-market ETFs get 0%. The calculator assumes a pure equity ETF.';
-  String get tipFinalCapital => 'Capital at retirement (end of savings phase). The depot is fully paid out as a monthly Auszahlplan over the payout phase. During those years the depot keeps compounding at the same return, so the total amount you receive over the whole payout phase (Depot before tax, below) is HIGHER than this Endkapital.';
+  String get tipFinalCapital => 'Capital at retirement (end of savings phase). The depot is fully paid out as a monthly Auszahlplan over the payout phase. During those years the depot keeps compounding at the same return, so the total amount you receive over the whole payout phase (Total gross payout, below) is HIGHER than this capital.';
 
   String avYieldsMore(String amount) => 'AV-Depot yields $amount more.';
   String etfYieldsMore(String amount) => 'ETF Portfolio yields $amount more.';
@@ -799,7 +799,7 @@ class StringsDe extends AppStrings {
   String payoutDurationHint(int years) => 'Auszahlungsdauer: $years Jahre (bis Alter 85)';
   String get hintMonthlySavings => 'Ihr monatlicher Beitrag. Gefördert bis 150 €/Mt (1.800 €/J). Max 570 €/Mt (6.840 €/J) pro Vertrag. Über 150 € keine Zulage, aber begünstigte Besteuerung bei Auszahlung.';
   String get hintGrossSalary => 'Ihr jährliches Bruttoeinkommen vor Steuern. Bestimmt Ihren Steuersatz und die Förderberechtigung.';
-  String get hintChildren => 'Anzahl kindergeldberechtigter Kinder. Jedes Kind bringt bis zu 300 €/Jahr Zulage. Endet mit 25 (Ausbildung) oder 18.';
+  String get hintChildren => 'Anzahl der Kinder, für die SIE die Kinderzulage beanspruchen. Jedes Kind erzeugt genau eine Kinderzulage (bis 300 €/Jahr); bei zwei Eltern erhält nur ein Vertrag die Zulage je Kind. Endet mit 25 (Ausbildung) oder 18.';
   String childAgeLabel(int index) => 'Alter Kind ${index + 1}';
   String get hintChildAge => 'Aktuelles Alter. Kinderzulage endet, wenn das Kind 25 (in Ausbildung) oder 18 wird.';
   String get childStudyYes => 'Ausbildung (bis 25)';
@@ -863,7 +863,7 @@ class StringsDe extends AppStrings {
   String get bdTotalSubsidies => 'Zulagen gesamt';
   String get bdTaxRefundTotal => 'Steuererstattung gesamt (→ Bank)';
   String get bdTotalIntoDepot => 'Ins Depot gesamt';
-  String get bdFinalCapital => 'Endkapital (gesamt)';
+  String get bdFinalCapital => 'Kapital bei Rentenbeginn';
   String get bdOwnContrib => 'davon Eigenbeiträge';
   String get bdSubsidiesReceived => 'davon Zulagen';
   String get bdCapGains => 'davon Kapitalerträge';
@@ -891,10 +891,10 @@ class StringsDe extends AppStrings {
   String get bdEffectiveTaxRateEtfFormula => '25 % KapESt + 5,5 % Soli';
   String get bdTaxOnPayoutYr => 'Steuer auf Depotauszahlung/J';
   String get bdUngefTreatment => 'Besteuerung ungefördert';
-  String bdLifetimeTotal(int years) => 'Gesamtauszahlung (über $years Jahre)';
+  String bdLifetimeTotal(int fromAge, int toAge) => 'Gesamtauszahlung (Alter $fromAge–$toAge)';
   String get bdTotalTaxPaid => 'Steuer gesamt';
-  String get bdDepotBeforeTax => 'Depot vor Steuer (gesamt)';
-  String get bdDepotAfterTax => 'Depot nach Steuer (gesamt)';
+  String get bdGrossPayoutTotal => 'Bruttoauszahlung gesamt';
+  String get bdNetPayoutTotal => 'Nettoauszahlung gesamt';
   String get bdContribTaxFree => 'Beiträge steuerfrei zurück';
   String get bdContribTaxFreeAV => 'Nein';
   String get bdMonthlyNet => 'Monatlich netto aus Depot';
@@ -916,14 +916,14 @@ class StringsDe extends AppStrings {
   String get hintAssumptions => 'Diese Optionen beeinflussen die Berechnung, hängen aber von individuellen Umständen ab.';
 
   String get tipGrundzulage => 'Der Staat bezuschusst Ihre Beiträge: 50 % auf die ersten 360 €/J und 25 % auf 361–1.800 €/J. Maximum 540 €/J. Fließt direkt ins Depot.';
-  String get tipKinderzulage => 'Bis 300 €/Kind/Jahr (1:1 ab 25 €/Mt). Kind muss kindergeldberechtigt sein — endet mit 25 (in Ausbildung) oder 18. Zulage entfällt danach.';
+  String get tipKinderzulage => 'Bis 300 €/Kind/Jahr (1:1 ab 25 €/Mt). Kind muss kindergeldberechtigt sein — endet mit 25 (in Ausbildung) oder 18. Jedes Kind erzeugt genau eine Kinderzulage; bei zwei Eltern erhält nur ein Vertrag die Zulage je Kind (Annahme nach Riester-Vorgang §85 EStG; finale Zuordnungsregel für das AV-Depot noch ausstehend). Bitte Anzahl der Kinder eintragen, für die SIE der bezugsberechtigte Elternteil sind.';
   String get tipBerufseinsteigerbonus => 'Einmaliger Bonus von 200 € im ersten Vertragsjahr, wenn Sie unter 25 sind. Keine laufenden Zahlungen — nur im ersten Jahr.';
   String get tipGuenstigerpruefung => 'Das Finanzamt prüft automatisch: Bringt der Sonderausgabenabzug auf Ihre Beiträge mehr als die Zulagen? Wenn ja, erhalten Sie die Differenz als Steuererstattung — aber auf Ihr Bankkonto, NICHT ins Depot.';
   String get tipGefoerdert => 'Geförderte Beiträge (bis 1.800 €/J): Wachsen steuerfrei, aber die GESAMTE Auszahlung im Ruhestand wird mit Einkommensteuer besteuert (nachgelagerte Besteuerung).';
   String get tipUngefoerdert => 'Ungeförderte Beiträge (über 1.800 €/J): Keine Zulagen, aber steuerfreies Wachstum in der Ansparphase. Auszahlung mit Ertragsanteilbesteuerung (§22 Nr. 1 Satz 3a EStG): nur 17 % der Auszahlung wird mit dem persönlichen Einkommensteuersatz versteuert (Annahme: Beginn mit 67).';
   String get tipVorabpauschale => 'Jährliche Steuer auf unrealisierte ETF-Gewinne, berechnet aus dem Basiszins (EZB-Referenzzins). Hier vereinfacht als fester Abzug. Gilt NICHT im AV-Depot.';
   String get tipTeilfreistellung => '30 % Ihrer ETF-Gewinne sind steuerfrei — aber nur bei Aktienfonds (>50 % Kapitalbeteiligungen gem. §2 Abs. 6 InvStG). Mischfonds: 15 %, Immobilienfonds: 60–80 %, Anleihe-/Geldmarkt-ETFs: 0 %. Der Rechner unterstellt einen reinen Aktien-ETF.';
-  String get tipFinalCapital => 'Kapital bei Renteneintritt (Ende Sparphase). Das Depot wird über die Auszahlphase als monatlicher Auszahlplan vollständig ausgezahlt. Während dieser Zeit wächst das Depot weiter mit derselben Rendite — die Gesamtsumme über die Auszahlphase (Depot vor Steuer, siehe unten) ist daher HÖHER als dieses Endkapital.';
+  String get tipFinalCapital => 'Kapital bei Renteneintritt (Ende Sparphase). Das Depot wird über die Auszahlphase als monatlicher Auszahlplan vollständig ausgezahlt. Während dieser Zeit wächst das Depot weiter mit derselben Rendite — die Gesamtsumme über die Auszahlphase (Bruttoauszahlung gesamt, siehe unten) ist daher HÖHER als dieses Kapital.';
 
   String avYieldsMore(String amount) => 'AV-Depot bringt $amount mehr.';
   String etfYieldsMore(String amount) => 'ETF-Depot bringt $amount mehr.';
