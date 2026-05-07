@@ -239,6 +239,50 @@ This is the incremental rate at which the AV payout itself is taxed, used in bot
 the gefördert (100% of payout) and ungefördert (17% of payout) tax-base
 calculations.
 
+#### Payout-phase simplifications (time dimension)
+
+The progressive §32a polynomial is applied exactly when computing
+`avPayoutTaxRate` — i.e. the **bracket structure** is correct. What is
+simplified is the **time dimension**: the rate is computed once at retirement
+and applied uniformly across all payout months. Specifically:
+
+- **Single rate × full payout horizon.** `avPayoutTaxRate` is calculated once
+  using year-1 retirement income (pension + sonstige + AV taxable) and applied
+  unchanged to all 18 payout years and 12 months/year. We do **not** re-run
+  `calcEinkommensteuer` per year, so a pension that grows during retirement,
+  annual fluctuation in `sonstigeEinkuenfte`, or an evolving AV taxable share
+  does not affect the rate. This is conservative for typical scenarios because
+  AV-derived progression is usually frontloaded.
+- **2026 brackets used for the whole horizon.** §32a thresholds
+  (Grundfreibetrag €12,348, Spitzensteuersatz threshold €69,878, Reichensteuer
+  threshold €277,825) are held constant for all 18 years. In reality the
+  brackets are indexed approximately yearly by the Steuerfortentwicklungs­gesetz.
+  Holding them flat slightly over-states the tax burden in the later payout
+  years. Update `CalcConstants` when new official brackets become available.
+- **Pension assumed constant.** `effectiveRente` (overrides → income-dev EP →
+  static estimate) is computed once and held flat across the payout. We do
+  not model the annual `Rentenwert` adjustment.
+- **`Brutto` ≈ zvE.** We use `pension × 12 + sonstige + avTaxable` as the
+  argument to `calcEinkommensteuer`. The actual zu versteuerndes Einkommen
+  would deduct Werbungskosten-Pauschale, Sonderausgaben (e.g.
+  Kranken-/Pflegeversicherung in retirement), außergewöhnliche Belastungen,
+  etc. The calculator's value is therefore an upper bound on zvE, slightly
+  over-stating the §32a tax.
+- **Kirchensteuer applied as `× (1 + 0.09)`.** When the user is
+  kirchensteuerpflichtig, `nettoRate = avPayoutTaxRate × (1 + 0.09)`. This
+  models KiSt as a fixed surcharge on top of the income-tax rate. The actual
+  mechanic is KiSt = 9 % of festgesetzte Einkommensteuer (with a deduction of
+  the KiSt itself as Sonderausgabe in the next-year zvE), which the calculator
+  does not iterate.
+
+If any of these matter for a particular scenario (e.g. a large
+`sonstigeEinkuenfte` schedule, or a pension expected to grow well above
+inflation), the right place to lift the simplification is the same module
+(`AnnuityAVPayout.compute`) — replace the single-rate computation with a
+year-by-year loop calling `calcEinkommensteuer` per payout year and average
+the resulting per-year nets. The module interface (`AVPayoutModule`) is
+specifically designed to allow this without touching the rest of the engine.
+
 ### 3.3 ETF-Depot (Private, Unfördert)
 
 **Legal basis**: Investmentsteuergesetz (InvStG) governs the taxation of
